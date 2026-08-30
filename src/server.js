@@ -471,7 +471,7 @@ async function pollHelloQuoteRequests() {
   const results = await withImap('hello', async (client) => {
     const lock = await client.getMailboxLock('INBOX');
     try {
-      const since = new Date(Date.now() - 30 * 60 * 1000);
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const uids = await client.search({ since }, { uid: true });
       const rows = [];
       for (const uid of uids.slice(-100)) {
