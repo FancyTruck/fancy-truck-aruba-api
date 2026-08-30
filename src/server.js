@@ -57,6 +57,21 @@ function addressList(value) {
   return value?.value?.map((item) => ({ name: item.name || null, address: item.address || null })) || [];
 }
 
+function quoteRequestKind(subject, text) {
+  const value = `${subject || ''}\n${text || ''}`.toLowerCase();
+  const requestWords = ['preventiv', 'quotazione', 'disponibil', 'noleggi', 'roadtour', 'road tour',
+    'brand activation', 'personalizz', 'food truck', 'foodtruck', 'pop up truck', 'truck', 'trasporto', 'logistica'];
+  if (!requestWords.some((word) => value.includes(word))) return null;
+  if (['noleggi', 'disponibil', 'food truck', 'foodtruck', 'veicolo'].some((word) => value.includes(word))) return 'rental';
+  if (['roadtour', 'road tour', 'brand activation', 'campagna', 'evento'].some((word) => value.includes(word))) return 'sale';
+  return 'unknown';
+}
+
+function emailMarker(parsed, uid) {
+  const source = parsed.messageId || `${uid}:${parsed.date?.toISOString() || ''}:${parsed.subject || ''}`;
+  return `mail-${crypto.createHash('sha256').update(source).digest('hex').slice(0, 24)}`;
+}
+
 function odooConfig() {
   const url = String(process.env.ODOO_URL || '').replace(/\/$/, '');
   const db = process.env.ODOO_DB;
@@ -95,6 +110,93 @@ async function odooCall(model, method, args = [], kwargs = {}) {
     throw new Error(payload?.message || payload?.error || `Errore Odoo ${model}.${method} (${response.status})`);
   }
   return payload;
+}
+
+async function findOrCreatePartnerFromEmail(parsed) {
+  const sender = parsed.from?.value?.[0];
+  const email = String(sender?.address || '').trim().toLowerCase();
+  if (!email) throw new Error('Mittente senza indirizzo e-mail');
+  const existing = await odooCall('res.partner', 'search_read', [[['email', '=ilike', email]]], {
+    fields: ['name', 'email', 'vat', 'l10n_it_pa_index', 'l10n_it_pec_email'], limit: 5,
+  });
+  if (existing.length) return { partner: existing[0], created: false };
+  const ids = await odooCall('res.partner', 'create', [[{
+    name: String(sender?.name || email).trim(), company_type: 'person', email,
+  }]]);
+  const id = Array.isArray(ids) ? ids[0] : ids;
+  return { partner: { id, name: sender?.name || email, email, vat: false }, created: true };
+}
+
+async function processQuoteRequest(parsed, uid) {
+  const sender = parsed.from?.value?.[0];
+  const senderEmail = String(sender?.address || '').trim().toLowerCase();
+  if (!senderEmail || senderEmail.endsWith('@fancytruck.it') || /no-?reply|mailer-daemon/.test(senderEmail)) {
+    return { skipped: true, reason: 'mittente interno o automatico' };
+  }
+  const kind = quoteRequestKind(parsed.subject, parsed.text);
+  if (!kind) return { skipped: true, reason: 'non commerciale' };
+
+  const key = emailMarker(parsed, uid);
+  const marker = `[AUTO:${key}]`;
+  const existingLead = await odooCall('crm.lead', 'search_read', [[['description', 'ilike', marker]]], {
+    fields: ['name', 'partner_id', 'stage_id'], limit: 1,
+  });
+  if (existingLead.length) return { skipped: true, duplicate: true, lead_id: existingLead[0].id };
+
+  const { partner, created } = await findOrCreatePartnerFromEmail(parsed);
+  const cleanBody = String(parsed.text || '').trim().slice(0, 12000);
+  const leadIds = await odooCall('crm.lead', 'create', [[{
+    name: String(parsed.subject || `Richiesta da ${sender?.name || senderEmail}`).slice(0, 240),
+    type: 'opportunity', partner_id: partner.id, contact_name: sender?.name || false,
+    email_from: senderEmail, description: `Richiesta ricevuta via hello@fancytruck.it\n\n${cleanBody}\n\n${marker}`,
+  }]]);
+  const leadId = Array.isArray(leadIds) ? leadIds[0] : leadIds;
+
+  const missingFiscal = [];
+  if (!partner.vat) missingFiscal.push('partita IVA/codice fiscale');
+  if (!partner.l10n_it_pa_index) missingFiscal.push('codice SDI');
+  if (!partner.l10n_it_pec_email) missingFiscal.push('PEC');
+  const operationalNote = kind === 'rental'
+    ? 'Richiesta classificata come possibile noleggio: prima della bozza Noleggi verificare veicolo, date, orari, luogo, personalizzazione e logistica.'
+    : kind === 'sale'
+      ? 'Richiesta classificata come Vendite/brand activation o roadtour.'
+      : 'Tipologia commerciale da verificare prima di generare il preventivo.';
+  await odooCall('crm.lead', 'message_post', [[leadId]], {
+    body: `${operationalNote}${missingFiscal.length ? `<br>Dati anagrafici da integrare: ${missingFiscal.join(', ')}.` : ''}`,
+    message_type: 'comment', subtype_xmlid: 'mail.mt_note',
+  });
+
+  let orderId = null;
+  if (kind === 'sale') {
+    const orderIds = await odooCall('sale.order', 'create', [[{
+      partner_id: partner.id, opportunity_id: leadId, client_order_ref: `AUTO:${key}`,
+      origin: parsed.subject || false,
+      order_line: [[0, 0, { display_type: 'line_note', name: 'Bozza automatica da completare dopo verifica di servizi, programma e condizioni economiche.' }]],
+    }]]);
+    orderId = Array.isArray(orderIds) ? orderIds[0] : orderIds;
+  }
+  return { lead_id: leadId, partner_id: partner.id, partner_created: created, order_id: orderId, kind };
+}
+
+async function pollHelloQuoteRequests() {
+  const results = await withImap('hello', async (client) => {
+    const lock = await client.getMailboxLock('INBOX');
+    try {
+      const since = new Date(Date.now() - 30 * 60 * 1000);
+      const uids = await client.search({ since }, { uid: true });
+      const rows = [];
+      for (const uid of uids.slice(-100)) {
+        const message = await client.fetchOne(uid, { source: true }, { uid: true });
+        if (!message?.source) continue;
+        const parsed = await simpleParser(message.source);
+        rows.push(await processQuoteRequest(parsed, uid));
+      }
+      return rows;
+    } finally { lock.release(); }
+  });
+  const created = results.filter((row) => row.lead_id && !row.duplicate);
+  if (created.length) console.log(`RICHIESTE HELLO: ${created.length} nuove lead elaborate`);
+  return created;
 }
 
 app.get('/health', (_req, res) => {
@@ -415,4 +517,6 @@ app.listen(port, () => {
   ]], { fields: ['model', 'name'], limit: 50 })
     .then((fields) => console.log(`ODOO FLUSSO PREVENTIVI: OK (${fields.map((field) => `${field.model}.${field.name}`).join(', ')})`))
     .catch((error) => console.error(`ODOO FLUSSO PREVENTIVI: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`));
+  setTimeout(() => pollHelloQuoteRequests().catch((error) => console.error(`RICHIESTE HELLO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 15000);
+  setInterval(() => pollHelloQuoteRequests().catch((error) => console.error(`RICHIESTE HELLO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 5 * 60 * 1000);
 });
