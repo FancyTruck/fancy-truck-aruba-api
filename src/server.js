@@ -195,7 +195,7 @@ async function pollHelloQuoteRequests() {
     } finally { lock.release(); }
   });
   const created = results.filter((row) => row.lead_id && !row.duplicate);
-  if (created.length) console.log(`RICHIESTE HELLO: ${created.length} nuove lead elaborate`);
+  console.log(`RICHIESTE HELLO: controllo completato, ${results.length} messaggi recenti, ${created.length} nuove lead elaborate`);
   return created;
 }
 
