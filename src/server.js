@@ -201,16 +201,9 @@ async function processQuoteRequest(parsed, uid) {
     });
   }
 
-  let orderId = null;
-  if (kind === 'sale') {
-    const orderIds = await odooCall('sale.order', 'create', [[{
-      partner_id: partner.id, opportunity_id: leadId, client_order_ref: `AUTO:${key}`,
-      origin: parsed.subject || false,
-      order_line: [[0, 0, { display_type: 'line_note', name: 'Bozza automatica da completare dopo verifica di servizi, programma e condizioni economiche.' }]],
-    }]]);
-    orderId = Array.isArray(orderIds) ? orderIds[0] : orderIds;
-  }
-  return { lead_id: leadId, partner_id: partner.id, partner_created: created, order_id: orderId, kind };
+  // Il flusso nasce sempre nel CRM. La bozza Vendite/Noleggi sarà generata
+  // dall'opportunità solo dopo l'integrazione e la verifica dei dati necessari.
+  return { lead_id: leadId, partner_id: partner.id, partner_created: created, order_id: null, kind };
 }
 
 async function pollHelloQuoteRequests() {
