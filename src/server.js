@@ -179,6 +179,9 @@ async function verifyAccountConnections(accountName) {
     host: process.env.ARUBA_SMTP_HOST || 'smtps.aruba.it',
     port: Number(process.env.ARUBA_SMTP_PORT || 465),
     secure: true,
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
     auth: { user: account.email, pass: account.password },
   });
 
