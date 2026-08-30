@@ -74,6 +74,10 @@ async function odooCall(model, method, args = [], kwargs = {}) {
     body = { vals_list: args[0] || [], ...kwargs };
   } else if (method === 'message_post') {
     body = { ids: args[0] || [], ...kwargs };
+  } else if (method === 'write') {
+    body = { ids: args[0] || [], vals: args[1] || {}, ...kwargs };
+  } else if (method === 'unlink') {
+    body = { ids: args[0] || [], ...kwargs };
   } else {
     body = { args, kwargs };
   }
@@ -142,6 +146,19 @@ app.get('/v1/odoo/contacts/search', async (req, res) => {
   }
 });
 
+app.get('/v1/odoo/products/search', async (req, res) => {
+  try {
+    const query = String(req.query.q || '').trim();
+    if (!query) return res.status(400).json({ ok: false, error: 'Parametro q obbligatorio' });
+    const products = await odooCall('product.product', 'search_read', [[
+      '|', ['name', 'ilike', query], ['default_code', 'ilike', query],
+    ]], { fields: ['name', 'default_code', 'list_price', 'uom_id', 'sale_ok', 'rent_ok'], limit: 30 });
+    res.json({ ok: true, products });
+  } catch (error) {
+    res.status(502).json({ ok: false, error: error instanceof Error ? error.message : 'Errore Odoo' });
+  }
+});
+
 app.post('/v1/odoo/contacts', async (req, res) => {
   try {
     const name = String(req.body?.name || '').trim();
@@ -151,6 +168,9 @@ app.post('/v1/odoo/contacts', async (req, res) => {
       email: req.body?.email || false, phone: req.body?.phone || false, mobile: req.body?.mobile || false,
       vat: req.body?.vat || false, street: req.body?.street || false, zip: req.body?.zip || false,
       city: req.body?.city || false,
+      l10n_it_codice_fiscale: req.body?.fiscal_code || false,
+      l10n_it_codice_destinatario: req.body?.sdi_code || false,
+      l10n_it_pec_email: req.body?.pec || false,
     };
     const duplicateDomain = [];
     if (values.email) duplicateDomain.push(['email', '=ilike', values.email]);
@@ -170,14 +190,76 @@ app.post('/v1/odoo/contacts', async (req, res) => {
 app.post('/v1/odoo/crm/leads', async (req, res) => {
   try {
     const name = String(req.body?.name || '').trim();
-    if (!name) return res.status(400).json({ ok: false, error: 'name obbligatorio' });
+    const idempotencyKey = String(req.body?.idempotency_key || '').trim();
+    if (!name || !idempotencyKey) return res.status(400).json({ ok: false, error: 'name e idempotency_key obbligatori' });
+    const marker = `[AUTO:${idempotencyKey}]`;
+    const existing = await odooCall('crm.lead', 'search_read', [[['description', 'ilike', marker]]], {
+      fields: ['name', 'partner_id', 'stage_id'], limit: 1,
+    });
+    if (existing.length) return res.json({ ok: true, duplicate: true, lead: existing[0] });
     const values = {
       name, type: 'opportunity', partner_id: req.body?.partner_id || false,
       contact_name: req.body?.contact_name || false, email_from: req.body?.email_from || false,
-      phone: req.body?.phone || false, description: req.body?.description || false,
+      phone: req.body?.phone || false,
+      description: `${req.body?.description || ''}\n\n${marker}`.trim(),
     };
     const id = await odooCall('crm.lead', 'create', [[values]]);
     res.status(201).json({ ok: true, id: Array.isArray(id) ? id[0] : id });
+  } catch (error) {
+    res.status(502).json({ ok: false, error: error instanceof Error ? error.message : 'Errore Odoo' });
+  }
+});
+
+app.post('/v1/odoo/sales/drafts', async (req, res) => {
+  try {
+    const partnerId = Number(req.body?.partner_id);
+    const idempotencyKey = String(req.body?.idempotency_key || '').trim();
+    const lines = Array.isArray(req.body?.lines) ? req.body.lines : [];
+    if (!Number.isInteger(partnerId) || !idempotencyKey) {
+      return res.status(400).json({ ok: false, error: 'partner_id e idempotency_key obbligatori' });
+    }
+    const marker = `AUTO:${idempotencyKey}`;
+    const existing = await odooCall('sale.order', 'search_read', [[['client_order_ref', '=', marker]]], {
+      fields: ['name', 'state', 'partner_id', 'opportunity_id', 'amount_total', 'is_rental_order'], limit: 1,
+    });
+    if (existing.length) return res.json({ ok: true, duplicate: true, order: existing[0] });
+
+    const isRental = req.body?.order_type === 'rental';
+    if (isRental && (!req.body?.rental_start_date || !req.body?.rental_return_date)) {
+      return res.status(400).json({ ok: false, error: 'Per il noleggio servono rental_start_date e rental_return_date' });
+    }
+    const orderLines = lines.map((line) => {
+      const displayType = ['line_section', 'line_note'].includes(line?.display_type) ? line.display_type : false;
+      const values = displayType ? {
+        display_type: displayType, name: String(line?.name || '').trim(),
+      } : {
+        product_id: Number(line?.product_id) || false,
+        name: String(line?.name || '').trim(),
+        product_uom_qty: Number(line?.quantity ?? 1),
+        price_unit: Number(line?.price_unit ?? 0),
+        discount: Number(line?.discount ?? 0),
+      };
+      if (!values.name) throw new Error('Ogni riga deve avere una descrizione');
+      return [0, 0, values];
+    });
+    const values = {
+      partner_id: partnerId,
+      opportunity_id: Number(req.body?.opportunity_id) || false,
+      client_order_ref: marker,
+      origin: req.body?.origin || false,
+      note: req.body?.note || false,
+      validity_date: req.body?.validity_date || false,
+      is_rental_order: isRental,
+      rental_start_date: isRental ? req.body.rental_start_date : false,
+      rental_return_date: isRental ? req.body.rental_return_date : false,
+      order_line: orderLines,
+    };
+    const id = await odooCall('sale.order', 'create', [[values]]);
+    const orderId = Array.isArray(id) ? id[0] : id;
+    const order = await odooCall('sale.order', 'search_read', [[['id', '=', orderId]]], {
+      fields: ['name', 'state', 'partner_id', 'opportunity_id', 'amount_total', 'is_rental_order'], limit: 1,
+    });
+    res.status(201).json({ ok: true, id: orderId, order: order[0] || null });
   } catch (error) {
     res.status(502).json({ ok: false, error: error instanceof Error ? error.message : 'Errore Odoo' });
   }
@@ -326,4 +408,11 @@ app.listen(port, () => {
   odooCall('crm.stage', 'search_count', [[]])
     .then((count) => console.log(`ODOO CRM: OK (${count} fasi)`))
     .catch((error) => console.error(`ODOO CRM: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`));
+  odooCall('ir.model.fields', 'search_count', [[
+    ['model', 'in', ['res.partner', 'crm.lead', 'sale.order', 'sale.order.line']],
+    ['name', 'in', ['l10n_it_codice_fiscale', 'l10n_it_codice_destinatario', 'l10n_it_pec_email',
+      'opportunity_id', 'is_rental_order', 'rental_start_date', 'rental_return_date', 'order_line']],
+  ]])
+    .then((count) => console.log(`ODOO FLUSSO PREVENTIVI: OK (${count} campi verificati)`))
+    .catch((error) => console.error(`ODOO FLUSSO PREVENTIVI: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`));
 });
