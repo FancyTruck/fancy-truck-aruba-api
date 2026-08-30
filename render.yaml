@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: fancy-truck-aruba-api
+    runtime: node
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: API_TOKEN
+        generateValue: true
+      - key: ARUBA_IMAP_HOST
+        value: imaps.aruba.it
+      - key: ARUBA_IMAP_PORT
+        value: "993"
+      - key: ARUBA_SMTP_HOST
+        value: smtps.aruba.it
+      - key: ARUBA_SMTP_PORT
+        value: "465"
+      - key: HELLO_EMAIL
+        value: hello@fancytruck.it
+      - key: HELLO_PASSWORD
+        sync: false
+      - key: PIETRO_EMAIL
+        value: pietro@fancytruck.it
+      - key: PIETRO_PASSWORD
+        sync: false
