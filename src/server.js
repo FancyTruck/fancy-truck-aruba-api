@@ -63,6 +63,22 @@ function escapeHtml(value) {
   }[char]));
 }
 
+function plainTextFromHtml(value) {
+  return String(value || '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function quoteRequestKind(subject, text) {
   const value = `${subject || ''}\n${text || ''}`.toLowerCase();
   const requestWords = ['preventiv', 'quotazione', 'disponibil', 'noleggi', 'roadtour', 'road tour',
@@ -375,6 +391,38 @@ async function pollHelloQuoteRequests() {
   const created = results.filter((row) => row.lead_id && !row.duplicate);
   console.log(`RICHIESTE HELLO: controllo completato, ${results.length} messaggi recenti, ${created.length} nuove lead elaborate`);
   return created;
+}
+
+async function pollOdooLeadReplies() {
+  const since = new Date(Date.now() - 30 * 60 * 1000).toISOString().replace('T', ' ').slice(0, 19);
+  const messages = await odooCall('mail.message', 'search_read', [[
+    ['model', '=', 'crm.lead'], ['message_type', '=', 'email'], ['date', '>=', since],
+  ]], {
+    fields: ['res_id', 'subject', 'body', 'email_from', 'author_id', 'date', 'message_id'],
+    order: 'date asc, id asc', limit: 100,
+  });
+  const results = [];
+  for (const message of messages) {
+    const emailMatch = String(message.email_from || '').match(/<([^>]+)>/) || String(message.email_from || '').match(/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i);
+    const senderEmail = String(emailMatch?.[1] || '').trim().toLowerCase();
+    if (!senderEmail || senderEmail.endsWith('@fancytruck.it')) continue;
+    const leads = await odooCall('crm.lead', 'search_read', [[['id', '=', message.res_id]]], {
+      fields: ['name', 'description', 'partner_id', 'stage_id', 'create_date'], limit: 1,
+    });
+    if (!leads.length) continue;
+    const authorName = Array.isArray(message.author_id) ? message.author_id[1] : null;
+    const parsed = {
+      messageId: message.message_id || `odoo-mail-message-${message.id}`,
+      subject: message.subject || leads[0].name,
+      date: message.date ? new Date(String(message.date).replace(' ', 'T') + 'Z') : new Date(),
+      text: plainTextFromHtml(message.body),
+      from: { value: [{ name: authorName, address: senderEmail }] },
+    };
+    results.push(await processQuoteReply(parsed, `odoo-${message.id}`, leads[0]));
+  }
+  const processed = results.filter((row) => row.reply && !row.duplicate);
+  console.log(`RISPOSTE ODOO CRM: controllo completato, ${messages.length} messaggi recenti, ${processed.length} risposte elaborate`);
+  return processed;
 }
 
 app.get('/health', (_req, res) => {
@@ -697,4 +745,6 @@ app.listen(port, () => {
     .catch((error) => console.error(`ODOO FLUSSO PREVENTIVI: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`));
   setTimeout(() => pollHelloQuoteRequests().catch((error) => console.error(`RICHIESTE HELLO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 15000);
   setInterval(() => pollHelloQuoteRequests().catch((error) => console.error(`RICHIESTE HELLO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 5 * 60 * 1000);
+  setTimeout(() => pollOdooLeadReplies().catch((error) => console.error(`RISPOSTE ODOO CRM: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 30000);
+  setInterval(() => pollOdooLeadReplies().catch((error) => console.error(`RISPOSTE ODOO CRM: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 5 * 60 * 1000);
 });
