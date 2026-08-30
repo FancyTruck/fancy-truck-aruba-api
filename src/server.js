@@ -408,11 +408,11 @@ app.listen(port, () => {
   odooCall('crm.stage', 'search_count', [[]])
     .then((count) => console.log(`ODOO CRM: OK (${count} fasi)`))
     .catch((error) => console.error(`ODOO CRM: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`));
-  odooCall('ir.model.fields', 'search_count', [[
+  odooCall('ir.model.fields', 'search_read', [[
     ['model', 'in', ['res.partner', 'crm.lead', 'sale.order', 'sale.order.line']],
     ['name', 'in', ['l10n_it_codice_fiscale', 'l10n_it_codice_destinatario', 'l10n_it_pec_email',
       'opportunity_id', 'is_rental_order', 'rental_start_date', 'rental_return_date', 'order_line']],
-  ]])
-    .then((count) => console.log(`ODOO FLUSSO PREVENTIVI: OK (${count} campi verificati)`))
+  ]], { fields: ['model', 'name'], limit: 50 })
+    .then((fields) => console.log(`ODOO FLUSSO PREVENTIVI: OK (${fields.map((field) => `${field.model}.${field.name}`).join(', ')})`))
     .catch((error) => console.error(`ODOO FLUSSO PREVENTIVI: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`));
 });
