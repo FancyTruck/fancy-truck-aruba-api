@@ -169,7 +169,7 @@ app.post('/v1/odoo/contacts', async (req, res) => {
       vat: req.body?.vat || false, street: req.body?.street || false, zip: req.body?.zip || false,
       city: req.body?.city || false,
       l10n_it_codice_fiscale: req.body?.fiscal_code || false,
-      l10n_it_codice_destinatario: req.body?.sdi_code || false,
+      l10n_it_pa_index: req.body?.sdi_code || false,
       l10n_it_pec_email: req.body?.pec || false,
     };
     const duplicateDomain = [];
@@ -410,14 +410,9 @@ app.listen(port, () => {
     .catch((error) => console.error(`ODOO CRM: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`));
   odooCall('ir.model.fields', 'search_read', [[
     ['model', 'in', ['res.partner', 'crm.lead', 'sale.order', 'sale.order.line']],
-    ['name', 'in', ['l10n_it_codice_fiscale', 'l10n_it_codice_destinatario', 'l10n_it_pec_email',
+    ['name', 'in', ['l10n_it_codice_fiscale', 'l10n_it_pa_index', 'l10n_it_pec_email',
       'opportunity_id', 'is_rental_order', 'rental_start_date', 'rental_return_date', 'order_line']],
   ]], { fields: ['model', 'name'], limit: 50 })
     .then((fields) => console.log(`ODOO FLUSSO PREVENTIVI: OK (${fields.map((field) => `${field.model}.${field.name}`).join(', ')})`))
     .catch((error) => console.error(`ODOO FLUSSO PREVENTIVI: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`));
-  odooCall('ir.model.fields', 'search_read', [[
-    ['model', '=', 'res.partner'], '|', ['name', 'ilike', 'destinat'], ['field_description', 'ilike', 'SDI'],
-  ]], { fields: ['name', 'field_description'], limit: 20 })
-    .then((fields) => console.log(`ODOO CAMPI SDI: ${fields.map((field) => `${field.name}=${field.field_description}`).join(', ') || 'nessuno'}`))
-    .catch((error) => console.error(`ODOO CAMPI SDI: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`));
 });
