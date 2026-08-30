@@ -57,39 +57,40 @@ function addressList(value) {
   return value?.value?.map((item) => ({ name: item.name || null, address: item.address || null })) || [];
 }
 
-async function odooSession() {
+function odooConfig() {
   const url = String(process.env.ODOO_URL || '').replace(/\/$/, '');
   const db = process.env.ODOO_DB;
-  const login = process.env.ODOO_LOGIN;
-  const password = process.env.ODOO_API_KEY;
-  if (!url || !db || !login || !password) throw new Error('Configurazione Odoo incompleta');
-
-  const response = await fetch(`${url}/web/session/authenticate`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ jsonrpc: '2.0', method: 'call', params: { db, login, password }, id: Date.now() }),
-  });
-  const payload = await response.json();
-  if (!response.ok || payload.error || !payload.result?.uid) {
-    throw new Error(payload.error?.data?.message || payload.error?.message || 'Autenticazione Odoo non riuscita');
-  }
-  const cookie = response.headers.get('set-cookie')?.split(';')[0];
-  if (!cookie) throw new Error('Sessione Odoo non ricevuta');
-  return { url, cookie, uid: payload.result.uid };
+  const apiKey = process.env.ODOO_API_KEY;
+  if (!url || !db || !apiKey) throw new Error('Configurazione Odoo incompleta');
+  return { url, db, apiKey };
 }
 
 async function odooCall(model, method, args = [], kwargs = {}) {
-  const session = await odooSession();
-  const response = await fetch(`${session.url}/web/dataset/call_kw/${model}/${method}`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', cookie: session.cookie },
-    body: JSON.stringify({ jsonrpc: '2.0', method: 'call', params: { model, method, args, kwargs }, id: Date.now() }),
-  });
-  const payload = await response.json();
-  if (!response.ok || payload.error) {
-    throw new Error(payload.error?.data?.message || payload.error?.message || `Errore Odoo ${model}.${method}`);
+  const config = odooConfig();
+  let body;
+  if (method === 'search_read' || method === 'search_count') {
+    body = { domain: args[0] || [], ...kwargs };
+  } else if (method === 'create') {
+    body = { vals_list: args[0] || [], ...kwargs };
+  } else if (method === 'message_post') {
+    body = { ids: args[0] || [], ...kwargs };
+  } else {
+    body = { args, kwargs };
   }
-  return payload.result;
+  const response = await fetch(`${config.url}/json/2/${model}/${method}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `bearer ${config.apiKey}`,
+      'x-odoo-database': config.db,
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(payload?.message || payload?.error || `Errore Odoo ${model}.${method} (${response.status})`);
+  }
+  return payload;
 }
 
 app.get('/health', (_req, res) => {
@@ -110,8 +111,8 @@ app.get('/v1/accounts', (_req, res) => {
 
 app.get('/v1/odoo/health', async (_req, res) => {
   try {
-    const session = await odooSession();
-    res.json({ ok: true, service: 'odoo', uid: session.uid });
+    const stages = await odooCall('crm.stage', 'search_count', [[]]);
+    res.json({ ok: true, service: 'odoo', crm_stages: stages });
   } catch (error) {
     res.status(502).json({ ok: false, error: error instanceof Error ? error.message : 'Errore Odoo' });
   }
