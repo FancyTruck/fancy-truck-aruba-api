@@ -402,45 +402,6 @@ async function verifyAccountConnections(accountName) {
   }
 }
 
-async function verifyOdooWriteWorkflow() {
-  const stamp = Date.now();
-  let partnerId;
-  let leadId;
-  let orderId;
-  try {
-    const partnerIds = await odooCall('res.partner', 'create', [[{
-      name: `TEST AUTOMAZIONE ${stamp}`, company_type: 'company',
-      email: `test-${stamp}@example.invalid`, l10n_it_pa_index: '0000000',
-      l10n_it_pec_email: `test-${stamp}@example.invalid`,
-    }]]);
-    partnerId = Array.isArray(partnerIds) ? partnerIds[0] : partnerIds;
-    const leadIds = await odooCall('crm.lead', 'create', [[{
-      name: `TEST AUTOMAZIONE ${stamp}`, type: 'opportunity', partner_id: partnerId,
-      description: `[AUTO:test-${stamp}]`,
-    }]]);
-    leadId = Array.isArray(leadIds) ? leadIds[0] : leadIds;
-    const orderIds = await odooCall('sale.order', 'create', [[{
-      partner_id: partnerId, opportunity_id: leadId, client_order_ref: `AUTO:test-${stamp}`,
-      is_rental_order: false,
-      order_line: [[0, 0, { display_type: 'line_note', name: 'Riga di collaudo temporanea' }]],
-    }]]);
-    orderId = Array.isArray(orderIds) ? orderIds[0] : orderIds;
-    const rows = await odooCall('sale.order', 'search_read', [[['id', '=', orderId]]], {
-      fields: ['partner_id', 'opportunity_id'], limit: 1,
-    });
-    const linked = rows[0]?.partner_id?.[0] === partnerId && rows[0]?.opportunity_id?.[0] === leadId;
-    if (!linked) throw new Error('Collegamenti contatto-lead-preventivo non coerenti');
-    console.log('ODOO SCRITTURA: OK (contatto, lead e bozza collegati)');
-  } catch (error) {
-    console.error(`ODOO SCRITTURA: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`);
-  } finally {
-    if (orderId) await odooCall('sale.order', 'unlink', [[orderId]]).catch(() => undefined);
-    if (leadId) await odooCall('crm.lead', 'unlink', [[leadId]]).catch(() => undefined);
-    if (partnerId) await odooCall('res.partner', 'unlink', [[partnerId]]).catch(() => undefined);
-    console.log('ODOO SCRITTURA: record temporanei rimossi');
-  }
-}
-
 app.listen(port, () => {
   console.log(`Fancy Truck Aruba API in ascolto sulla porta ${port}`);
   Promise.allSettled(['hello', 'pietro'].map(verifyAccountConnections)).catch(() => {});
@@ -454,5 +415,4 @@ app.listen(port, () => {
   ]], { fields: ['model', 'name'], limit: 50 })
     .then((fields) => console.log(`ODOO FLUSSO PREVENTIVI: OK (${fields.map((field) => `${field.model}.${field.name}`).join(', ')})`))
     .catch((error) => console.error(`ODOO FLUSSO PREVENTIVI: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`));
-  verifyOdooWriteWorkflow().catch(() => undefined);
 });
