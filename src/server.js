@@ -192,7 +192,7 @@ async function findOrCreatePartnerFromEmail(parsed) {
   const email = String(sender?.address || '').trim().toLowerCase();
   if (!email) throw new Error('Mittente senza indirizzo e-mail');
   const existing = await odooCall('res.partner', 'search_read', [[['email', '=ilike', email]]], {
-    fields: ['name', 'email', 'phone', 'mobile', 'vat', 'l10n_it_codice_fiscale', 'l10n_it_pa_index', 'l10n_it_pec_email'], limit: 5,
+    fields: ['name', 'email', 'phone', 'vat', 'l10n_it_codice_fiscale', 'l10n_it_pa_index', 'l10n_it_pec_email'], limit: 5,
   });
   if (existing.length) return { partner: existing[0], created: false };
   const ids = await odooCall('res.partner', 'create', [[{
@@ -390,7 +390,7 @@ async function processQuoteReply(parsed, uid, lead) {
 
   const partnerId = Array.isArray(lead.partner_id) ? lead.partner_id[0] : lead.partner_id;
   const partners = await odooCall('res.partner', 'search_read', [[['id', '=', partnerId]]], {
-    fields: ['name', 'email', 'phone', 'mobile', 'vat', 'l10n_it_codice_fiscale', 'l10n_it_pa_index', 'l10n_it_pec_email'], limit: 1,
+    fields: ['name', 'email', 'phone', 'vat', 'l10n_it_codice_fiscale', 'l10n_it_pa_index', 'l10n_it_pec_email'], limit: 1,
   });
   if (!partners.length) throw new Error(`Contatto Odoo non trovato per opportunità ${lead.id}`);
   let partner = await updatePartnerFromText(partners[0], parsed.text);
@@ -562,7 +562,7 @@ app.get('/v1/odoo/contacts/search', async (req, res) => {
     if (!query) return res.status(400).json({ ok: false, error: 'Parametro q obbligatorio' });
     const contacts = await odooCall('res.partner', 'search_read', [[
       '|', '|', '|', ['name', 'ilike', query], ['email', 'ilike', query], ['phone', 'ilike', query], ['vat', 'ilike', query],
-    ]], { fields: ['name', 'email', 'phone', 'mobile', 'vat', 'company_type'], limit: 20 });
+    ]], { fields: ['name', 'email', 'phone', 'vat', 'company_type'], limit: 20 });
     res.json({ ok: true, contacts });
   } catch (error) {
     res.status(502).json({ ok: false, error: error instanceof Error ? error.message : 'Errore Odoo' });
