@@ -157,4 +157,42 @@ app.post('/v1/:account/send', async (req, res) => {
   }
 });
 
-app.listen(port, () => console.log(`Fancy Truck Aruba API in ascolto sulla porta ${port}`));
+async function verifyAccountConnections(accountName) {
+  const account = accountConfig(accountName);
+  const imap = new ImapFlow({
+    host: process.env.ARUBA_IMAP_HOST || 'imaps.aruba.it',
+    port: Number(process.env.ARUBA_IMAP_PORT || 993),
+    secure: true,
+    auth: { user: account.email, pass: account.password },
+    logger: false,
+  });
+
+  try {
+    await imap.connect();
+    console.log(`IMAP ${accountName}: OK`);
+    await imap.logout();
+  } catch (error) {
+    console.error(`IMAP ${accountName}: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`);
+  }
+
+  const smtp = nodemailer.createTransport({
+    host: process.env.ARUBA_SMTP_HOST || 'smtps.aruba.it',
+    port: Number(process.env.ARUBA_SMTP_PORT || 465),
+    secure: true,
+    auth: { user: account.email, pass: account.password },
+  });
+
+  try {
+    await smtp.verify();
+    console.log(`SMTP ${accountName}: OK`);
+  } catch (error) {
+    console.error(`SMTP ${accountName}: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`);
+  } finally {
+    smtp.close();
+  }
+}
+
+app.listen(port, () => {
+  console.log(`Fancy Truck Aruba API in ascolto sulla porta ${port}`);
+  Promise.allSettled(['hello', 'pietro'].map(verifyAccountConnections)).catch(() => {});
+});
