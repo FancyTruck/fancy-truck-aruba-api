@@ -363,8 +363,15 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
 }
 
 async function findReplyLead(senderEmail, subject) {
+  const partners = await odooCall('res.partner', 'search_read', [[
+    ['email', '=ilike', senderEmail],
+  ]], { fields: ['id'], limit: 50 });
+  const partnerIds = partners.map((partner) => partner.id);
+  const senderDomain = partnerIds.length
+    ? ['|', ['email_from', '=ilike', senderEmail], ['partner_id', 'in', partnerIds]]
+    : [['email_from', '=ilike', senderEmail]];
   const leads = await odooCall('crm.lead', 'search_read', [[
-    ['type', '=', 'opportunity'], ['active', '=', true], ['email_from', '=ilike', senderEmail],
+    ['type', '=', 'opportunity'], ['active', '=', true], ...senderDomain,
   ]], { fields: ['name', 'description', 'partner_id', 'stage_id', 'create_date'], order: 'create_date desc', limit: 20 });
   const normalized = normalizedSubject(subject);
   const matched = leads.filter((lead) => {
