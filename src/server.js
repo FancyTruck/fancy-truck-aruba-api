@@ -57,6 +57,12 @@ function addressList(value) {
   return value?.value?.map((item) => ({ name: item.name || null, address: item.address || null })) || [];
 }
 
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[char]));
+}
+
 function quoteRequestKind(subject, text) {
   const value = `${subject || ''}\n${text || ''}`.toLowerCase();
   const requestWords = ['preventiv', 'quotazione', 'disponibil', 'noleggi', 'roadtour', 'road tour',
@@ -70,6 +76,23 @@ function quoteRequestKind(subject, text) {
 function emailMarker(parsed, uid) {
   const source = parsed.messageId || `${uid}:${parsed.date?.toISOString() || ''}:${parsed.subject || ''}`;
   return `mail-${crypto.createHash('sha256').update(source).digest('hex').slice(0, 24)}`;
+}
+
+function missingRequestDetails(kind, subject, text) {
+  const value = `${subject || ''}\n${text || ''}`;
+  const lower = value.toLowerCase();
+  const dates = value.match(/\b(?:0?[1-9]|[12]\d|3[01])[\/.\-](?:0?[1-9]|1[0-2])[\/.\-](?:20)?\d{2}\b/g) || [];
+  const times = value.match(/\b(?:[01]?\d|2[0-3])[:.]\d{2}\b/g) || [];
+  const vehicleWords = ['ape', 'airstream', 'fiat 238', 'citroen', 'hy', 'horse trailer', 'schoolbus', 'school bus', 'vw t1', 'framo', 'truck'];
+  const hasVehicle = vehicleWords.some((word) => lower.includes(word));
+  const hasLocation = /\b(?:luogo|location|destinazione|presso|indirizzo|città|comune)\b/i.test(value);
+  const missing = [];
+  if (!hasVehicle) missing.push(kind === 'sale' ? 'mezzo o struttura richiesta' : 'veicolo richiesto');
+  if (dates.length < 2) missing.push('data di inizio e data di fine');
+  if (times.length < 2) missing.push('orario di consegna/inizio e orario di ritiro/fine');
+  if (!hasLocation) missing.push('luogo completo dell’attività o della consegna');
+  if (kind === 'sale' && !/programma|tappa|attività|attivita|roadtour|road tour/i.test(value)) missing.push('programma operativo o tappe previste');
+  return missing;
 }
 
 function odooConfig() {
@@ -117,7 +140,7 @@ async function findOrCreatePartnerFromEmail(parsed) {
   const email = String(sender?.address || '').trim().toLowerCase();
   if (!email) throw new Error('Mittente senza indirizzo e-mail');
   const existing = await odooCall('res.partner', 'search_read', [[['email', '=ilike', email]]], {
-    fields: ['name', 'email', 'vat', 'l10n_it_pa_index', 'l10n_it_pec_email'], limit: 5,
+    fields: ['name', 'email', 'phone', 'mobile', 'vat', 'l10n_it_codice_fiscale', 'l10n_it_pa_index', 'l10n_it_pec_email'], limit: 5,
   });
   if (existing.length) return { partner: existing[0], created: false };
   const ids = await odooCall('res.partner', 'create', [[{
@@ -153,18 +176,30 @@ async function processQuoteRequest(parsed, uid) {
   const leadId = Array.isArray(leadIds) ? leadIds[0] : leadIds;
 
   const missingFiscal = [];
-  if (!partner.vat) missingFiscal.push('partita IVA/codice fiscale');
+  if (!partner.vat && !partner.l10n_it_codice_fiscale) missingFiscal.push('partita IVA o codice fiscale');
   if (!partner.l10n_it_pa_index) missingFiscal.push('codice SDI');
   if (!partner.l10n_it_pec_email) missingFiscal.push('PEC');
+  if (!partner.phone && !partner.mobile) missingFiscal.push('telefono di contatto');
+  const missingOperational = missingRequestDetails(kind, parsed.subject, parsed.text);
   const operationalNote = kind === 'rental'
     ? 'Richiesta classificata come possibile noleggio: prima della bozza Noleggi verificare veicolo, date, orari, luogo, personalizzazione e logistica.'
     : kind === 'sale'
       ? 'Richiesta classificata come Vendite/brand activation o roadtour.'
       : 'Tipologia commerciale da verificare prima di generare il preventivo.';
   await odooCall('crm.lead', 'message_post', [[leadId]], {
-    body: `${operationalNote}${missingFiscal.length ? `<br>Dati anagrafici da integrare: ${missingFiscal.join(', ')}.` : ''}`,
+    body: `${operationalNote}${missingFiscal.length ? `<br>Dati anagrafici da integrare: ${missingFiscal.join(', ')}.` : ''}${missingOperational.length ? `<br>Dati operativi da integrare: ${missingOperational.join(', ')}.` : ''}`,
     message_type: 'comment', subtype_xmlid: 'mail.mt_note',
   });
+
+  const missingForCustomer = [...missingOperational, ...missingFiscal];
+  if (missingForCustomer.length) {
+    const items = missingForCustomer.map((item) => `<li>${item}</li>`).join('');
+    await odooCall('crm.lead', 'message_post', [[leadId]], {
+      subject: 'Informazioni necessarie per preparare il preventivo Fancy Truck',
+      body: `<p>Buongiorno${sender?.name ? ` ${escapeHtml(sender.name)}` : ''},</p><p>grazie per aver contattato Fancy Truck. Per preparare un preventivo completo abbiamo bisogno delle seguenti informazioni:</p><ul>${items}</ul><p>Può rispondere direttamente a questa e-mail; aggiorneremo la stessa richiesta senza creare duplicati.</p><p>Grazie,<br>Fancy Truck</p>`,
+      partner_ids: [partner.id], message_type: 'comment', subtype_xmlid: 'mail.mt_comment',
+    });
+  }
 
   let orderId = null;
   if (kind === 'sale') {
