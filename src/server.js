@@ -415,4 +415,9 @@ app.listen(port, () => {
   ]], { fields: ['model', 'name'], limit: 50 })
     .then((fields) => console.log(`ODOO FLUSSO PREVENTIVI: OK (${fields.map((field) => `${field.model}.${field.name}`).join(', ')})`))
     .catch((error) => console.error(`ODOO FLUSSO PREVENTIVI: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`));
+  odooCall('ir.model.fields', 'search_read', [[
+    ['model', '=', 'res.partner'], '|', ['name', 'ilike', 'destinat'], ['field_description', 'ilike', 'SDI'],
+  ]], { fields: ['name', 'field_description'], limit: 20 })
+    .then((fields) => console.log(`ODOO CAMPI SDI: ${fields.map((field) => `${field.name}=${field.field_description}`).join(', ') || 'nessuno'}`))
+    .catch((error) => console.error(`ODOO CAMPI SDI: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`));
 });
