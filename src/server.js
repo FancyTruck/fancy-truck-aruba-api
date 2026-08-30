@@ -95,6 +95,42 @@ function missingRequestDetails(kind, subject, text) {
   return missing;
 }
 
+function normalizedSubject(value) {
+  return String(value || '').replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, '').trim().toLowerCase();
+}
+
+function extractCustomerData(text) {
+  const value = String(text || '');
+  const vat = value.match(/(?:p\.?\s*iva|partita\s+iva)\s*[:\-]?\s*(?:it\s*)?(\d{11})/i)?.[1] || null;
+  const fiscalCode = value.match(/(?:c\.?\s*f\.?|codice\s+fiscale)\s*[:\-]?\s*([A-Z0-9]{11,16})/i)?.[1]?.toUpperCase() || null;
+  const sdi = value.match(/(?:sdi|codice\s+destinatario)\s*[:\-]?\s*([A-Z0-9]{7})/i)?.[1]?.toUpperCase() || null;
+  const pec = value.match(/(?:pec)\s*[:\-]?\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i)?.[1]?.toLowerCase() || null;
+  const phone = value.match(/(?:tel(?:efono)?|cell(?:ulare)?)\s*[:\-]?\s*(\+?\d[\d .()\/-]{6,}\d)/i)?.[1]?.replace(/\s+/g, ' ').trim() || null;
+  return { vat, fiscalCode, sdi, pec, phone };
+}
+
+function italianDateTimeValues(text) {
+  const value = String(text || '');
+  const dateMatches = [...value.matchAll(/\b(0?[1-9]|[12]\d|3[01])[\/.\-](0?[1-9]|1[0-2])[\/.\-]((?:20)?\d{2})\b/g)];
+  const timeMatches = [...value.matchAll(/\b([01]?\d|2[0-3])[:.](\d{2})\b/g)];
+  if (dateMatches.length < 2 || timeMatches.length < 2) return null;
+  const compose = (dateMatch, timeMatch) => {
+    const year = String(dateMatch[3]).length === 2 ? `20${dateMatch[3]}` : dateMatch[3];
+    return `${year}-${String(dateMatch[2]).padStart(2, '0')}-${String(dateMatch[1]).padStart(2, '0')} ${String(timeMatch[1]).padStart(2, '0')}:${timeMatch[2]}:00`;
+  };
+  return { start: compose(dateMatches[0], timeMatches[0]), end: compose(dateMatches[1], timeMatches[1]) };
+}
+
+function vehicleSearchTerm(text) {
+  const value = String(text || '').toLowerCase();
+  const known = [
+    ['horse trailer', 'Horse Trailer'], ['school bus', 'School Bus'], ['schoolbus', 'School Bus'],
+    ['fiat 238', 'Fiat 238'], ['vw t1', 'VW T1'], ['airstream', 'Airstream'], ['citroen hy', 'Citroen HY'],
+    ['citroën hy', 'Citroen HY'], ['framo', 'Framo'], ['ape', 'Ape'],
+  ];
+  return known.find(([needle]) => value.includes(needle))?.[1] || null;
+}
+
 function odooConfig() {
   const url = String(process.env.ODOO_URL || '').replace(/\/$/, '');
   const db = process.env.ODOO_DB;
@@ -150,12 +186,132 @@ async function findOrCreatePartnerFromEmail(parsed) {
   return { partner: { id, name: sender?.name || email, email, vat: false }, created: true };
 }
 
+async function updatePartnerFromText(partner, text) {
+  const extracted = extractCustomerData(text);
+  const values = {};
+  if (!partner.vat && extracted.vat) values.vat = extracted.vat;
+  if (!partner.l10n_it_codice_fiscale && extracted.fiscalCode) values.l10n_it_codice_fiscale = extracted.fiscalCode;
+  if (!partner.l10n_it_pa_index && extracted.sdi) values.l10n_it_pa_index = extracted.sdi;
+  if (!partner.l10n_it_pec_email && extracted.pec) values.l10n_it_pec_email = extracted.pec;
+  if (!partner.phone && !partner.mobile && extracted.phone) values.phone = extracted.phone;
+  if (Object.keys(values).length) await odooCall('res.partner', 'write', [[partner.id], values]);
+  return { ...partner, ...values };
+}
+
+function missingFiscalDetails(partner) {
+  const missing = [];
+  if (!partner.vat && !partner.l10n_it_codice_fiscale) missing.push('partita IVA o codice fiscale');
+  if (!partner.l10n_it_pa_index) missing.push('codice SDI');
+  if (!partner.l10n_it_pec_email) missing.push('PEC');
+  if (!partner.phone && !partner.mobile) missing.push('telefono di contatto');
+  return missing;
+}
+
+async function askCustomerForMissingDetails(leadId, partner, senderName, missing) {
+  if (!missing.length) return;
+  const items = missing.map((item) => `<li>${escapeHtml(item)}</li>`).join('');
+  await odooCall('crm.lead', 'message_post', [[leadId]], {
+    subject: 'Informazioni necessarie per preparare il preventivo Fancy Truck',
+    body: `<p>Buongiorno${senderName ? ` ${escapeHtml(senderName)}` : ''},</p><p>grazie per le informazioni. Per completare il preventivo ci servono ancora:</p><ul>${items}</ul><p>Può rispondere direttamente a questa e-mail; aggiorneremo la stessa richiesta senza creare duplicati.</p><p>Grazie,<br>Fancy Truck</p>`,
+    partner_ids: [partner.id], message_type: 'comment', subtype_xmlid: 'mail.mt_comment',
+  });
+}
+
+async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
+  const existing = await odooCall('sale.order', 'search_read', [[['opportunity_id', '=', lead.id]]], {
+    fields: ['name', 'state', 'opportunity_id', 'is_rental_order'], limit: 1,
+  });
+  if (existing.length) return { order: existing[0], duplicate: true };
+
+  const dates = italianDateTimeValues(combinedText);
+  const isRental = kind === 'rental';
+  const vehicle = vehicleSearchTerm(combinedText);
+  let product = null;
+  if (vehicle) {
+    const products = await odooCall('product.product', 'search_read', [[['name', 'ilike', vehicle]]], {
+      fields: ['name', 'list_price', 'sale_ok', 'rent_ok'], limit: 20,
+    });
+    const eligible = products.filter((item) => item.sale_ok && (!isRental || item.rent_ok));
+    if (eligible.length === 1) product = eligible[0];
+  }
+
+  const line = product
+    ? [0, 0, { product_id: product.id, name: product.name, product_uom_qty: 1, price_unit: product.list_price }]
+    : [0, 0, { display_type: 'line_note', name: `Richiesta cliente da completare commercialmente: ${String(combinedText).slice(0, 3000)}` }];
+  const values = {
+    partner_id: partner.id, opportunity_id: lead.id, client_order_ref: `AUTO:${key}`,
+    origin: lead.name, is_rental_order: isRental, order_line: [line],
+  };
+  if (isRental && dates) {
+    values.rental_start_date = dates.start;
+    values.rental_return_date = dates.end;
+  }
+  const ids = await odooCall('sale.order', 'create', [[values]]);
+  const orderId = Array.isArray(ids) ? ids[0] : ids;
+  const order = await odooCall('sale.order', 'search_read', [[['id', '=', orderId]]], {
+    fields: ['name', 'state', 'opportunity_id', 'is_rental_order', 'amount_total'], limit: 1,
+  });
+  await odooCall('crm.lead', 'message_post', [[lead.id]], {
+    body: `Bozza ${isRental ? 'Noleggi' : 'Vendite'} ${order[0]?.name || orderId} generata dalla presente opportunità CRM. ${product ? `Prodotto riconosciuto: ${product.name}.` : 'Prodotto/prezzo da verificare nel controllo finale.'}`,
+    message_type: 'comment', subtype_xmlid: 'mail.mt_note',
+  });
+  return { order: order[0] || { id: orderId }, duplicate: false };
+}
+
+async function findReplyLead(senderEmail, subject) {
+  const leads = await odooCall('crm.lead', 'search_read', [[
+    ['type', '=', 'opportunity'], ['active', '=', true], ['email_from', '=ilike', senderEmail],
+  ]], { fields: ['name', 'description', 'partner_id', 'stage_id', 'create_date'], order: 'create_date desc', limit: 20 });
+  const normalized = normalizedSubject(subject);
+  const matched = leads.filter((lead) => {
+    const leadSubject = normalizedSubject(lead.name);
+    return normalized && leadSubject && (normalized.includes(leadSubject) || leadSubject.includes(normalized));
+  });
+  if (matched.length === 1) return matched[0];
+  return leads.length === 1 ? leads[0] : null;
+}
+
+async function processQuoteReply(parsed, uid, lead) {
+  const sender = parsed.from?.value?.[0];
+  const key = emailMarker(parsed, uid);
+  const marker = `[AUTO:${key}]`;
+  if (String(lead.description || '').includes(marker)) return { skipped: true, duplicate: true, lead_id: lead.id };
+
+  const partnerId = Array.isArray(lead.partner_id) ? lead.partner_id[0] : lead.partner_id;
+  const partners = await odooCall('res.partner', 'search_read', [[['id', '=', partnerId]]], {
+    fields: ['name', 'email', 'phone', 'mobile', 'vat', 'l10n_it_codice_fiscale', 'l10n_it_pa_index', 'l10n_it_pec_email'], limit: 1,
+  });
+  if (!partners.length) throw new Error(`Contatto Odoo non trovato per opportunità ${lead.id}`);
+  let partner = await updatePartnerFromText(partners[0], parsed.text);
+  const replyText = String(parsed.text || '').trim().slice(0, 12000);
+  const combinedText = `${lead.description || ''}\n\nRisposta cliente:\n${replyText}\n\n${marker}`;
+  await odooCall('crm.lead', 'write', [[lead.id], { description: combinedText }]);
+  await odooCall('crm.lead', 'message_post', [[lead.id]], {
+    body: `<p><strong>Risposta cliente acquisita automaticamente</strong></p><p>${escapeHtml(replyText).replace(/\n/g, '<br>')}</p>`,
+    message_type: 'comment', subtype_xmlid: 'mail.mt_note',
+  });
+
+  const kind = quoteRequestKind(lead.name, combinedText) || 'unknown';
+  const missing = [...missingRequestDetails(kind, lead.name, combinedText), ...missingFiscalDetails(partner)];
+  if (missing.length) {
+    await askCustomerForMissingDetails(lead.id, partner, sender?.name, missing);
+    return { lead_id: lead.id, reply: true, missing };
+  }
+  const draft = await createDraftFromCrmLead(lead, partner, kind, combinedText, key);
+  return { lead_id: lead.id, reply: true, order_id: draft.order?.id, ready_for_review: true };
+}
+
 async function processQuoteRequest(parsed, uid) {
   const sender = parsed.from?.value?.[0];
   const senderEmail = String(sender?.address || '').trim().toLowerCase();
   if (!senderEmail || senderEmail.endsWith('@fancytruck.it') || /no-?reply|mailer-daemon/.test(senderEmail)) {
     return { skipped: true, reason: 'mittente interno o automatico' };
   }
+  const replyLead = await findReplyLead(senderEmail, parsed.subject);
+  if (/^\s*(re|r|fw|fwd)\s*:/i.test(String(parsed.subject || '')) && replyLead) {
+    return processQuoteReply(parsed, uid, replyLead);
+  }
+
   const kind = quoteRequestKind(parsed.subject, parsed.text);
   if (!kind) return { skipped: true, reason: 'non commerciale' };
 
@@ -166,7 +322,9 @@ async function processQuoteRequest(parsed, uid) {
   });
   if (existingLead.length) return { skipped: true, duplicate: true, lead_id: existingLead[0].id };
 
-  const { partner, created } = await findOrCreatePartnerFromEmail(parsed);
+  const found = await findOrCreatePartnerFromEmail(parsed);
+  const created = found.created;
+  const partner = await updatePartnerFromText(found.partner, parsed.text);
   const cleanBody = String(parsed.text || '').trim().slice(0, 12000);
   const leadIds = await odooCall('crm.lead', 'create', [[{
     name: String(parsed.subject || `Richiesta da ${sender?.name || senderEmail}`).slice(0, 240),
@@ -175,11 +333,7 @@ async function processQuoteRequest(parsed, uid) {
   }]]);
   const leadId = Array.isArray(leadIds) ? leadIds[0] : leadIds;
 
-  const missingFiscal = [];
-  if (!partner.vat && !partner.l10n_it_codice_fiscale) missingFiscal.push('partita IVA o codice fiscale');
-  if (!partner.l10n_it_pa_index) missingFiscal.push('codice SDI');
-  if (!partner.l10n_it_pec_email) missingFiscal.push('PEC');
-  if (!partner.phone && !partner.mobile) missingFiscal.push('telefono di contatto');
+  const missingFiscal = missingFiscalDetails(partner);
   const missingOperational = missingRequestDetails(kind, parsed.subject, parsed.text);
   const operationalNote = kind === 'rental'
     ? 'Richiesta classificata come possibile noleggio: prima della bozza Noleggi verificare veicolo, date, orari, luogo, personalizzazione e logistica.'
@@ -193,17 +347,13 @@ async function processQuoteRequest(parsed, uid) {
 
   const missingForCustomer = [...missingOperational, ...missingFiscal];
   if (missingForCustomer.length) {
-    const items = missingForCustomer.map((item) => `<li>${item}</li>`).join('');
-    await odooCall('crm.lead', 'message_post', [[leadId]], {
-      subject: 'Informazioni necessarie per preparare il preventivo Fancy Truck',
-      body: `<p>Buongiorno${sender?.name ? ` ${escapeHtml(sender.name)}` : ''},</p><p>grazie per aver contattato Fancy Truck. Per preparare un preventivo completo abbiamo bisogno delle seguenti informazioni:</p><ul>${items}</ul><p>Può rispondere direttamente a questa e-mail; aggiorneremo la stessa richiesta senza creare duplicati.</p><p>Grazie,<br>Fancy Truck</p>`,
-      partner_ids: [partner.id], message_type: 'comment', subtype_xmlid: 'mail.mt_comment',
-    });
+    await askCustomerForMissingDetails(leadId, partner, sender?.name, missingForCustomer);
+    return { lead_id: leadId, partner_id: partner.id, partner_created: created, order_id: null, kind, missing: missingForCustomer };
   }
 
-  // Il flusso nasce sempre nel CRM. La bozza Vendite/Noleggi sarà generata
-  // dall'opportunità solo dopo l'integrazione e la verifica dei dati necessari.
-  return { lead_id: leadId, partner_id: partner.id, partner_created: created, order_id: null, kind };
+  const lead = { id: leadId, name: String(parsed.subject || `Richiesta da ${sender?.name || senderEmail}`), description: cleanBody };
+  const draft = await createDraftFromCrmLead(lead, partner, kind, cleanBody, key);
+  return { lead_id: leadId, partner_id: partner.id, partner_created: created, order_id: draft.order?.id, kind, ready_for_review: true };
 }
 
 async function pollHelloQuoteRequests() {
