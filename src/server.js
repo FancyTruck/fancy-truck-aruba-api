@@ -233,6 +233,73 @@ async function askCustomerForMissingDetails(leadId, partner, senderName, missing
   });
 }
 
+async function quotationTemplate(kind) {
+  const names = kind === 'rental'
+    ? ['Noleggio Fancy Truck', 'Noleggio']
+    : ['Brand Activation', 'Roadtour', 'Vendite Fancy Truck'];
+  try {
+    for (const name of names) {
+      const templates = await odooCall('sale.order.template', 'search_read', [[['name', 'ilike', name]]], {
+        fields: ['name', 'note', 'payment_term_id'], limit: 5,
+      });
+      if (templates.length === 1) return templates[0];
+    }
+  } catch (error) {
+    console.error(`MODELLO PREVENTIVO: controllo non completato - ${error instanceof Error ? error.message : 'errore sconosciuto'}`);
+  }
+  return null;
+}
+
+async function rentalAvailability(productId, dates) {
+  if (!productId || !dates) return { checked: false, conflicts: [] };
+  try {
+    const conflicts = await odooCall('sale.order', 'search_read', [[
+      ['state', '!=', 'cancel'], ['is_rental_order', '=', true],
+      ['rental_start_date', '<', dates.end], ['rental_return_date', '>', dates.start],
+      ['order_line.product_id', '=', productId],
+    ]], {
+      fields: ['name', 'state', 'partner_id', 'rental_start_date', 'rental_return_date'],
+      order: 'rental_start_date asc', limit: 50,
+    });
+    return { checked: true, conflicts };
+  } catch (error) {
+    console.error(`DISPONIBILITÀ NOLEGGIO: controllo non completato - ${error instanceof Error ? error.message : 'errore sconosciuto'}`);
+    return { checked: false, conflicts: [] };
+  }
+}
+
+async function createReviewActivity(lead, order, reviewItems) {
+  try {
+    const login = String(process.env.ODOO_LOGIN || '').trim();
+    let users = login ? await odooCall('res.users', 'search_read', [[['login', '=ilike', login]]], {
+      fields: ['name', 'login'], limit: 1,
+    }) : [];
+    if (!users.length) users = await odooCall('res.users', 'search_read', [[['name', 'ilike', 'Pietro']]], {
+      fields: ['name', 'login'], limit: 5,
+    });
+    const models = await odooCall('ir.model', 'search_read', [[['model', '=', 'crm.lead']]], { fields: ['model'], limit: 1 });
+    const types = await odooCall('mail.activity.type', 'search_read', [[]], { fields: ['name'], order: 'sequence asc, id asc', limit: 1 });
+    if (!users.length || !models.length || !types.length) throw new Error('utente, modello o tipo attività non disponibile');
+    const summary = `Controllare bozza ${order.name || order.id}`;
+    const existing = await odooCall('mail.activity', 'search_count', [[
+      ['res_model', '=', 'crm.lead'], ['res_id', '=', lead.id], ['summary', '=', summary],
+    ]]);
+    if (existing) return;
+    const baseUrl = odooConfig().url;
+    await odooCall('mail.activity', 'create', [[{
+      activity_type_id: types[0].id, res_model_id: models[0].id, res_id: lead.id,
+      user_id: users[0].id, summary,
+      note: `<p>Bozza pronta per il controllo finale: <a href="${baseUrl}/odoo/crm/${lead.id}">${escapeHtml(order.name || String(order.id))}</a></p><ul>${reviewItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`,
+      date_deadline: new Date().toISOString().slice(0, 10),
+    }]]);
+  } catch (error) {
+    await odooCall('crm.lead', 'message_post', [[lead.id]], {
+      body: `Avviso automatico non creato come attività: ${escapeHtml(error instanceof Error ? error.message : 'errore sconosciuto')}. La bozza resta segnalata nel chatter.`,
+      message_type: 'comment', subtype_xmlid: 'mail.mt_note',
+    });
+  }
+}
+
 async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
   const existing = await odooCall('sale.order', 'search_read', [[['opportunity_id', '=', lead.id]]], {
     fields: ['name', 'state', 'opportunity_id', 'is_rental_order'], limit: 1,
@@ -242,6 +309,7 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
   const dates = italianDateTimeValues(combinedText);
   const isRental = kind === 'rental';
   const vehicle = vehicleSearchTerm(combinedText);
+  const template = await quotationTemplate(kind);
   let product = null;
   if (vehicle) {
     const products = await odooCall('product.product', 'search_read', [[['name', 'ilike', vehicle]]], {
@@ -251,6 +319,8 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
     if (eligible.length === 1) product = eligible[0];
   }
 
+  const availability = isRental ? await rentalAvailability(product?.id, dates) : { checked: false, conflicts: [] };
+
   const line = product
     ? [0, 0, { product_id: product.id, name: product.name, product_uom_qty: 1, price_unit: product.list_price }]
     : [0, 0, { display_type: 'line_note', name: `Richiesta cliente da completare commercialmente: ${String(combinedText).slice(0, 3000)}` }];
@@ -258,6 +328,11 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
     partner_id: partner.id, opportunity_id: lead.id, client_order_ref: `AUTO:${key}`,
     origin: lead.name, is_rental_order: isRental, order_line: [line],
   };
+  if (template) {
+    values.sale_order_template_id = template.id;
+    if (template.note) values.note = template.note;
+    if (Array.isArray(template.payment_term_id)) values.payment_term_id = template.payment_term_id[0];
+  }
   if (isRental && dates) {
     values.rental_start_date = dates.start;
     values.rental_return_date = dates.end;
@@ -267,10 +342,23 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
   const order = await odooCall('sale.order', 'search_read', [[['id', '=', orderId]]], {
     fields: ['name', 'state', 'opportunity_id', 'is_rental_order', 'amount_total'], limit: 1,
   });
+  const reviewItems = [];
+  reviewItems.push(template ? `Modello applicato: ${template.name}` : 'Modello di preventivo da verificare');
+  reviewItems.push(product ? `Prodotto e listino riconosciuti: ${product.name} — euro ${Number(product.list_price || 0).toFixed(2)}` : 'Prodotto e prezzo da selezionare');
+  if (isRental) {
+    reviewItems.push(dates ? `Periodo: ${dates.start} — ${dates.end}` : 'Periodo da verificare');
+    if (!availability.checked) reviewItems.push('Disponibilità non verificabile senza prodotto e periodo certi');
+    else if (availability.conflicts.length) reviewItems.push(`ATTENZIONE: ${availability.conflicts.length} possibile sovrapposizione (${availability.conflicts.map((item) => item.name).join(', ')})`);
+    else reviewItems.push('Disponibilità: nessuna sovrapposizione rilevata nei noleggi Odoo');
+    reviewItems.push('Cauzione, tariffa per la durata e condizioni di pagamento da confermare nel controllo finale');
+  } else {
+    reviewItems.push('Programma, servizi, logistica, personalizzazione e condizioni economiche da confermare');
+  }
   await odooCall('crm.lead', 'message_post', [[lead.id]], {
-    body: `Bozza ${isRental ? 'Noleggi' : 'Vendite'} ${order[0]?.name || orderId} generata dalla presente opportunità CRM. ${product ? `Prodotto riconosciuto: ${product.name}.` : 'Prodotto/prezzo da verificare nel controllo finale.'}`,
+    body: `<p>Bozza ${isRental ? 'Noleggi' : 'Vendite'} <strong>${escapeHtml(order[0]?.name || orderId)}</strong> generata dalla presente opportunità CRM.</p><ul>${reviewItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul><p>La bozza non è stata inviata al cliente.</p>`,
     message_type: 'comment', subtype_xmlid: 'mail.mt_note',
   });
+  await createReviewActivity(lead, order[0] || { id: orderId }, reviewItems);
   return { order: order[0] || { id: orderId }, duplicate: false };
 }
 
