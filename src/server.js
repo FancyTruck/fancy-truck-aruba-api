@@ -379,7 +379,7 @@ async function findReplyLead(senderEmail, subject) {
     return normalized && leadSubject && (normalized.includes(leadSubject) || leadSubject.includes(normalized));
   });
   if (matched.length === 1) return matched[0];
-  return leads.length === 1 ? leads[0] : null;
+  return leads.length ? leads[0] : null;
 }
 
 async function processQuoteReply(parsed, uid, lead) {
