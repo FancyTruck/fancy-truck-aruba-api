@@ -224,7 +224,7 @@ async function updatePartnerFromText(partner, text) {
   if (!partner.phone && !partner.mobile && extracted.phone) values.phone = extracted.phone;
   const companyName = explicitCompanyName(text);
   const issues = [...extracted.issues];
-  const shouldEnrich = process.env.ODOO_PARTNER_AUTOCOMPLETE === 'true'
+  const shouldEnrich = process.env.ODOO_PARTNER_AUTOCOMPLETE !== 'false'
     && (extracted.vat || companyName)
     && (!partner.street || !partner.zip || !partner.city || !partner.vat);
   if (shouldEnrich) {
@@ -663,7 +663,7 @@ app.get('/health', (_req, res) => {
     hello: Boolean(process.env.HELLO_EMAIL && process.env.HELLO_PASSWORD),
     pietro: Boolean(process.env.PIETRO_EMAIL && process.env.PIETRO_PASSWORD),
     odoo: Boolean(process.env.ODOO_URL && process.env.ODOO_DB && process.env.ODOO_API_KEY),
-    odoo_partner_autocomplete: process.env.ODOO_PARTNER_AUTOCOMPLETE === 'true',
+    odoo_partner_autocomplete: process.env.ODOO_PARTNER_AUTOCOMPLETE !== 'false',
     gmail_double_check: Boolean(process.env.GMAIL_CLIENT_ID && process.env.GMAIL_REFRESH_TOKEN),
     sistemi_cloud: Boolean(process.env.SISTEMI_API_URL && process.env.SISTEMI_API_TOKEN),
     bank: Boolean(process.env.BANK_API_URL && process.env.BANK_API_TOKEN),
