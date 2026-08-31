@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node src/server.js",
-    "check": "node --check src/server.js"
+    "check": "node --check src/server.js && node --check src/workflow.js && node --check src/store.js && node --check src/policy.js",
+    "test": "node --test"
   },
   "dependencies": {
     "express": "^5.1.0",
