@@ -3,12 +3,17 @@ import express from 'express';
 import { ImapFlow } from 'imapflow';
 import { simpleParser } from 'mailparser';
 import nodemailer from 'nodemailer';
+import { JsonStateStore } from './store.js';
+import { ApprovalService, withinOperatingWindow } from './policy.js';
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
 
 const port = Number(process.env.PORT || 3000);
 const apiToken = process.env.API_TOKEN || '';
+const startedAt = Date.now();
+const store = new JsonStateStore();
+const approvals = new ApprovalService(store);
 
 function accountConfig(accountName) {
   const key = String(accountName || '').toLowerCase();
@@ -226,11 +231,16 @@ function missingFiscalDetails(partner) {
 async function askCustomerForMissingDetails(leadId, partner, senderName, missing) {
   if (!missing.length) return;
   const items = missing.map((item) => `<li>${escapeHtml(item)}</li>`).join('');
+  const body = `<p>Buongiorno${senderName ? ` ${escapeHtml(senderName)}` : ''},</p><p>grazie per le informazioni. Per completare il preventivo ci servono ancora:</p><ul>${items}</ul><p>Può rispondere direttamente a questa e-mail; aggiorneremo la stessa richiesta senza creare duplicati.</p><p>Grazie,<br>Fancy Truck</p>`;
   await odooCall('crm.lead', 'message_post', [[leadId]], {
-    subject: 'Informazioni necessarie per preparare il preventivo Fancy Truck',
-    body: `<p>Buongiorno${senderName ? ` ${escapeHtml(senderName)}` : ''},</p><p>grazie per le informazioni. Per completare il preventivo ci servono ancora:</p><ul>${items}</ul><p>Può rispondere direttamente a questa e-mail; aggiorneremo la stessa richiesta senza creare duplicati.</p><p>Grazie,<br>Fancy Truck</p>`,
-    partner_ids: [partner.id], message_type: 'comment', subtype_xmlid: 'mail.mt_comment',
+    body: `<p><strong>BOZZA NON INVIATA — approvazione di Pietro necessaria</strong></p>${body}`,
+    message_type: 'comment', subtype_xmlid: 'mail.mt_note',
   });
+  return approvals.queue({
+    type: 'SEND_EMAIL', target: partner.email, case_id: `odoo-lead-${leadId}`,
+    idempotency_key: `missing-details:${leadId}:${missing.slice().sort().join(',')}`,
+    payload: { account: 'hello', subject: 'Informazioni necessarie per preparare il preventivo Fancy Truck', html: body },
+  }).action;
 }
 
 async function quotationTemplate(kind) {
@@ -300,6 +310,35 @@ async function createReviewActivity(lead, order, reviewItems) {
   }
 }
 
+async function createEconomicProject(lead, order, partner) {
+  const projectName = `${order.name || order.id} — ${lead.name}`.slice(0, 240);
+  const existing = await odooCall('project.project', 'search_read', [[['name', '=', projectName]]], {
+    fields: ['name'], limit: 1,
+  });
+  let projectId = existing[0]?.id;
+  if (!projectId) {
+    const fields = await odooCall('ir.model.fields', 'search_read', [[
+      ['model', '=', 'project.project'], ['name', 'in', ['partner_id', 'sale_order_id']],
+    ]], { fields: ['name'], limit: 10 });
+    const available = new Set(fields.map((field) => field.name));
+    const values = { name: projectName };
+    if (available.has('partner_id')) values.partner_id = partner.id;
+    if (available.has('sale_order_id')) values.sale_order_id = order.id;
+    const ids = await odooCall('project.project', 'create', [[values]]);
+    projectId = Array.isArray(ids) ? ids[0] : ids;
+  }
+  const tasks = await odooCall('project.task', 'search_read', [[
+    ['project_id', '=', projectId], ['name', '=', '00 – RIEPILOGO ECONOMICO'],
+  ]], { fields: ['name'], limit: 1 });
+  if (!tasks.length) {
+    await odooCall('project.task', 'create', [[{
+      project_id: projectId, name: '00 – RIEPILOGO ECONOMICO', partner_id: partner.id,
+      description: `<p>Riepilogo economico collegato alla bozza ${escapeHtml(order.name || String(order.id))}. Sostituire le stime con i costi effettivi senza sommarli due volte.</p>`,
+    }]]);
+  }
+  return { id: projectId, name: projectName };
+}
+
 async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
   const existing = await odooCall('sale.order', 'search_read', [[['opportunity_id', '=', lead.id]]], {
     fields: ['name', 'state', 'opportunity_id', 'is_rental_order'], limit: 1,
@@ -359,7 +398,12 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
     message_type: 'comment', subtype_xmlid: 'mail.mt_note',
   });
   await createReviewActivity(lead, order[0] || { id: orderId }, reviewItems);
-  return { order: order[0] || { id: orderId }, duplicate: false };
+  const economicProject = await createEconomicProject(lead, order[0] || { id: orderId, name: String(orderId) }, partner);
+  await odooCall('crm.lead', 'message_post', [[lead.id]], {
+    body: `<p>Creato progetto economico <strong>${escapeHtml(economicProject.name)}</strong> con un solo lavoro <strong>00 – RIEPILOGO ECONOMICO</strong>.</p>`,
+    message_type: 'comment', subtype_xmlid: 'mail.mt_note',
+  });
+  return { order: order[0] || { id: orderId }, project: economicProject, duplicate: false };
 }
 
 async function findReplyLead(senderEmail, subject) {
@@ -467,8 +511,8 @@ async function processQuoteRequest(parsed, uid) {
   return { lead_id: leadId, partner_id: partner.id, partner_created: created, order_id: draft.order?.id, kind, ready_for_review: true };
 }
 
-async function pollHelloQuoteRequests() {
-  const results = await withImap('hello', async (client) => {
+async function pollQuoteRequests(accountName) {
+  const results = await withImap(accountName, async (client) => {
     const lock = await client.getMailboxLock('INBOX');
     try {
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -484,8 +528,37 @@ async function pollHelloQuoteRequests() {
     } finally { lock.release(); }
   });
   const created = results.filter((row) => row.lead_id && !row.duplicate);
-  console.log(`RICHIESTE HELLO: controllo completato, ${results.length} messaggi recenti, ${created.length} nuove lead elaborate`);
+  console.log(`RICHIESTE ${accountName.toUpperCase()}: controllo completato, ${results.length} messaggi recenti, ${created.length} nuove lead elaborate`);
   return created;
+}
+
+async function runOperationalCycle({ force = false } = {}) {
+  if (!force && !withinOperatingWindow()) return { skipped: true, reason: 'fuori fascia 08:00-19:59 Europe/Rome' };
+  const cycle = store.beginCycle(['aruba:hello', 'aruba:pietro', 'odoo:crm']);
+  const summary = { read: 0, created: 0, updated: 0, duplicates: 0, suspended: 0, failed: 0, errors: [] };
+  for (const source of ['hello', 'pietro']) {
+    try {
+      const rows = await pollQuoteRequests(source);
+      summary.read += rows.length;
+      summary.created += rows.filter((row) => row.lead_id).length;
+      store.integration(`aruba:${source}`, { status: 'OK', last_success_at: new Date().toISOString(), error: null });
+    } catch (error) {
+      summary.failed += 1;
+      summary.errors.push(`${source}: ${error instanceof Error ? error.message : 'errore sconosciuto'}`);
+      store.integration(`aruba:${source}`, { status: 'CONTROLLO NON COMPLETATO', error: summary.errors.at(-1) });
+    }
+  }
+  try {
+    const replies = await pollOdooLeadReplies();
+    summary.read += replies.length;
+    summary.updated += replies.filter((row) => row.reply).length;
+    store.integration('odoo:crm', { status: 'OK', last_success_at: new Date().toISOString(), error: null });
+  } catch (error) {
+    summary.failed += 1;
+    summary.errors.push(`odoo: ${error instanceof Error ? error.message : 'errore sconosciuto'}`);
+    store.integration('odoo:crm', { status: 'CONTROLLO NON COMPLETATO', error: summary.errors.at(-1) });
+  }
+  return store.finishCycle(cycle.id, summary);
 }
 
 async function pollOdooLeadReplies() {
@@ -521,13 +594,47 @@ async function pollOdooLeadReplies() {
 }
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'fancy-truck-aruba-api', configured: {
+  const snapshot = store.snapshot();
+  const lastCycle = snapshot.cycles.at(-1) || null;
+  const operatingNow = withinOperatingWindow();
+  const stale = operatingNow && (lastCycle?.ended_at
+    ? Date.now() - new Date(lastCycle.ended_at).getTime() > 2 * 60 * 60 * 1000
+    : Date.now() - startedAt > 10 * 60 * 1000);
+  res.status(stale ? 503 : 200).json({ ok: !stale, service: 'fancy-truck-aruba-api', procedure_version: '2026-08-30',
+    operating_window: '08:00-19:59 Europe/Rome', state_file: store.filePath, last_cycle: lastCycle,
+    pending_approvals: Object.values(snapshot.actions).filter((item) => !['EXECUTED', 'CANCELLED'].includes(item.status)).length,
+    configured: {
     hello: Boolean(process.env.HELLO_EMAIL && process.env.HELLO_PASSWORD),
     pietro: Boolean(process.env.PIETRO_EMAIL && process.env.PIETRO_PASSWORD),
+    odoo: Boolean(process.env.ODOO_URL && process.env.ODOO_DB && process.env.ODOO_API_KEY),
+    gmail_double_check: Boolean(process.env.GMAIL_CLIENT_ID && process.env.GMAIL_REFRESH_TOKEN),
+    sistemi_cloud: Boolean(process.env.SISTEMI_API_URL && process.env.SISTEMI_API_TOKEN),
+    bank: Boolean(process.env.BANK_API_URL && process.env.BANK_API_TOKEN),
   } });
 });
 
 app.use('/v1', requireToken);
+
+app.get('/v1/automation/status', (_req, res) => {
+  const snapshot = store.snapshot();
+  res.json({ ok: true, integrations: snapshot.integrations, last_cycle: snapshot.cycles.at(-1) || null,
+    actions: Object.values(snapshot.actions).map(({ confirmation_digest: _hidden, ...item }) => item) });
+});
+
+app.post('/v1/automation/run', async (req, res) => {
+  try { res.json({ ok: true, cycle: await runOperationalCycle({ force: req.body?.force === true }) }); }
+  catch (error) { res.status(500).json({ ok: false, error: error instanceof Error ? error.message : 'Errore ciclo' }); }
+});
+
+app.post('/v1/approvals/:id/command', (req, res) => {
+  try { res.json({ ok: true, ...approvals.approveCommand(req.params.id, req.body?.actor, req.body?.command) }); }
+  catch (error) { res.status(409).json({ ok: false, error: error instanceof Error ? error.message : 'Errore approvazione' }); }
+});
+
+app.post('/v1/approvals/:id/confirm', (req, res) => {
+  try { res.json({ ok: true, action: approvals.confirm(req.params.id, req.body?.actor, req.body?.confirmation_token) }); }
+  catch (error) { res.status(409).json({ ok: false, error: error instanceof Error ? error.message : 'Errore conferma' }); }
+});
 
 app.get('/v1/accounts', (_req, res) => {
   res.json({ ok: true, accounts: [
@@ -770,20 +877,42 @@ app.get('/v1/:account/messages/:uid', async (req, res) => {
 
 app.post('/v1/:account/send', async (req, res) => {
   try {
-    const account = accountConfig(req.params.account);
-    const transporter = nodemailer.createTransport({
-      host: process.env.ARUBA_SMTP_HOST || 'smtps.aruba.it', port: Number(process.env.ARUBA_SMTP_PORT || 465), secure: true,
-      auth: { user: account.email, pass: account.password },
-    });
     const to = String(req.body?.to || '').trim();
     const subject = String(req.body?.subject || '').trim();
     const text = String(req.body?.text || '').trim();
     if (!to || !subject || !text) return res.status(400).json({ ok: false, error: 'to, subject e text sono obbligatori' });
-    const info = await transporter.sendMail({ from: `Fancy Truck <${account.email}>`, to, cc: req.body?.cc || undefined,
-      replyTo: account.email, subject, text });
-    res.json({ ok: true, messageId: info.messageId, accepted: info.accepted, rejected: info.rejected });
+    const type = String(req.body?.action_type || 'SEND_EMAIL');
+    const queued = approvals.queue({ type, target: to,
+      idempotency_key: String(req.body?.idempotency_key || `email:${req.params.account}:${to}:${subject}`).trim(),
+      payload: { account: req.params.account, to, cc: req.body?.cc || null, subject, text },
+    });
+    res.status(202).json({ ok: true, sent: false, duplicate: queued.duplicate, action: queued.action,
+      message: 'Azione accodata: servono comando specifico di Pietro e conferma finale.' });
   } catch (error) {
-    res.status(502).json({ ok: false, error: error instanceof Error ? error.message : 'Errore SMTP' });
+    res.status(400).json({ ok: false, error: error instanceof Error ? error.message : 'Errore accodamento' });
+  }
+});
+
+app.post('/v1/actions/:id/execute', async (req, res) => {
+  try {
+    const action = approvals.assertExecutable(req.params.id);
+    if (!['SEND_EMAIL', 'SEND_FOLLOW_UP', 'SEND_PAYMENT_REMINDER', 'SEND_QUOTE', 'SEND_CONTRACT', 'SEND_INVOICE'].includes(action.type)) {
+      return res.status(409).json({ ok: false, error: 'Questa azione richiede un connettore specifico e non può essere eseguita via SMTP generico' });
+    }
+    const payload = action.payload || {};
+    if (!payload.to && !action.target) throw new Error('Destinatario mancante');
+    if (!payload.subject || (!payload.text && !payload.html)) throw new Error('Contenuto non completo: esecuzione bloccata');
+    const account = accountConfig(payload.account || 'hello');
+    const transporter = nodemailer.createTransport({
+      host: process.env.ARUBA_SMTP_HOST || 'smtps.aruba.it', port: Number(process.env.ARUBA_SMTP_PORT || 465), secure: true,
+      auth: { user: account.email, pass: account.password },
+    });
+    const info = await transporter.sendMail({ from: `Fancy Truck <${account.email}>`, to: payload.to || action.target,
+      cc: payload.cc || undefined, replyTo: account.email, subject: payload.subject, text: payload.text || undefined,
+      html: payload.html || undefined });
+    res.json({ ok: true, action: approvals.executed(action.id, { message_id: info.messageId, accepted: info.accepted, rejected: info.rejected }) });
+  } catch (error) {
+    res.status(409).json({ ok: false, error: error instanceof Error ? error.message : 'Esecuzione bloccata' });
   }
 });
 
@@ -838,8 +967,6 @@ app.listen(port, () => {
   ]], { fields: ['model', 'name'], limit: 50 })
     .then((fields) => console.log(`ODOO FLUSSO PREVENTIVI: OK (${fields.map((field) => `${field.model}.${field.name}`).join(', ')})`))
     .catch((error) => console.error(`ODOO FLUSSO PREVENTIVI: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`));
-  setTimeout(() => pollHelloQuoteRequests().catch((error) => console.error(`RICHIESTE HELLO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 15000);
-  setInterval(() => pollHelloQuoteRequests().catch((error) => console.error(`RICHIESTE HELLO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 5 * 60 * 1000);
-  setTimeout(() => pollOdooLeadReplies().catch((error) => console.error(`RISPOSTE ODOO CRM: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 30000);
-  setInterval(() => pollOdooLeadReplies().catch((error) => console.error(`RISPOSTE ODOO CRM: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 5 * 60 * 1000);
+  setTimeout(() => runOperationalCycle().catch((error) => console.error(`CICLO OPERATIVO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 15000);
+  setInterval(() => runOperationalCycle().catch((error) => console.error(`CICLO OPERATIVO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 60 * 60 * 1000);
 });
