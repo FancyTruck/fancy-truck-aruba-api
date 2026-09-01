@@ -7,6 +7,7 @@ import { JsonStateStore } from './store.js';
 import { ApprovalService, withinOperatingWindow } from './policy.js';
 import { isValidItalianFiscalCode, isValidItalianVat } from './italianFiscal.js';
 import { explicitCompanyName, partnerValuesFromAutocomplete, selectCertainAutocompleteResult } from './partnerEnrichment.js';
+import { contactPhoneValue, hasPartnerPhone, ODOO_PARTNER_FIELDS } from './odooPartnerSchema.js';
 import {
   COMMERCIAL_PROCEDURE, COMMERCIAL_PROCEDURE_VERSION, PIETRO_FINAL_CHECKS,
   emailDomain, normalizeCommercialSubject, normalizeCompanyName,
@@ -212,8 +213,7 @@ async function findOrCreatePartnerFromEmail(parsed) {
   const text = String(parsed.text || '');
   const extracted = extractCustomerData(text);
   const companyName = explicitCompanyName(text);
-  const fields = ['name', 'company_type', 'email', 'phone', 'mobile', 'vat', 'street', 'zip', 'city',
-    'l10n_it_codice_fiscale', 'l10n_it_pa_index', 'l10n_it_pec_email'];
+  const fields = ODOO_PARTNER_FIELDS;
   const byEmail = await odooCall('res.partner', 'search_read', [[['email', '=ilike', email]]], {
     fields, limit: 10,
   });
@@ -256,7 +256,7 @@ async function updatePartnerFromText(partner, text) {
   if (!partner.l10n_it_codice_fiscale && extracted.fiscalCode) values.l10n_it_codice_fiscale = extracted.fiscalCode;
   if (!partner.l10n_it_pa_index && extracted.sdi) values.l10n_it_pa_index = extracted.sdi;
   if (!partner.l10n_it_pec_email && extracted.pec) values.l10n_it_pec_email = extracted.pec;
-  if (!partner.phone && !partner.mobile && extracted.phone) values.phone = extracted.phone;
+  if (!hasPartnerPhone(partner) && extracted.phone) values.phone = extracted.phone;
   const companyName = explicitCompanyName(text);
   const issues = [...extracted.issues];
   const shouldEnrich = process.env.ODOO_PARTNER_AUTOCOMPLETE !== 'false'
@@ -299,7 +299,7 @@ function missingFiscalDetails(partner) {
   }
   if (!partner.l10n_it_pa_index) missing.push('codice SDI');
   if (!partner.l10n_it_pec_email) missing.push('PEC');
-  if (!partner.phone && !partner.mobile) missing.push('telefono di contatto');
+  if (!hasPartnerPhone(partner)) missing.push('telefono di contatto');
   return missing;
 }
 
@@ -529,8 +529,7 @@ async function processQuoteReply(parsed, uid, lead) {
   let partner = null;
   if (partnerId) {
     const partners = await odooCall('res.partner', 'search_read', [[['id', '=', partnerId]]], {
-      fields: ['name', 'company_type', 'email', 'phone', 'mobile', 'vat', 'street', 'zip', 'city',
-        'l10n_it_codice_fiscale', 'l10n_it_pa_index', 'l10n_it_pec_email'], limit: 1,
+      fields: ODOO_PARTNER_FIELDS, limit: 1,
     });
     if (!partners.length) throw new Error(`Contatto Odoo non trovato per opportunità ${lead.id}`);
     partner = await updatePartnerFromText(partners[0], parsed.text);
@@ -832,7 +831,7 @@ app.post('/v1/odoo/contacts', async (req, res) => {
     if (!name) return res.status(400).json({ ok: false, error: 'name obbligatorio' });
     const values = {
       name, company_type: req.body?.company_type === 'person' ? 'person' : 'company',
-      email: req.body?.email || false, phone: req.body?.phone || false, mobile: req.body?.mobile || false,
+      email: req.body?.email || false, phone: contactPhoneValue(req.body),
       vat: req.body?.vat || false, street: req.body?.street || false, zip: req.body?.zip || false,
       city: req.body?.city || false,
       l10n_it_codice_fiscale: req.body?.fiscal_code || false,
