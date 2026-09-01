@@ -35,7 +35,7 @@ const base = {
 const complete = {
   account: 'hello', message_id: '<m2@example.test>', subject: 'Re: Preventivo evento Milano',
   customer: { name: 'Cliente Test', email: 'cliente@example.test', address: 'Via Test 1, Milano', phone: '+3901000000', vat: '01234567890', sdi: 'ABC1234', pec: 'cliente@pec.test' },
-  request: { service: 'rental', asset: 'Fiat 238', location: 'Milano', start_at: '2026-09-10T09:00:00+02:00', end_at: '2026-09-11T18:00:00+02:00', delivery: 'Fancy Truck', recovery: 'Fancy Truck', logistics: 'A/R Genova', deposit: 1000 },
+  request: { service: 'rental', asset: 'Fiat 238', location: 'Milano', start_at: '2026-09-10T09:00:00+02:00', end_at: '2026-09-11T18:00:00+02:00', personalization: 'wrapping parziale', budget: 10000, delivery: 'Fancy Truck', recovery: 'Fancy Truck', logistics: 'A/R Genova', deposit: 1000 },
 };
 
 test('richiesta incompleta crea una lead, accoda la domanda e non invia', async () => {
@@ -43,11 +43,36 @@ test('richiesta incompleta crea una lead, accoda la domanda e non invia', async 
   const first = await workflow.receiveCommercialRequest(base);
   assert.equal(first.lead_created, true);
   assert.ok(first.missing.length > 0);
+  assert.equal(store.case(first.case_id).stage, 'Da integrare');
   assert.equal(store.action(first.action_id).status, 'PENDING_APPROVAL');
   const repeated = await workflow.receiveCommercialRequest(base);
   assert.equal(repeated.duplicate, true);
   assert.equal(Object.keys(store.snapshot().cases).length, 1);
   assert.equal(Object.keys(store.snapshot().actions).length, 1);
+});
+
+test('stesso cliente e progetto senza prefisso Re aggiorna la pratica esistente', async () => {
+  const { workflow, store } = setup();
+  const first = await workflow.receiveCommercialRequest(base);
+  const followOn = await workflow.receiveCommercialRequest({
+    ...complete, message_id: '<m3@example.test>', subject: 'Preventivo evento Milano',
+  });
+  assert.equal(followOn.case_id, first.case_id);
+  assert.equal(Object.keys(store.snapshot().cases).length, 1);
+  assert.equal(store.action(first.action_id).status, 'CANCELLED');
+  assert.equal(store.action(first.action_id).cancel_reason, 'REQUEST_COMPLETED');
+});
+
+test('una nuova lista di dati mancanti sostituisce la precedente', async () => {
+  const { workflow, store } = setup();
+  const first = await workflow.receiveCommercialRequest(base);
+  const second = await workflow.receiveCommercialRequest({
+    ...base, message_id: '<m4@example.test>',
+    request: { service: 'rental', asset: 'Ape' },
+  });
+  assert.equal(second.case_id, first.case_id);
+  assert.equal(store.action(first.action_id).status, 'CANCELLED');
+  assert.equal(store.action(second.action_id).status, 'PENDING_APPROVAL');
 });
 
 test('la risposta aggiorna la stessa lead e crea una sola bozza e progetto economico', async () => {

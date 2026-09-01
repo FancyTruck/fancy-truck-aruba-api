@@ -7,6 +7,10 @@ import { JsonStateStore } from './store.js';
 import { ApprovalService, withinOperatingWindow } from './policy.js';
 import { isValidItalianFiscalCode, isValidItalianVat } from './italianFiscal.js';
 import { explicitCompanyName, partnerValuesFromAutocomplete, selectCertainAutocompleteResult } from './partnerEnrichment.js';
+import {
+  COMMERCIAL_PROCEDURE, COMMERCIAL_PROCEDURE_VERSION, PIETRO_FINAL_CHECKS,
+  emailDomain, normalizeCommercialSubject, normalizeCompanyName,
+} from './commercialProcedure.js';
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
@@ -108,18 +112,20 @@ function missingRequestDetails(kind, subject, text) {
   const times = value.match(/\b(?:[01]?\d|2[0-3])[:.]\d{2}\b/g) || [];
   const vehicleWords = ['ape', 'airstream', 'fiat 238', 'citroen', 'hy', 'horse trailer', 'schoolbus', 'school bus', 'vw t1', 'framo', 'truck'];
   const hasVehicle = vehicleWords.some((word) => lower.includes(word));
-  const hasLocation = /\b(?:luogo|location|destinazione|presso|indirizzo|città|comune)\b/i.test(value);
+  const hasLocation = /\b(?:luogo|location|destinazione|presso|indirizzo|città|comune|a|in)\s*[:\-]?\s+[A-ZÀ-ÖØ-Þ][\p{L}' -]{2,}/u.test(value)
+    || /\b(?:milano|roma|genova|torino|napoli|bologna|firenze|venezia|padova|verona|bari|palermo|cagliari)\b/i.test(value);
+  const hasDuration = /\b\d+(?:[.,]\d+)?\s*(?:ore|giorni?|gg|settimane?|mesi?)\b/i.test(value);
+  const hasPersonalization = /\b(?:personalizz|brandizz|wrap|wrapping|grafica|adesiv|allestiment|senza\s+personalizzazione|non\s+personalizzat)\w*/i.test(value);
+  const hasBudget = /(?:\b(?:budget|massimale|investimento)\b[^\n]{0,40}(?:€|euro|\d)|(?:€|euro)\s*\d|\d[\d., ]*\s*(?:€|euro)|\b(?:budget\s+da\s+definire|budget\s+non\s+definito)\b)/i.test(value);
   const missing = [];
+  if (kind === 'unknown') missing.push('servizio richiesto');
   if (!hasVehicle) missing.push(kind === 'sale' ? 'mezzo o struttura richiesta' : 'veicolo richiesto');
-  if (dates.length < 2) missing.push('data di inizio e data di fine');
-  if (times.length < 2) missing.push('orario di consegna/inizio e orario di ritiro/fine');
+  if (!dates.length) missing.push('data o periodo dell’attività');
+  if (dates.length < 2 && !hasDuration && times.length < 2) missing.push('durata o orario di fine');
   if (!hasLocation) missing.push('luogo completo dell’attività o della consegna');
-  if (kind === 'sale' && !/programma|tappa|attività|attivita|roadtour|road tour/i.test(value)) missing.push('programma operativo o tappe previste');
+  if (!hasPersonalization) missing.push('personalizzazione richiesta, anche se nessuna');
+  if (!hasBudget) missing.push('budget indicativo, anche se ancora da definire');
   return missing;
-}
-
-function normalizedSubject(value) {
-  return String(value || '').replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, '').trim().toLowerCase();
 }
 
 function extractCustomerData(text) {
@@ -203,15 +209,44 @@ async function findOrCreatePartnerFromEmail(parsed) {
   const sender = parsed.from?.value?.[0];
   const email = String(sender?.address || '').trim().toLowerCase();
   if (!email) throw new Error('Mittente senza indirizzo e-mail');
-  const existing = await odooCall('res.partner', 'search_read', [[['email', '=ilike', email]]], {
-    fields: ['name', 'email', 'phone', 'vat', 'l10n_it_codice_fiscale', 'l10n_it_pa_index', 'l10n_it_pec_email'], limit: 5,
+  const text = String(parsed.text || '');
+  const extracted = extractCustomerData(text);
+  const companyName = explicitCompanyName(text);
+  const fields = ['name', 'company_type', 'email', 'phone', 'mobile', 'vat', 'street', 'zip', 'city',
+    'l10n_it_codice_fiscale', 'l10n_it_pa_index', 'l10n_it_pec_email'];
+  const byEmail = await odooCall('res.partner', 'search_read', [[['email', '=ilike', email]]], {
+    fields, limit: 10,
   });
-  if (existing.length) return { partner: existing[0], created: false };
+  if (byEmail.length === 1) return { partner: byEmail[0], created: false, matched_by: 'email' };
+  if (byEmail.length > 1) throw new Error(`Possibile anagrafica duplicata: ${byEmail.length} contatti usano ${email}`);
+
+  if (extracted.vat) {
+    const byVat = await odooCall('res.partner', 'search_read', [[['vat', '=ilike', extracted.vat]]], { fields, limit: 10 });
+    if (byVat.length === 1) return { partner: byVat[0], created: false, matched_by: 'vat' };
+    if (byVat.length > 1) throw new Error(`Possibile anagrafica duplicata: ${byVat.length} record usano la partita IVA ${extracted.vat}`);
+  }
+
+  if (companyName) {
+    const candidates = await odooCall('res.partner', 'search_read', [[['name', 'ilike', companyName]]], { fields, limit: 20 });
+    const normalized = normalizeCompanyName(companyName);
+    const exact = candidates.filter((item) => normalizeCompanyName(item.name) === normalized);
+    const sameDomain = candidates.filter((item) => emailDomain(item.email) && emailDomain(item.email) === emailDomain(email));
+    const matches = exact.length ? exact : sameDomain;
+    if (matches.length === 1) return { partner: matches[0], created: false, matched_by: exact.length ? 'company_name' : 'company_domain' };
+    if (matches.length > 1) throw new Error(`Possibile anagrafica duplicata: ragione sociale ${companyName} non univoca`);
+  }
+
+  if (!companyName && !extracted.vat) {
+    return { partner: null, created: false, identification_missing: true, email };
+  }
+
   const ids = await odooCall('res.partner', 'create', [[{
-    name: String(sender?.name || email).trim(), company_type: 'person', email,
+    name: String(companyName || sender?.name || email).trim(), company_type: 'company', email,
+    vat: extracted.vat || false,
   }]]);
   const id = Array.isArray(ids) ? ids[0] : ids;
-  return { partner: { id, name: sender?.name || email, email, vat: false }, created: true };
+  store.audit('ODOO_PARTNER_CREATED', { partner_id: id, email_domain: emailDomain(email), identified_by: extracted.vat ? 'vat' : 'company_name' });
+  return { partner: { id, name: companyName || sender?.name || email, company_type: 'company', email, vat: extracted.vat || false }, created: true };
 }
 
 async function updatePartnerFromText(partner, text) {
@@ -279,8 +314,23 @@ async function askCustomerForMissingDetails(leadId, partner, senderName, missing
   return approvals.queue({
     type: 'SEND_EMAIL', target: partner.email, case_id: `odoo-lead-${leadId}`,
     idempotency_key: `missing-details:${leadId}:${missing.slice().sort().join(',')}`,
+    supersede_group: `missing-details:odoo-lead-${leadId}`,
     payload: { account: 'hello', subject: 'Informazioni necessarie per preparare il preventivo Fancy Truck', html: body },
   }).action;
+}
+
+async function setLeadProcedureStatus(leadId, status) {
+  const label = status === 'DA_INTEGRARE' ? 'Da integrare' : 'Qualificate';
+  const stages = await odooCall('crm.stage', 'search_read', [[['name', '=ilike', label]]], {
+    fields: ['name'], limit: 5,
+  }).catch(() => []);
+  const exact = stages.filter((stage) => String(stage.name).trim().toLowerCase() === label.toLowerCase());
+  if (exact.length === 1) await odooCall('crm.lead', 'write', [[leadId], { stage_id: exact[0].id }]);
+  await odooCall('crm.lead', 'message_post', [[leadId]], {
+    body: `<p><strong>Stato procedura: ${escapeHtml(status)}</strong></p>`,
+    message_type: 'comment', subtype_xmlid: 'mail.mt_note',
+  });
+  store.audit('ODOO_LEAD_PROCEDURE_STATUS', { lead_id: leadId, status, stage_updated: exact.length === 1 });
 }
 
 async function quotationTemplate(kind) {
@@ -384,6 +434,7 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
     fields: ['name', 'state', 'opportunity_id', 'is_rental_order'], limit: 1,
   });
   if (existing.length) return { order: existing[0], duplicate: true };
+  store.cancelActionGroup(`missing-details:odoo-lead-${lead.id}`, 'REQUEST_COMPLETED');
 
   const dates = italianDateTimeValues(combinedText);
   const isRental = kind === 'rental';
@@ -421,7 +472,7 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
   const order = await odooCall('sale.order', 'search_read', [[['id', '=', orderId]]], {
     fields: ['name', 'state', 'opportunity_id', 'is_rental_order', 'amount_total'], limit: 1,
   });
-  const reviewItems = [];
+  const reviewItems = [...PIETRO_FINAL_CHECKS];
   reviewItems.push(template ? `Modello applicato: ${template.name}` : 'Modello di preventivo da verificare');
   reviewItems.push(product ? `Prodotto e listino riconosciuti: ${product.name} — euro ${Number(product.list_price || 0).toFixed(2)}` : 'Prodotto e prezzo da selezionare');
   if (isRental) {
@@ -443,6 +494,7 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
     body: `<p>Creato progetto economico <strong>${escapeHtml(economicProject.name)}</strong> con un solo lavoro <strong>00 – RIEPILOGO ECONOMICO</strong>.</p>`,
     message_type: 'comment', subtype_xmlid: 'mail.mt_note',
   });
+  store.audit('ODOO_DRAFT_BUNDLE_CREATED', { lead_id: lead.id, order_id: orderId, project_id: economicProject.id });
   return { order: order[0] || { id: orderId }, project: economicProject, duplicate: false };
 }
 
@@ -457,13 +509,14 @@ async function findReplyLead(senderEmail, subject) {
   const leads = await odooCall('crm.lead', 'search_read', [[
     ['type', '=', 'opportunity'], ['active', '=', true], ...senderDomain,
   ]], { fields: ['name', 'description', 'partner_id', 'stage_id', 'create_date'], order: 'create_date desc', limit: 20 });
-  const normalized = normalizedSubject(subject);
+  const normalized = normalizeCommercialSubject(subject);
   const matched = leads.filter((lead) => {
-    const leadSubject = normalizedSubject(lead.name);
+    const leadSubject = normalizeCommercialSubject(lead.name);
     return normalized && leadSubject && (normalized.includes(leadSubject) || leadSubject.includes(normalized));
   });
-  if (matched.length === 1) return matched[0];
-  return leads.length ? leads[0] : null;
+  if (matched.length === 1) return { lead: matched[0], ambiguous: false };
+  if (matched.length > 1) return { lead: null, ambiguous: true, candidate_ids: matched.map((lead) => lead.id) };
+  return { lead: null, ambiguous: false, candidate_ids: [] };
 }
 
 async function processQuoteReply(parsed, uid, lead) {
@@ -473,26 +526,38 @@ async function processQuoteReply(parsed, uid, lead) {
   if (String(lead.description || '').includes(marker)) return { skipped: true, duplicate: true, lead_id: lead.id };
 
   const partnerId = Array.isArray(lead.partner_id) ? lead.partner_id[0] : lead.partner_id;
-  const partners = await odooCall('res.partner', 'search_read', [[['id', '=', partnerId]]], {
-    fields: ['name', 'email', 'phone', 'vat', 'l10n_it_codice_fiscale', 'l10n_it_pa_index', 'l10n_it_pec_email'], limit: 1,
-  });
-  if (!partners.length) throw new Error(`Contatto Odoo non trovato per opportunità ${lead.id}`);
-  let partner = await updatePartnerFromText(partners[0], parsed.text);
+  let partner = null;
+  if (partnerId) {
+    const partners = await odooCall('res.partner', 'search_read', [[['id', '=', partnerId]]], {
+      fields: ['name', 'company_type', 'email', 'phone', 'mobile', 'vat', 'street', 'zip', 'city',
+        'l10n_it_codice_fiscale', 'l10n_it_pa_index', 'l10n_it_pec_email'], limit: 1,
+    });
+    if (!partners.length) throw new Error(`Contatto Odoo non trovato per opportunità ${lead.id}`);
+    partner = await updatePartnerFromText(partners[0], parsed.text);
+  } else {
+    const resolved = await findOrCreatePartnerFromEmail(parsed);
+    if (resolved.partner) partner = await updatePartnerFromText(resolved.partner, parsed.text);
+  }
   const replyText = String(parsed.text || '').trim().slice(0, 12000);
   const combinedText = `${lead.description || ''}\n\nRisposta cliente:\n${replyText}\n\n${marker}`;
-  await odooCall('crm.lead', 'write', [[lead.id], { description: combinedText }]);
+  await odooCall('crm.lead', 'write', [[lead.id], {
+    description: combinedText, ...(partner?.id ? { partner_id: partner.id } : {}),
+  }]);
   await odooCall('crm.lead', 'message_post', [[lead.id]], {
     body: `<p><strong>Risposta cliente acquisita automaticamente</strong></p><p>${escapeHtml(replyText).replace(/\n/g, '<br>')}</p>`,
     message_type: 'comment', subtype_xmlid: 'mail.mt_note',
   });
 
   const kind = quoteRequestKind(lead.name, combinedText) || 'unknown';
-  const missing = [...missingRequestDetails(kind, lead.name, combinedText), ...missingFiscalDetails(partner)];
+  const missing = missingRequestDetails(kind, lead.name, combinedText);
+  if (!partner) missing.unshift('ragione sociale o partita IVA per identificare il cliente');
   if (missing.length) {
-    await askCustomerForMissingDetails(lead.id, partner, sender?.name, missing);
+    await setLeadProcedureStatus(lead.id, 'DA_INTEGRARE');
+    await askCustomerForMissingDetails(lead.id, partner || { email: sender?.address }, sender?.name, [...new Set(missing)]);
     return { lead_id: lead.id, reply: true, missing };
   }
   const draft = await createDraftFromCrmLead(lead, partner, kind, combinedText, key);
+  await setLeadProcedureStatus(lead.id, 'PRONTA_CONTROLLO_PIETRO');
   return { lead_id: lead.id, reply: true, order_id: draft.order?.id, ready_for_review: true };
 }
 
@@ -502,12 +567,19 @@ async function processQuoteRequest(parsed, uid) {
   if (!senderEmail || senderEmail.endsWith('@fancytruck.it') || /no-?reply|mailer-daemon/.test(senderEmail)) {
     return { skipped: true, reason: 'mittente interno o automatico' };
   }
-  const replyLead = await findReplyLead(senderEmail, parsed.subject);
-  if (/^\s*(re|r|fw|fwd)\s*:/i.test(String(parsed.subject || '')) && replyLead) {
-    return processQuoteReply(parsed, uid, replyLead);
-  }
-
+  const isReply = /^\s*(re|r|fw|fwd)\s*:/i.test(String(parsed.subject || ''));
   const kind = quoteRequestKind(parsed.subject, parsed.text);
+  if (!isReply && !kind) return { skipped: true, reason: 'non commerciale' };
+
+  const leadMatch = await findReplyLead(senderEmail, parsed.subject);
+  if (leadMatch.ambiguous) {
+    store.audit('ODOO_LEAD_DUPLICATE_AMBIGUOUS', { sender_domain: emailDomain(senderEmail), candidate_ids: leadMatch.candidate_ids });
+    return { suspended: true, possible_duplicate: true, candidate_ids: leadMatch.candidate_ids,
+      error: 'Possibile duplicato: più lead compatibili, creazione sospesa per controllo' };
+  }
+  if (leadMatch.lead) {
+    return processQuoteReply(parsed, uid, leadMatch.lead);
+  }
   if (!kind) return { skipped: true, reason: 'non commerciale' };
 
   const key = emailMarker(parsed, uid);
@@ -519,16 +591,17 @@ async function processQuoteRequest(parsed, uid) {
 
   const found = await findOrCreatePartnerFromEmail(parsed);
   const created = found.created;
-  const partner = await updatePartnerFromText(found.partner, parsed.text);
+  const partner = found.partner ? await updatePartnerFromText(found.partner, parsed.text) : null;
   const cleanBody = String(parsed.text || '').trim().slice(0, 12000);
   const leadIds = await odooCall('crm.lead', 'create', [[{
     name: String(parsed.subject || `Richiesta da ${sender?.name || senderEmail}`).slice(0, 240),
-    type: 'opportunity', partner_id: partner.id, contact_name: sender?.name || false,
+    type: 'opportunity', partner_id: partner?.id || false, contact_name: sender?.name || false,
     email_from: senderEmail, description: `Richiesta ricevuta via hello@fancytruck.it\n\n${cleanBody}\n\n${marker}`,
   }]]);
   const leadId = Array.isArray(leadIds) ? leadIds[0] : leadIds;
+  store.audit('ODOO_LEAD_CREATED', { lead_id: leadId, sender_domain: emailDomain(senderEmail), partner_id: partner?.id || null });
 
-  const missingFiscal = missingFiscalDetails(partner);
+  const missingFiscal = partner ? missingFiscalDetails(partner) : ['ragione sociale o partita IVA'];
   const missingOperational = missingRequestDetails(kind, parsed.subject, parsed.text);
   const operationalNote = kind === 'rental'
     ? 'Richiesta classificata come possibile noleggio: prima della bozza Noleggi verificare veicolo, date, orari, luogo, personalizzazione e logistica.'
@@ -536,18 +609,21 @@ async function processQuoteRequest(parsed, uid) {
       ? 'Richiesta classificata come Vendite/brand activation o roadtour.'
       : 'Tipologia commerciale da verificare prima di generare il preventivo.';
   await odooCall('crm.lead', 'message_post', [[leadId]], {
-    body: `${operationalNote}${partner._dataIssues?.length ? `<br>Controlli anagrafici: ${partner._dataIssues.map(escapeHtml).join(', ')}.` : ''}${missingFiscal.length ? `<br>Dati anagrafici da integrare: ${missingFiscal.join(', ')}.` : ''}${missingOperational.length ? `<br>Dati operativi da integrare: ${missingOperational.join(', ')}.` : ''}`,
+    body: `${operationalNote}${partner?._dataIssues?.length ? `<br>Controlli anagrafici: ${partner._dataIssues.map(escapeHtml).join(', ')}.` : ''}${missingFiscal.length ? `<br>Dati anagrafici da integrare: ${missingFiscal.join(', ')}.` : ''}${missingOperational.length ? `<br>Dati operativi da integrare: ${missingOperational.join(', ')}.` : ''}`,
     message_type: 'comment', subtype_xmlid: 'mail.mt_note',
   });
 
-  const missingForCustomer = [...missingOperational, ...missingFiscal];
+  const missingForCustomer = [...missingOperational];
+  if (!partner) missingForCustomer.unshift('ragione sociale o partita IVA per identificare il cliente');
   if (missingForCustomer.length) {
-    await askCustomerForMissingDetails(leadId, partner, sender?.name, missingForCustomer);
-    return { lead_id: leadId, partner_id: partner.id, partner_created: created, order_id: null, kind, missing: missingForCustomer };
+    await setLeadProcedureStatus(leadId, 'DA_INTEGRARE');
+    await askCustomerForMissingDetails(leadId, partner || { email: senderEmail }, sender?.name, [...new Set(missingForCustomer)]);
+    return { lead_id: leadId, partner_id: partner?.id || null, partner_created: created, order_id: null, kind, missing: missingForCustomer };
   }
 
   const lead = { id: leadId, name: String(parsed.subject || `Richiesta da ${sender?.name || senderEmail}`), description: cleanBody };
   const draft = await createDraftFromCrmLead(lead, partner, kind, cleanBody, key);
+  await setLeadProcedureStatus(leadId, 'PRONTA_CONTROLLO_PIETRO');
   return { lead_id: leadId, partner_id: partner.id, partner_created: created, order_id: draft.order?.id, kind, ready_for_review: true };
 }
 
@@ -656,7 +732,7 @@ app.get('/health', (_req, res) => {
   const stale = operatingNow && (lastCycle?.ended_at
     ? Date.now() - new Date(lastCycle.ended_at).getTime() > 2 * 60 * 60 * 1000
     : Date.now() - startedAt > 10 * 60 * 1000);
-  res.status(stale ? 503 : 200).json({ ok: !stale, service: 'fancy-truck-aruba-api', procedure_version: '2026-08-30',
+  res.status(stale ? 503 : 200).json({ ok: !stale, service: 'fancy-truck-aruba-api', procedure_version: COMMERCIAL_PROCEDURE_VERSION,
     operating_window: '08:00-19:59 Europe/Rome', state_file: store.filePath, last_cycle: lastCycle,
     pending_approvals: Object.values(snapshot.actions).filter((item) => !['EXECUTED', 'CANCELLED'].includes(item.status)).length,
     configured: {
@@ -671,6 +747,10 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/v1', requireToken);
+
+app.get('/v1/procedure/commercial', (_req, res) => {
+  res.json({ ok: true, procedure: COMMERCIAL_PROCEDURE });
+});
 
 app.get('/v1/automation/status', (_req, res) => {
   const snapshot = store.snapshot();

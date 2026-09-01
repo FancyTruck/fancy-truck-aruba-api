@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { missingDraftData, normalizeCommercialSubject, sameCommercialCase } from './commercialProcedure.js';
 
 export const PIPELINE = [
   'Nuove richieste', 'Qualificate', 'Preventivo inviato', 'Revisione del preventivo',
@@ -6,9 +7,6 @@ export const PIPELINE = [
   'Ricezione pagamento parziale', 'Ricezione pagamento completa', 'Attività in esecuzione',
   'Cauzione da rendere', 'Completata',
 ];
-
-const REQUIRED_REQUEST = ['service', 'asset', 'location', 'start_at', 'end_at', 'delivery', 'recovery', 'logistics'];
-const REQUIRED_CUSTOMER = ['name', 'email', 'address', 'phone'];
 
 function workdayAfter(date, days) {
   const result = new Date(date);
@@ -28,22 +26,17 @@ export class FancyTruckWorkflow {
   }
 
   missing(input) {
-    const missing = [];
-    for (const key of REQUIRED_REQUEST) if (!input.request?.[key]) missing.push(key);
-    for (const key of REQUIRED_CUSTOMER) if (!input.customer?.[key]) missing.push(`customer.${key}`);
-    if (!input.customer?.vat && !input.customer?.fiscal_code) missing.push('customer.vat_or_fiscal_code');
-    if (!input.customer?.sdi) missing.push('customer.sdi');
-    if (!input.customer?.pec) missing.push('customer.pec');
-    return missing;
+    return missingDraftData(input);
   }
 
   async receiveCommercialRequest(input) {
     const key = `email:${input.account}:${input.message_id}:${input.attachment_id || '-'}`;
     const remembered = this.store.state.idempotency[key];
     if (remembered) return { duplicate: true, ...remembered.result };
-    const subject = String(input.subject || '').replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, '').trim().toLowerCase();
-    let item = this.store.findCase((row) => row.active !== false && row.customer?.email === input.customer?.email
-      && row.normalized_subject === subject);
+    const subject = normalizeCommercialSubject(input.subject);
+    let item = this.store.findCase((row) => row.active !== false && sameCommercialCase(row, {
+      customer: input.customer, request: input.request, normalized_subject: subject,
+    }));
     let created = false;
     if (!item) {
       item = this.store.createCase({
@@ -61,9 +54,10 @@ export class FancyTruckWorkflow {
       const queued = this.approvals.queue({
         type: 'SEND_EMAIL', target: customer.email,
         idempotency_key: `missing:${item.id}:${missing.sort().join(',')}`,
+        supersede_group: `missing-details:${item.id}`,
         case_id: item.id, payload: { channel: 'odoo_chatter', missing },
       });
-      this.store.updateCase(item.id, { pending_missing: missing, pending_action_id: queued.action.id });
+      this.store.updateCase(item.id, { stage: 'Da integrare', pending_missing: missing, pending_action_id: queued.action.id });
       const result = { case_id: item.id, lead_created: created, missing, action_id: queued.action.id };
       this.store.remember(key, result);
       return result;
@@ -76,6 +70,7 @@ export class FancyTruckWorkflow {
   async prepareDraft(caseId, sourceKey) {
     const item = this.store.case(caseId);
     if (item.documents?.quote) return { duplicate: true, quote: item.documents.quote, project: item.documents.project };
+    this.store.cancelActionGroup(`missing-details:${caseId}`, 'REQUEST_COMPLETED');
     const remote = await this.adapter.createDraftBundle({
       case: item, idempotency_key: `quote-project:${caseId}`, task_name: '00 – RIEPILOGO ECONOMICO',
     });

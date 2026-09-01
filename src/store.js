@@ -102,6 +102,7 @@ export class JsonStateStore {
   createAction(input) {
     const existing = Object.values(this.state.actions).find((item) => item.idempotency_key === input.idempotency_key);
     if (existing) return { action: existing, duplicate: true };
+    if (input.supersede_group) this.cancelActionGroup(input.supersede_group, 'SUPERSEDED_BY_NEWER_ACTION');
     const id = crypto.randomUUID();
     const action = {
       id,
@@ -115,6 +116,20 @@ export class JsonStateStore {
     this.state.actions[id] = action;
     this.audit('ACTION_QUEUED', { action_id: id, action_type: action.type, target: action.target });
     return { action, duplicate: false };
+  }
+
+  cancelActionGroup(group, reason = 'CANCELLED') {
+    let changed = false;
+    for (const action of Object.values(this.state.actions)) {
+      if (action.supersede_group !== group || ['EXECUTED', 'CANCELLED'].includes(action.status)) continue;
+      action.status = 'CANCELLED';
+      action.cancelled_at = new Date().toISOString();
+      action.cancel_reason = reason;
+      this.audit('ACTION_CANCELLED', { action_id: action.id, reason, supersede_group: group });
+      changed = true;
+    }
+    if (changed) this.save();
+    return changed;
   }
 
   action(id) {

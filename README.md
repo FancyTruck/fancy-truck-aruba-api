@@ -10,6 +10,10 @@ Motore cloud per il processo commerciale e operativo Fancy Truck. Il servizio è
 - Pagamenti, rimborsi, cauzioni e abbinamenti incerti non vengono mai eseguiti automaticamente.
 - Ogni operazione usa una chiave idempotente e produce un evento di audit.
 
+## Procedura commerciale
+
+La procedura vincolante condivisa da chat, e-mail e backend è descritta in `PROCEDURA_CHAT.md` ed è esposta dall'API protetta `GET /v1/procedure/commercial`. Le richieste incomplete restano nella stessa lead **Da integrare**; anagrafica, bozza e progetto vengono creati soltanto alle condizioni previste e mai in duplicato.
+
 ## Pianificazione
 
 Il ciclo ordinario gira una volta all'ora esclusivamente tra le 08:00 e le 19:59 `Europe/Rome`. Webhook e scadenze possono avviare controlli immediati. `/health` diventa non sano se, durante la fascia operativa, non viene completato un ciclo per oltre due ore.
