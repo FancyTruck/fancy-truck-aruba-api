@@ -725,24 +725,40 @@ async function pollOdooLeadReplies() {
 }
 
 app.get('/health', (_req, res) => {
-  const snapshot = store.snapshot();
-  const lastCycle = snapshot.cycles.at(-1) || null;
+  const state = store.state;
+  const lastCycle = state.cycles.at(-1) || null;
   const operatingNow = withinOperatingWindow();
   const stale = operatingNow && (lastCycle?.ended_at
     ? Date.now() - new Date(lastCycle.ended_at).getTime() > 2 * 60 * 60 * 1000
     : Date.now() - startedAt > 10 * 60 * 1000);
-  res.status(stale ? 503 : 200).json({ ok: !stale, service: 'fancy-truck-aruba-api', procedure_version: COMMERCIAL_PROCEDURE_VERSION,
-    operating_window: '08:00-19:59 Europe/Rome', state_file: store.filePath, last_cycle: lastCycle,
-    pending_approvals: Object.values(snapshot.actions).filter((item) => !['EXECUTED', 'CANCELLED'].includes(item.status)).length,
+
+  // Liveness stays HTTP 200 while the process is alive. A stale automation
+  // cycle is reported as degraded data instead of disconnecting the web API.
+  res.status(200).json({
+    ok: true,
+    ready: true,
+    service: 'fancy-truck-aruba-api',
+    procedure_version: COMMERCIAL_PROCEDURE_VERSION,
+    automation_status: stale ? 'DEGRADED' : 'OK',
+    automation_stale: stale,
+    operating_window: '08:00-19:59 Europe/Rome',
+    state_file: store.filePath,
+    last_cycle: lastCycle,
+    pending_approvals: Object.values(state.actions).filter((item) => !['EXECUTED', 'CANCELLED'].includes(item.status)).length,
     configured: {
-    hello: Boolean(process.env.HELLO_EMAIL && process.env.HELLO_PASSWORD),
-    pietro: Boolean(process.env.PIETRO_EMAIL && process.env.PIETRO_PASSWORD),
-    odoo: Boolean(process.env.ODOO_URL && process.env.ODOO_DB && process.env.ODOO_API_KEY),
-    odoo_partner_autocomplete: process.env.ODOO_PARTNER_AUTOCOMPLETE !== 'false',
-    gmail_double_check: Boolean(process.env.GMAIL_CLIENT_ID && process.env.GMAIL_REFRESH_TOKEN),
-    sistemi_cloud: Boolean(process.env.SISTEMI_API_URL && process.env.SISTEMI_API_TOKEN),
-    bank: Boolean(process.env.BANK_API_URL && process.env.BANK_API_TOKEN),
-  } });
+      hello: Boolean(process.env.HELLO_EMAIL && process.env.HELLO_PASSWORD),
+      pietro: Boolean(process.env.PIETRO_EMAIL && process.env.PIETRO_PASSWORD),
+      odoo: Boolean(process.env.ODOO_URL && process.env.ODOO_DB && process.env.ODOO_API_KEY),
+      odoo_partner_autocomplete: process.env.ODOO_PARTNER_AUTOCOMPLETE !== 'false',
+      gmail_double_check: Boolean(process.env.GMAIL_CLIENT_ID && process.env.GMAIL_REFRESH_TOKEN),
+      sistemi_cloud: Boolean(process.env.SISTEMI_API_URL && process.env.SISTEMI_API_TOKEN),
+      bank: Boolean(process.env.BANK_API_URL && process.env.BANK_API_TOKEN),
+    },
+  });
+});
+
+app.get('/ready', (_req, res) => {
+  res.status(200).json({ ok: true, ready: true, service: 'fancy-truck-aruba-api' });
 });
 
 app.use('/v1', requireToken);
@@ -752,9 +768,9 @@ app.get('/v1/procedure/commercial', (_req, res) => {
 });
 
 app.get('/v1/automation/status', (_req, res) => {
-  const snapshot = store.snapshot();
-  res.json({ ok: true, integrations: snapshot.integrations, last_cycle: snapshot.cycles.at(-1) || null,
-    actions: Object.values(snapshot.actions).map(({ confirmation_digest: _hidden, ...item }) => item) });
+  const state = store.state;
+  res.json({ ok: true, integrations: state.integrations, last_cycle: state.cycles.at(-1) || null,
+    actions: Object.values(state.actions).map(({ confirmation_digest: _hidden, ...item }) => item) });
 });
 
 app.post('/v1/automation/run', async (req, res) => {
