@@ -627,15 +627,25 @@ async function processQuoteRequest(parsed, uid) {
 }
 
 async function pollQuoteRequests(accountName) {
+  const cursorName = `imap:${accountName}:last_uid`;
+  const lastUid = Number(store.cursor(cursorName, 0) || 0);
+  let highestProcessedUid = lastUid;
+
   const results = await withImap(accountName, async (client) => {
     const lock = await client.getMailboxLock('INBOX');
     try {
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const uids = await client.search({ since }, { uid: true });
+      const candidates = lastUid > 0
+        ? uids.filter((uid) => Number(uid) > lastUid).slice(0, 100)
+        : uids.slice(-100);
       const rows = [];
-      for (const uid of uids.slice(-100)) {
+      for (const uid of candidates) {
         const message = await client.fetchOne(uid, { source: true }, { uid: true });
-        if (!message?.source) continue;
+        if (!message?.source) {
+          highestProcessedUid = Math.max(highestProcessedUid, Number(uid));
+          continue;
+        }
         const parsed = await simpleParser(message.source);
         try {
           rows.push(await processQuoteRequest(parsed, uid));
@@ -643,53 +653,78 @@ async function pollQuoteRequests(accountName) {
           const reason = error instanceof Error ? error.message : 'errore sconosciuto';
           rows.push({ suspended: true, uid, error: reason });
           console.error(`RICHIESTA ${accountName.toUpperCase()} UID ${uid}: SOSPESA — ${reason}`);
+        } finally {
+          // Do not re-download and re-parse the same message every hour.
+          highestProcessedUid = Math.max(highestProcessedUid, Number(uid));
         }
       }
       return rows;
     } finally { lock.release(); }
   });
+
+  if (highestProcessedUid > lastUid) store.setCursor(cursorName, highestProcessedUid);
   const created = results.filter((row) => row.lead_id && !row.duplicate);
   const suspended = results.filter((row) => row.suspended);
-  console.log(`RICHIESTE ${accountName.toUpperCase()}: controllo completato, ${results.length} messaggi recenti, ${created.length} nuove lead elaborate, ${suspended.length} sospese`);
+  console.log(`RICHIESTE ${accountName.toUpperCase()}: controllo completato, ${results.length} nuovi messaggi, ${created.length} nuove lead elaborate, ${suspended.length} sospese`);
   return { rows: results, created, suspended };
 }
 
+let operationalCycleRunning = false;
+
 async function runOperationalCycle({ force = false } = {}) {
   if (!force && !withinOperatingWindow()) return { skipped: true, reason: 'fuori fascia 08:00-19:59 Europe/Rome' };
-  const cycle = store.beginCycle(['aruba:hello', 'aruba:pietro', 'odoo:crm']);
-  const summary = { read: 0, created: 0, updated: 0, duplicates: 0, suspended: 0, failed: 0, errors: [] };
-  for (const source of ['hello', 'pietro']) {
+  if (operationalCycleRunning) return { skipped: true, reason: 'ciclo operativo già in esecuzione' };
+  operationalCycleRunning = true;
+  let cycle = null;
+  try {
+    cycle = store.beginCycle(['aruba:hello', 'aruba:pietro', 'odoo:crm']);
+    const summary = { read: 0, created: 0, updated: 0, duplicates: 0, suspended: 0, failed: 0, errors: [] };
+    for (const source of ['hello', 'pietro']) {
+      try {
+        const result = await pollQuoteRequests(source);
+        summary.read += result.rows.length;
+        summary.created += result.created.length;
+        summary.suspended += result.suspended.length;
+        summary.errors.push(...result.suspended.map((row) => `${source} UID ${row.uid}: ${row.error}`));
+        store.integration(`aruba:${source}`, {
+          status: result.suspended.length ? 'OK_WITH_SUSPENSIONS' : 'OK',
+          last_success_at: new Date().toISOString(),
+          error: result.suspended.length ? `${result.suspended.length} elementi sospesi` : null,
+        });
+      } catch (error) {
+        summary.failed += 1;
+        summary.errors.push(`${source}: ${error instanceof Error ? error.message : 'errore sconosciuto'}`);
+        store.integration(`aruba:${source}`, { status: 'CONTROLLO NON COMPLETATO', error: summary.errors.at(-1) });
+      }
+    }
     try {
-      const result = await pollQuoteRequests(source);
-      summary.read += result.rows.length;
-      summary.created += result.created.length;
-      summary.suspended += result.suspended.length;
-      summary.errors.push(...result.suspended.map((row) => `${source} UID ${row.uid}: ${row.error}`));
-      store.integration(`aruba:${source}`, {
-        status: result.suspended.length ? 'OK_WITH_SUSPENSIONS' : 'OK',
-        last_success_at: new Date().toISOString(),
-        error: result.suspended.length ? `${result.suspended.length} elementi sospesi` : null,
-      });
+      const replies = await pollOdooLeadReplies();
+      summary.read += replies.length;
+      summary.updated += replies.filter((row) => row.reply).length;
+      store.integration('odoo:crm', { status: 'OK', last_success_at: new Date().toISOString(), error: null });
     } catch (error) {
       summary.failed += 1;
-      summary.errors.push(`${source}: ${error instanceof Error ? error.message : 'errore sconosciuto'}`);
-      store.integration(`aruba:${source}`, { status: 'CONTROLLO NON COMPLETATO', error: summary.errors.at(-1) });
+      summary.errors.push(`odoo: ${error instanceof Error ? error.message : 'errore sconosciuto'}`);
+      store.integration('odoo:crm', { status: 'CONTROLLO NON COMPLETATO', error: summary.errors.at(-1) });
     }
-  }
-  try {
-    const replies = await pollOdooLeadReplies();
-    summary.read += replies.length;
-    summary.updated += replies.filter((row) => row.reply).length;
-    store.integration('odoo:crm', { status: 'OK', last_success_at: new Date().toISOString(), error: null });
+    return store.finishCycle(cycle.id, {
+      ...summary,
+      status: summary.failed ? 'CONTROLLO NON COMPLETATO' : summary.suspended ? 'COMPLETATO_CON_SOSPENSIONI' : 'COMPLETED',
+    });
   } catch (error) {
-    summary.failed += 1;
-    summary.errors.push(`odoo: ${error instanceof Error ? error.message : 'errore sconosciuto'}`);
-    store.integration('odoo:crm', { status: 'CONTROLLO NON COMPLETATO', error: summary.errors.at(-1) });
+    if (cycle) {
+      try {
+        store.finishCycle(cycle.id, {
+          failed: 1,
+          status: 'CONTROLLO NON COMPLETATO',
+          errors: [error instanceof Error ? error.message : 'errore sconosciuto'],
+        });
+      } catch {}
+    }
+    throw error;
+  } finally {
+    operationalCycleRunning = false;
   }
-  return store.finishCycle(cycle.id, {
-    ...summary,
-    status: summary.failed ? 'CONTROLLO NON COMPLETATO' : summary.suspended ? 'COMPLETATO_CON_SOSPENSIONI' : 'COMPLETED',
-  });
 }
 
 async function pollOdooLeadReplies() {
