@@ -27,12 +27,30 @@ export class JsonStateStore {
   load() {
     try {
       this.state = { ...clone(EMPTY_STATE), ...JSON.parse(fs.readFileSync(this.filePath, 'utf8')) };
+      this.compact();
     } catch (error) {
       if (error?.code !== 'ENOENT') throw error;
     }
   }
 
+  compact() {
+    if (this.state.events.length > 2000) {
+      this.state.events.splice(0, this.state.events.length - 2000);
+    }
+    if (this.state.cycles.length > 200) {
+      this.state.cycles.splice(0, this.state.cycles.length - 200);
+    }
+    const idempotencyEntries = Object.entries(this.state.idempotency);
+    if (idempotencyEntries.length > 10000) {
+      idempotencyEntries
+        .sort(([, left], [, right]) => String(left?.at || '').localeCompare(String(right?.at || '')))
+        .slice(0, idempotencyEntries.length - 10000)
+        .forEach(([key]) => delete this.state.idempotency[key]);
+    }
+  }
+
   save() {
+    this.compact();
     const directory = path.dirname(this.filePath);
     fs.mkdirSync(directory, { recursive: true });
     const temporary = `${this.filePath}.${process.pid}.tmp`;
