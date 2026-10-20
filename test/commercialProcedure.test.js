@@ -10,13 +10,13 @@ test('la procedura chat espone i vincoli approvati', () => {
   assert.match(COMMERCIAL_PROCEDURE.pietro_control.rule, /conferma finale di Pietro/);
 });
 
-test('la bozza resta bloccata senza cliente identificato, personalizzazione e budget', () => {
+test('cliente e budget restano necessari, personalizzazione facoltativa', () => {
   const missing = missingDraftData({
     customer: { name: 'Mario', email: 'mario@example.test' },
     request: { service: 'rental', asset: 'Ape', location: 'Milano', start_at: '2026-09-10', duration: '1 giorno' },
   });
   assert.ok(missing.includes('customer.company_or_vat'));
-  assert.ok(missing.includes('personalization'));
+  assert.ok(!missing.includes('personalization'));
   assert.ok(missing.includes('budget'));
 });
 
