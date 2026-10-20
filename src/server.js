@@ -1,8 +1,21 @@
+import { classifyRentalBookings, unavailableVehicleAction } from './rentalAvailability.js';
+import { accessControl } from './accessControl.js';
+import { VERIFIED_ODOO_MODELS } from './verifiedOdooModels.js';
+import { selectExactProduct, draftProductLine } from './productSelection.js';
+import { catalogueModelsIn } from './vehicleCatalogue.js';
+import { missingRequestDetails, requiredRequestDetails, REQUEST_CATEGORIES } from './requestDetails.js';
+import { fileURLToPath } from 'node:url';
+import { pollOdooMessages } from './odooPolling.js';
+import { runMailOperation } from './mailOperations.js';
+import { pollMailbox } from './mailPolling.js';
 import crypto from 'node:crypto';
 import express from 'express';
 import { ImapFlow } from 'imapflow';
 import { simpleParser } from 'mailparser';
 import nodemailer from 'nodemailer';
+import { classifyCommercialMessage } from './commercialFilter.js';
+import { routeCommercialMessage } from './commercialRouting.js';
+import { runtimeConfig, assertWritable, assertOdooMethod, readOnlyMiddleware } from './runtime.js';
 import { JsonStateStore } from './store.js';
 import { ApprovalService, withinOperatingWindow } from './policy.js';
 import { isValidItalianFiscalCode, isValidItalianVat } from './italianFiscal.js';
@@ -18,8 +31,9 @@ app.use(express.json({ limit: '2mb' }));
 
 const port = Number(process.env.PORT || 3000);
 const apiToken = process.env.API_TOKEN || '';
+const runtime = runtimeConfig();
 const startedAt = Date.now();
-const store = new JsonStateStore();
+const store = new JsonStateStore(runtime.stateFile);
 const approvals = new ApprovalService(store);
 
 function accountConfig(accountName) {
@@ -33,17 +47,7 @@ function accountConfig(accountName) {
   return selected;
 }
 
-function safeEqual(left, right) {
-  const a = Buffer.from(String(left || ''));
-  const b = Buffer.from(String(right || ''));
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
-}
-
-function requireToken(req, res, next) {
-  const supplied = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-  if (!apiToken || !safeEqual(supplied, apiToken)) return res.status(401).json({ ok: false, error: 'Non autorizzato' });
-  next();
-}
+const requireToken = accessControl(process.env);
 
 function imapClient(account) {
   return new ImapFlow({
@@ -92,13 +96,7 @@ function plainTextFromHtml(value) {
 }
 
 function quoteRequestKind(subject, text) {
-  const value = `${subject || ''}\n${text || ''}`.toLowerCase();
-  const requestWords = ['preventiv', 'quotazione', 'disponibil', 'noleggi', 'roadtour', 'road tour',
-    'brand activation', 'personalizz', 'food truck', 'foodtruck', 'pop up truck', 'truck', 'trasporto', 'logistica'];
-  if (!requestWords.some((word) => value.includes(word))) return null;
-  if (['noleggi', 'disponibil', 'food truck', 'foodtruck', 'veicolo'].some((word) => value.includes(word))) return 'rental';
-  if (['roadtour', 'road tour', 'brand activation', 'campagna', 'evento'].some((word) => value.includes(word))) return 'sale';
-  return 'unknown';
+  return classifyCommercialMessage(subject, text).kind;
 }
 
 function emailMarker(parsed, uid) {
@@ -106,28 +104,6 @@ function emailMarker(parsed, uid) {
   return `mail-${crypto.createHash('sha256').update(source).digest('hex').slice(0, 24)}`;
 }
 
-function missingRequestDetails(kind, subject, text) {
-  const value = `${subject || ''}\n${text || ''}`;
-  const lower = value.toLowerCase();
-  const dates = value.match(/\b(?:0?[1-9]|[12]\d|3[01])[\/.\-](?:0?[1-9]|1[0-2])[\/.\-](?:20)?\d{2}\b/g) || [];
-  const times = value.match(/\b(?:[01]?\d|2[0-3])[:.]\d{2}\b/g) || [];
-  const vehicleWords = ['ape', 'airstream', 'fiat 238', 'citroen', 'hy', 'horse trailer', 'schoolbus', 'school bus', 'vw t1', 'framo', 'truck'];
-  const hasVehicle = vehicleWords.some((word) => lower.includes(word));
-  const hasLocation = /\b(?:luogo|location|destinazione|presso|indirizzo|città|comune|a|in)\s*[:\-]?\s+[A-ZÀ-ÖØ-Þ][\p{L}' -]{2,}/u.test(value)
-    || /\b(?:milano|roma|genova|torino|napoli|bologna|firenze|venezia|padova|verona|bari|palermo|cagliari)\b/i.test(value);
-  const hasDuration = /\b\d+(?:[.,]\d+)?\s*(?:ore|giorni?|gg|settimane?|mesi?)\b/i.test(value);
-  const hasPersonalization = /\b(?:personalizz|brandizz|wrap|wrapping|grafica|adesiv|allestiment|senza\s+personalizzazione|non\s+personalizzat)\w*/i.test(value);
-  const hasBudget = /(?:\b(?:budget|massimale|investimento)\b[^\n]{0,40}(?:€|euro|\d)|(?:€|euro)\s*\d|\d[\d., ]*\s*(?:€|euro)|\b(?:budget\s+da\s+definire|budget\s+non\s+definito)\b)/i.test(value);
-  const missing = [];
-  if (kind === 'unknown') missing.push('servizio richiesto');
-  if (!hasVehicle) missing.push(kind === 'sale' ? 'mezzo o struttura richiesta' : 'veicolo richiesto');
-  if (!dates.length) missing.push('data o periodo dell’attività');
-  if (dates.length < 2 && !hasDuration && times.length < 2) missing.push('durata o orario di fine');
-  if (!hasLocation) missing.push('luogo completo dell’attività o della consegna');
-  if (!hasPersonalization) missing.push('personalizzazione richiesta, anche se nessuna');
-  if (!hasBudget) missing.push('budget indicativo, anche se ancora da definire');
-  return missing;
-}
 
 function extractCustomerData(text) {
   const value = String(text || '');
@@ -163,7 +139,11 @@ function vehicleSearchTerm(text) {
     ['fiat 238', 'Fiat 238'], ['vw t1', 'VW T1'], ['airstream', 'Airstream'], ['citroen hy', 'Citroen HY'],
     ['citroën hy', 'Citroen HY'], ['framo', 'Framo'], ['ape', 'Ape'],
   ];
-  return known.find(([needle]) => value.includes(needle))?.[1] || null;
+  const models = catalogueModelsIn(text);
+  if (models.length > 1) return null;
+  if (models[0] === 'Horse Trailer Vintage') return models[0];
+  if (/\bhorse trailer legno\b/i.test(text)) return 'Horse Trailer Legno';
+  return known.find(([needle]) => value.includes(needle))?.[1] || models[0] || null;
 }
 
 function odooConfig() {
@@ -175,6 +155,7 @@ function odooConfig() {
 }
 
 async function odooCall(model, method, args = [], kwargs = {}) {
+  assertOdooMethod(runtime, method);
   const config = odooConfig();
   let body;
   if (method === 'search_read' || method === 'search_count') {
@@ -198,6 +179,7 @@ async function odooCall(model, method, args = [], kwargs = {}) {
       'x-odoo-database': config.db,
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(20000),
   });
   const payload = await response.json().catch(() => null);
   if (!response.ok) {
@@ -303,10 +285,20 @@ function missingFiscalDetails(partner) {
   return missing;
 }
 
-async function askCustomerForMissingDetails(leadId, partner, senderName, missing) {
+async function queueStreetfoodHandoff(leadId, recipient) {
+  const contact = REQUEST_CATEGORIES.event_food.contact;
+  const action = approvals.queue({ type: 'SEND_EMAIL', target: recipient,
+    case_id: `odoo-lead-${leadId}`, idempotency_key: `streetfood-handoff:${leadId}`,
+    payload: { account: 'hello', subject: 'La sua richiesta per un evento food',
+      html: `<p>Buongiorno, per la partecipazione a eventi food il suo riferimento è Cristiano, commerciale della nostra divisione streetfood: <a href="mailto:${contact}">${contact}</a>.</p><p>Grazie,<br>Fancy AI · Fancy Truck</p>` },
+  }).action;
+  return { lead_id: leadId, kind: 'event_food', handoff_contact: contact, approval_id: action.id };
+}
+
+async function askCustomerForMissingDetails(leadId, partner, senderName, missing, newRequest = null) {
   if (!missing.length) return;
   const items = missing.map((item) => `<li>${escapeHtml(item)}</li>`).join('');
-  const body = `<p>Buongiorno${senderName ? ` ${escapeHtml(senderName)}` : ''},</p><p>grazie per le informazioni. Per completare il preventivo ci servono ancora:</p><ul>${items}</ul><p>Può rispondere direttamente a questa e-mail; aggiorneremo la stessa richiesta senza creare duplicati.</p><p>Grazie,<br>Fancy Truck</p>`;
+  const body = `<p>Buongiorno${senderName ? ` ${escapeHtml(senderName)}` : ''},</p><p>sono Fancy AI, il bot di Fancy Truck. Aiuto il team a raccogliere le informazioni necessarie per preparare il suo preventivo.</p><p>Grazie per la richiesta. Ci mancano queste informazioni:</p><ul>${items}</ul><p>Può rispondere direttamente a questa e-mail. Se qualche dettaglio è ancora da definire, ce lo segnali. Se preferisce parlare con una persona, lo scriva nella risposta.</p><p>Il preventivo sarà verificato dal team prima dell’invio.</p><p>Grazie,<br>Fancy AI<br>Bot di Fancy Truck</p>`;
   await odooCall('crm.lead', 'message_post', [[leadId]], {
     body: `<p><strong>BOZZA NON INVIATA — approvazione di Pietro necessaria</strong></p>${body}`,
     message_type: 'comment', subtype_xmlid: 'mail.mt_note',
@@ -351,20 +343,20 @@ async function quotationTemplate(kind) {
 }
 
 async function rentalAvailability(productId, dates) {
-  if (!productId || !dates) return { checked: false, conflicts: [] };
+  if (!productId || !dates) return { checked: false, status: 'UNKNOWN', conflicts: [] };
   try {
     const conflicts = await odooCall('sale.order', 'search_read', [[
       ['state', '!=', 'cancel'], ['is_rental_order', '=', true],
       ['rental_start_date', '<', dates.end], ['rental_return_date', '>', dates.start],
       ['order_line.product_id', '=', productId],
     ]], {
-      fields: ['name', 'state', 'partner_id', 'rental_start_date', 'rental_return_date'],
+      fields: ['name', 'state', 'partner_id', 'rental_start_date', 'rental_return_date', 'validity_date', 'signed_on'],
       order: 'rental_start_date asc', limit: 50,
     });
-    return { checked: true, conflicts };
+    return classifyRentalBookings(conflicts, { complete: conflicts.length < 50 });
   } catch (error) {
     console.error(`DISPONIBILITÀ NOLEGGIO: controllo non completato - ${error instanceof Error ? error.message : 'errore sconosciuto'}`);
-    return { checked: false, conflicts: [] };
+    return { checked: false, status: 'UNKNOWN', conflicts: [] };
   }
 }
 
@@ -442,18 +434,26 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
   const template = await quotationTemplate(kind);
   let product = null;
   if (vehicle) {
-    const products = await odooCall('product.product', 'search_read', [[['name', 'ilike', vehicle]]], {
+    const models = catalogueModelsIn(vehicle);
+    const verifiedIds = VERIFIED_ODOO_MODELS.filter(item => models.includes(item.model)).map(item => item.productId);
+    const domain = verifiedIds.length ? ['|', ['id', 'in', verifiedIds], ['name', 'ilike', vehicle]] : [['name', 'ilike', vehicle]];
+    const products = await odooCall('product.product', 'search_read', [domain], {
       fields: ['name', 'list_price', 'sale_ok', 'rent_ok'], limit: 20,
     });
-    const eligible = products.filter((item) => item.sale_ok && (!isRental || item.rent_ok));
-    if (eligible.length === 1) product = eligible[0];
+    product = selectExactProduct(products, vehicle, isRental);
   }
 
   const availability = isRental ? await rentalAvailability(product?.id, dates) : { checked: false, conflicts: [] };
 
-  const line = product
-    ? [0, 0, { product_id: product.id, name: product.name, product_uom_qty: 1, price_unit: product.list_price }]
-    : [0, 0, { display_type: 'line_note', name: `Richiesta cliente da completare commercialmente: ${String(combinedText).slice(0, 3000)}` }];
+  if (isRental && availability.status === 'UNAVAILABLE') {
+    const action = approvals.queue(unavailableVehicleAction({
+      leadId: lead.id, recipient: partner.email, product, dates,
+    })).action;
+    await setLeadProcedureStatus(lead.id, 'DA_INTEGRARE');
+    return { awaiting_customer_choice: true, approval_id: action.id, availability: 'UNAVAILABLE' };
+  }
+
+  const line = draftProductLine(product, isRental, combinedText);
   const values = {
     partner_id: partner.id, opportunity_id: lead.id, client_order_ref: `AUTO:${key}`,
     origin: lead.name, is_rental_order: isRental, order_line: [line],
@@ -474,12 +474,12 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
   });
   const reviewItems = [...PIETRO_FINAL_CHECKS];
   reviewItems.push(template ? `Modello applicato: ${template.name}` : 'Modello di preventivo da verificare');
-  reviewItems.push(product ? `Prodotto e listino riconosciuti: ${product.name} — euro ${Number(product.list_price || 0).toFixed(2)}` : 'Prodotto e prezzo da selezionare');
+  reviewItems.push(product ? (isRental ? `Mezzo individuato: ${product.name}. Tariffa del noleggio da verificare: il listino prodotto non è stato applicato.` : `Prodotto individuato: ${product.name}. Verificare il prezzo prima dell’invio.`) : 'Prodotto e prezzo da selezionare');
   if (isRental) {
     reviewItems.push(dates ? `Periodo: ${dates.start} — ${dates.end}` : 'Periodo da verificare');
     if (!availability.checked) reviewItems.push('Disponibilità non verificabile senza prodotto e periodo certi');
-    else if (availability.conflicts.length) reviewItems.push(`ATTENZIONE: ${availability.conflicts.length} possibile sovrapposizione (${availability.conflicts.map((item) => item.name).join(', ')})`);
-    else reviewItems.push('Disponibilità: nessuna sovrapposizione rilevata nei noleggi Odoo');
+    else if (availability.status === 'OPTIONED') reviewItems.push('Veicolo soltanto opzionato: disponibilità da confermare, non dichiararlo indisponibile.');
+    else reviewItems.push('Nessun impegno definitivo rilevato negli ordini Odoo. Verificare logistica e disponibilità definitiva prima della conferma.');
     reviewItems.push('Cauzione, tariffa per la durata e condizioni di pagamento da confermare nel controllo finale');
   } else {
     reviewItems.push('Programma, servizi, logistica, personalizzazione e condizioni economiche da confermare');
@@ -548,38 +548,36 @@ async function processQuoteReply(parsed, uid, lead) {
   });
 
   const kind = quoteRequestKind(lead.name, combinedText) || 'unknown';
-  const missing = missingRequestDetails(kind, lead.name, combinedText);
+  const missing = requiredRequestDetails(kind, lead.name, combinedText);
+  const optional = missingRequestDetails(kind, lead.name, combinedText).filter(item => item.includes('(facoltativo)'));
+  if (kind === 'event_food') return queueStreetfoodHandoff(lead.id, sender?.address);
   if (!partner) missing.unshift('ragione sociale o partita IVA per identificare il cliente');
   if (missing.length) {
     await setLeadProcedureStatus(lead.id, 'DA_INTEGRARE');
-    await askCustomerForMissingDetails(lead.id, partner || { email: sender?.address }, sender?.name, [...new Set(missing)]);
+    await askCustomerForMissingDetails(lead.id, partner || { email: sender?.address }, sender?.name, [...new Set([...missing, ...optional])]);
     return { lead_id: lead.id, reply: true, missing };
   }
+  store.cancelActionGroup(`missing-details:odoo-lead-${lead.id}`, 'REQUEST_COMPLETED');
+  if (['catering', 'brand_activation'].includes(kind)) {
+    await setLeadProcedureStatus(lead.id, 'PRONTA_CONTROLLO_PIETRO');
+    return { lead_id: lead.id, reply: true, kind, ready_for_review: true };
+  }
   const draft = await createDraftFromCrmLead(lead, partner, kind, combinedText, key);
+  if (draft.awaiting_customer_choice) return { lead_id: lead.id, reply: true, ...draft };
   await setLeadProcedureStatus(lead.id, 'PRONTA_CONTROLLO_PIETRO');
   return { lead_id: lead.id, reply: true, order_id: draft.order?.id, ready_for_review: true };
 }
 
-async function processQuoteRequest(parsed, uid) {
+async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
   const sender = parsed.from?.value?.[0];
   const senderEmail = String(sender?.address || '').trim().toLowerCase();
-  if (!senderEmail || senderEmail.endsWith('@fancytruck.it') || /no-?reply|mailer-daemon/.test(senderEmail)) {
-    return { skipped: true, reason: 'mittente interno o automatico' };
-  }
-  const isReply = /^\s*(re|r|fw|fwd)\s*:/i.test(String(parsed.subject || ''));
-  const kind = quoteRequestKind(parsed.subject, parsed.text);
-  if (!isReply && !kind) return { skipped: true, reason: 'non commerciale' };
-
-  const leadMatch = await findReplyLead(senderEmail, parsed.subject);
-  if (leadMatch.ambiguous) {
-    store.audit('ODOO_LEAD_DUPLICATE_AMBIGUOUS', { sender_domain: emailDomain(senderEmail), candidate_ids: leadMatch.candidate_ids });
-    return { suspended: true, possible_duplicate: true, candidate_ids: leadMatch.candidate_ids,
-      error: 'Possibile duplicato: più lead compatibili, creazione sospesa per controllo' };
-  }
-  if (leadMatch.lead) {
-    return processQuoteReply(parsed, uid, leadMatch.lead);
-  }
-  if (!kind) return { skipped: true, reason: 'non commerciale' };
+  const decision = await routeCommercialMessage({
+    parsed, uid, account: accountName, uidValidity, store, findLead: findReplyLead,
+  });
+  if (decision.action === 'skip') return { skipped: true, reason: decision.reason };
+  if (decision.action === 'review') return { suspended: true, ...decision };
+  if (decision.action === 'reply') return processQuoteReply(parsed, uid, decision.lead);
+  const kind = decision.kind;
 
   const key = emailMarker(parsed, uid);
   const marker = `[AUTO:${key}]`;
@@ -595,18 +593,15 @@ async function processQuoteRequest(parsed, uid) {
   const leadIds = await odooCall('crm.lead', 'create', [[{
     name: String(parsed.subject || `Richiesta da ${sender?.name || senderEmail}`).slice(0, 240),
     type: 'opportunity', partner_id: partner?.id || false, contact_name: sender?.name || false,
-    email_from: senderEmail, description: `Richiesta ricevuta via hello@fancytruck.it\n\n${cleanBody}\n\n${marker}`,
+    email_from: senderEmail, description: `Richiesta ricevuta via ${accountName}@fancytruck.it\n\n${cleanBody}\n\n${marker}`,
   }]]);
   const leadId = Array.isArray(leadIds) ? leadIds[0] : leadIds;
   store.audit('ODOO_LEAD_CREATED', { lead_id: leadId, sender_domain: emailDomain(senderEmail), partner_id: partner?.id || null });
 
   const missingFiscal = partner ? missingFiscalDetails(partner) : ['ragione sociale o partita IVA'];
-  const missingOperational = missingRequestDetails(kind, parsed.subject, parsed.text);
-  const operationalNote = kind === 'rental'
-    ? 'Richiesta classificata come possibile noleggio: prima della bozza Noleggi verificare veicolo, date, orari, luogo, personalizzazione e logistica.'
-    : kind === 'sale'
-      ? 'Richiesta classificata come Vendite/brand activation o roadtour.'
-      : 'Tipologia commerciale da verificare prima di generare il preventivo.';
+  const missingOperational = requiredRequestDetails(kind, parsed.subject, parsed.text);
+  if (kind === 'event_food') return queueStreetfoodHandoff(leadId, senderEmail);
+  const operationalNote = `Categoria: ${REQUEST_CATEGORIES[kind]?.label || 'servizio da precisare'}. Raccogliere i dati specifici prima della preparazione del preventivo.`;
   await odooCall('crm.lead', 'message_post', [[leadId]], {
     body: `${operationalNote}${partner?._dataIssues?.length ? `<br>Controlli anagrafici: ${partner._dataIssues.map(escapeHtml).join(', ')}.` : ''}${missingFiscal.length ? `<br>Dati anagrafici da integrare: ${missingFiscal.join(', ')}.` : ''}${missingOperational.length ? `<br>Dati operativi da integrare: ${missingOperational.join(', ')}.` : ''}`,
     message_type: 'comment', subtype_xmlid: 'mail.mt_note',
@@ -616,53 +611,34 @@ async function processQuoteRequest(parsed, uid) {
   if (!partner) missingForCustomer.unshift('ragione sociale o partita IVA per identificare il cliente');
   if (missingForCustomer.length) {
     await setLeadProcedureStatus(leadId, 'DA_INTEGRARE');
-    await askCustomerForMissingDetails(leadId, partner || { email: senderEmail }, sender?.name, [...new Set(missingForCustomer)]);
+    await askCustomerForMissingDetails(leadId, partner || { email: senderEmail }, sender?.name, [...new Set([...missingForCustomer, ...missingRequestDetails(kind, parsed.subject, parsed.text).filter(item => item.includes('(facoltativo)'))])], parsed);
     return { lead_id: leadId, partner_id: partner?.id || null, partner_created: created, order_id: null, kind, missing: missingForCustomer };
   }
 
   const lead = { id: leadId, name: String(parsed.subject || `Richiesta da ${sender?.name || senderEmail}`), description: cleanBody };
+  if (['catering', 'brand_activation'].includes(kind)) {
+    await setLeadProcedureStatus(leadId, 'PRONTA_CONTROLLO_PIETRO');
+    return { lead_id: leadId, kind, ready_for_review: true };
+  }
   const draft = await createDraftFromCrmLead(lead, partner, kind, cleanBody, key);
+  if (draft.awaiting_customer_choice) return { lead_id: leadId, ...draft };
   await setLeadProcedureStatus(leadId, 'PRONTA_CONTROLLO_PIETRO');
   return { lead_id: leadId, partner_id: partner.id, partner_created: created, order_id: draft.order?.id, kind, ready_for_review: true };
 }
 
 async function pollQuoteRequests(accountName) {
-  const cursorName = `imap:${accountName}:last_uid`;
-  const lastUid = Number(store.cursor(cursorName, 0) || 0);
-  let highestProcessedUid = lastUid;
-
   const results = await withImap(accountName, async (client) => {
-    const lock = await client.getMailboxLock('INBOX');
+    const lock = await client.getMailboxLock('INBOX', { readOnly: true });
     try {
-      const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const uids = await client.search({ since }, { uid: true });
-      const candidates = lastUid > 0
-        ? uids.filter((uid) => Number(uid) > lastUid).slice(0, 100)
-        : uids.slice(-100);
-      const rows = [];
-      for (const uid of candidates) {
-        const message = await client.fetchOne(uid, { source: true }, { uid: true });
-        if (!message?.source) {
-          highestProcessedUid = Math.max(highestProcessedUid, Number(uid));
-          continue;
-        }
-        const parsed = await simpleParser(message.source);
-        try {
-          rows.push(await processQuoteRequest(parsed, uid));
-        } catch (error) {
-          const reason = error instanceof Error ? error.message : 'errore sconosciuto';
-          rows.push({ suspended: true, uid, error: reason });
-          console.error(`RICHIESTA ${accountName.toUpperCase()} UID ${uid}: SOSPESA — ${reason}`);
-        } finally {
-          // Do not re-download and re-parse the same message every hour.
-          highestProcessedUid = Math.max(highestProcessedUid, Number(uid));
-        }
-      }
-      return rows;
+      return await pollMailbox({ client, account: accountName, store, parse: simpleParser,
+        processMessage: (parsed, uid, uidValidity) => runMailOperation({
+          store, account: accountName, validity: uidValidity, uid, parsed,
+          execute: () => processQuoteRequest(parsed, uid, accountName, uidValidity),
+        }),
+      });
     } finally { lock.release(); }
   });
 
-  if (highestProcessedUid > lastUid) store.setCursor(cursorName, highestProcessedUid);
   const created = results.filter((row) => row.lead_id && !row.duplicate);
   const suspended = results.filter((row) => row.suspended);
   console.log(`RICHIESTE ${accountName.toUpperCase()}: controllo completato, ${results.length} nuovi messaggi, ${created.length} nuove lead elaborate, ${suspended.length} sospese`);
@@ -672,6 +648,7 @@ async function pollQuoteRequests(accountName) {
 let operationalCycleRunning = false;
 
 async function runOperationalCycle({ force = false } = {}) {
+  assertWritable(runtime);
   if (!force && !withinOperatingWindow()) return { skipped: true, reason: 'fuori fascia 08:00-19:59 Europe/Rome' };
   if (operationalCycleRunning) return { skipped: true, reason: 'ciclo operativo già in esecuzione' };
   operationalCycleRunning = true;
@@ -700,8 +677,12 @@ async function runOperationalCycle({ force = false } = {}) {
     try {
       const replies = await pollOdooLeadReplies();
       summary.read += replies.length;
-      summary.updated += replies.filter((row) => row.reply).length;
-      store.integration('odoo:crm', { status: 'OK', last_success_at: new Date().toISOString(), error: null });
+      summary.updated += replies.filter((row) => row.reply && !row.duplicate).length;
+      const suspended = replies.filter(row => row.suspended);
+      summary.suspended += suspended.length;
+      summary.errors.push(...suspended.map(row => `odoo: ${row.error || row.reason}`));
+      store.integration('odoo:crm', { status: suspended.length ? 'OK_WITH_SUSPENSIONS' : 'OK',
+        last_success_at: new Date().toISOString(), error: suspended.length ? `${suspended.length} elementi sospesi` : null });
     } catch (error) {
       summary.failed += 1;
       summary.errors.push(`odoo: ${error instanceof Error ? error.message : 'errore sconosciuto'}`);
@@ -728,22 +709,19 @@ async function runOperationalCycle({ force = false } = {}) {
 }
 
 async function pollOdooLeadReplies() {
-  const since = new Date(Date.now() - 30 * 60 * 1000).toISOString().replace('T', ' ').slice(0, 19);
-  const messages = await odooCall('mail.message', 'search_read', [[
-    ['model', '=', 'crm.lead'], ['message_type', '=', 'email'], ['date', '>=', since],
-  ]], {
-    fields: ['res_id', 'subject', 'body', 'email_from', 'author_id', 'date', 'message_id'],
-    order: 'date asc, id asc', limit: 100,
-  });
-  const results = [];
-  for (const message of messages) {
+  return pollOdooMessages({ store,
+    search: domain => odooCall('mail.message', 'search_read', [domain], {
+      fields: ['res_id', 'subject', 'body', 'email_from', 'author_id', 'date', 'message_id'],
+      order: 'id asc', limit: 100,
+    }),
+    processMessage: async message => {
     const emailMatch = String(message.email_from || '').match(/<([^>]+)>/) || String(message.email_from || '').match(/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i);
     const senderEmail = String(emailMatch?.[1] || '').trim().toLowerCase();
-    if (!senderEmail || senderEmail.endsWith('@fancytruck.it')) continue;
+    if (!senderEmail || senderEmail.endsWith('@fancytruck.it')) return { skipped: true };
     const leads = await odooCall('crm.lead', 'search_read', [[['id', '=', message.res_id]]], {
       fields: ['name', 'description', 'partner_id', 'stage_id', 'create_date'], limit: 1,
     });
-    if (!leads.length) continue;
+    if (!leads.length) throw new Error(`Opportunità ${message.res_id} non disponibile per il messaggio ${message.id}`);
     const authorName = Array.isArray(message.author_id) ? message.author_id[1] : null;
     const parsed = {
       messageId: message.message_id || `odoo-mail-message-${message.id}`,
@@ -752,14 +730,30 @@ async function pollOdooLeadReplies() {
       text: plainTextFromHtml(message.body),
       from: { value: [{ name: authorName, address: senderEmail }] },
     };
-    results.push(await processQuoteReply(parsed, `odoo-${message.id}`, leads[0]));
-  }
-  const processed = results.filter((row) => row.reply && !row.duplicate);
-  console.log(`RISPOSTE ODOO CRM: controllo completato, ${messages.length} messaggi recenti, ${processed.length} risposte elaborate`);
-  return processed;
+    return runMailOperation({ store, account: 'odoo', mailbox: 'crm.lead',
+      validity: 'mail.message', uid: message.id, parsed,
+      execute: () => processQuoteReply(parsed, `odoo-${message.id}`, leads[0]),
+    });
+    },
+  });
 }
 
+const reviewDirectory = fileURLToPath(new URL('../public/', import.meta.url));
+function reviewHeaders(_req, res, next) {
+  res.set('Cache-Control', 'no-store');
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set('Referrer-Policy', 'no-referrer');
+  res.set('Content-Security-Policy', "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'");
+  next();
+}
+app.get('/reviews', reviewHeaders, (_req, res) => res.sendFile('reviews.html', { root: reviewDirectory }));
+app.use('/review-assets', reviewHeaders, express.static(reviewDirectory, { index: false, dotfiles: 'deny' }));
+
 app.get('/health', (_req, res) => {
+  res.json({ ok: true, service: 'fancy-truck-aruba-api' });
+});
+
+app.get('/v1/diagnostics', requireToken, (_req, res) => {
   const state = store.state;
   const lastCycle = state.cycles.at(-1) || null;
   const operatingNow = withinOperatingWindow();
@@ -774,7 +768,9 @@ app.get('/health', (_req, res) => {
     ready: true,
     service: 'fancy-truck-aruba-api',
     procedure_version: COMMERCIAL_PROCEDURE_VERSION,
-    automation_status: stale ? 'DEGRADED' : 'OK',
+    automation_status: runtime.readOnly || !runtime.automationEnabled ? 'DISABLED' : stale ? 'DEGRADED' : 'OK',
+    environment: runtime.environment,
+    read_only: runtime.readOnly,
     automation_stale: stale,
     operating_window: '08:00-19:59 Europe/Rome',
     state_file: store.filePath,
@@ -797,6 +793,20 @@ app.get('/ready', (_req, res) => {
 });
 
 app.use('/v1', requireToken);
+app.use('/v1', readOnlyMiddleware(runtime));
+
+app.get('/v1/classification-reviews', (_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ ok: true, can_resolve: !runtime.readOnly && ['admin', 'reviewer'].includes(_req.accessRole),
+    items: Object.values(store.state.classification_reviews).filter(item => item.status === 'DA_CLASSIFICARE') });
+});
+
+app.post('/v1/classification-reviews/:id/resolve', (req, res) => {
+  try {
+    const item = store.resolveClassification(req.params.id, req.body?.resolution, req.body?.note, req.accessRole);
+    res.json({ ok: true, item });
+  } catch (error) { res.status(409).json({ ok: false, error: error.message }); }
+});
 
 app.get('/v1/procedure/commercial', (_req, res) => {
   res.json({ ok: true, procedure: COMMERCIAL_PROCEDURE });
@@ -1000,7 +1010,7 @@ app.post('/v1/odoo/chatter', async (req, res) => {
 app.get('/v1/:account/status', async (req, res) => {
   try {
     const result = await withImap(req.params.account, async (client) => {
-      const lock = await client.getMailboxLock('INBOX');
+      const lock = await client.getMailboxLock('INBOX', { readOnly: true });
       try {
         return { email: accountConfig(req.params.account).email, exists: client.mailbox.exists, uidNext: client.mailbox.uidNext };
       } finally { lock.release(); }
@@ -1017,7 +1027,7 @@ app.get('/v1/:account/messages', async (req, res) => {
   const since = req.query.since ? new Date(String(req.query.since)) : null;
   try {
     const messages = await withImap(req.params.account, async (client) => {
-      const lock = await client.getMailboxLock('INBOX');
+      const lock = await client.getMailboxLock('INBOX', { readOnly: true });
       try {
         const search = {};
         if (unseenOnly) search.seen = false;
@@ -1044,7 +1054,7 @@ app.get('/v1/:account/messages/:uid', async (req, res) => {
   if (!Number.isInteger(uid) || uid < 1) return res.status(400).json({ ok: false, error: 'UID non valido' });
   try {
     const parsed = await withImap(req.params.account, async (client) => {
-      const lock = await client.getMailboxLock('INBOX');
+      const lock = await client.getMailboxLock('INBOX', { readOnly: true });
       try {
         const raw = await client.download(uid, undefined, { uid: true });
         return simpleParser(raw.content);
@@ -1082,6 +1092,7 @@ app.post('/v1/:account/send', async (req, res) => {
 
 app.post('/v1/actions/:id/execute', async (req, res) => {
   try {
+    assertWritable(runtime);
     const action = approvals.assertExecutable(req.params.id);
     if (!['SEND_EMAIL', 'SEND_FOLLOW_UP', 'SEND_PAYMENT_REMINDER', 'SEND_QUOTE', 'SEND_CONTRACT', 'SEND_INVOICE'].includes(action.type)) {
       return res.status(409).json({ ok: false, error: 'Questa azione richiede un connettore specifico e non può essere eseguita via SMTP generico' });
@@ -1141,8 +1152,14 @@ async function verifyAccountConnections(accountName) {
   }
 }
 
-app.listen(port, () => {
-  console.log(`Fancy Truck Aruba API in ascolto sulla porta ${port}`);
+const server = app.listen(port, runtime.host, (error) => {
+  if (error) {
+    console.error(`Avvio server fallito: ${error.code || 'errore sconosciuto'}`);
+    process.exitCode = 1;
+    return;
+  }
+  console.log(`Fancy Truck Aruba API in ascolto sulla porta ${server.address().port}`);
+  if (runtime.startupChecks) {
   Promise.allSettled(['hello', 'pietro'].map(verifyAccountConnections)).catch(() => {});
   odooCall('crm.stage', 'search_count', [[]])
     .then((count) => console.log(`ODOO CRM: OK (${count} fasi)`))
@@ -1154,6 +1171,12 @@ app.listen(port, () => {
   ]], { fields: ['model', 'name'], limit: 50 })
     .then((fields) => console.log(`ODOO FLUSSO PREVENTIVI: OK (${fields.map((field) => `${field.model}.${field.name}`).join(', ')})`))
     .catch((error) => console.error(`ODOO FLUSSO PREVENTIVI: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`));
-  setTimeout(() => runOperationalCycle().catch((error) => console.error(`CICLO OPERATIVO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 15000);
-  setInterval(() => runOperationalCycle().catch((error) => console.error(`CICLO OPERATIVO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 60 * 60 * 1000);
+  }
+  if (runtime.automationEnabled && !runtime.readOnly) {
+    setTimeout(() => runOperationalCycle().catch((error) => console.error(`CICLO OPERATIVO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 15000);
+    setInterval(() => runOperationalCycle().catch((error) => console.error(`CICLO OPERATIVO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 60 * 60 * 1000);
+  }
 });
+
+// Module exports permit isolated contract tests without exposing extra HTTP routes.
+export { processQuoteRequest, processQuoteReply, server, store, approvals };

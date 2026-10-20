@@ -11,6 +11,8 @@ const EMPTY_STATE = {
   integrations: {},
   cycles: [],
   cursors: {},
+  classification_reviews: {},
+  mail_operations: {},
 };
 
 function clone(value) {
@@ -74,8 +76,25 @@ export class JsonStateStore {
   }
 
   setCursor(name, value) {
+    const previous = this.state.cursors[name];
     this.state.cursors[name] = value;
-    this.save();
+    try { this.save(); }
+    catch (error) {
+      if (previous === undefined) delete this.state.cursors[name];
+      else this.state.cursors[name] = previous;
+      throw error;
+    }
+  }
+
+  saveMailOperation(key, value) {
+    const previous = this.state.mail_operations[key];
+    this.state.mail_operations[key] = value;
+    try { this.save(); }
+    catch (error) {
+      if (previous === undefined) delete this.state.mail_operations[key];
+      else this.state.mail_operations[key] = previous;
+      throw error;
+    }
   }
 
   audit(type, payload = {}) {
@@ -189,5 +208,43 @@ export class JsonStateStore {
 
   snapshot() {
     return clone(this.state);
+  }
+
+  queueClassification(input) {
+    const id = crypto.createHash('sha256').update(input.source_key).digest('hex');
+    const existing = this.state.classification_reviews[id];
+    if (existing) return { item: existing, duplicate: true };
+    const item = { ...input, id, status: 'DA_CLASSIFICARE', created_at: new Date().toISOString() };
+    this.state.classification_reviews[id] = item;
+    try { this.save(); }
+    catch (error) {
+      delete this.state.classification_reviews[id];
+      throw error;
+    }
+    return { item, duplicate: false };
+  }
+
+  resolveClassification(id, resolution, note, actor) {
+    const previous = this.state.classification_reviews[id];
+    if (!previous || previous.status !== 'DA_CLASSIFICARE') throw new Error('Revisione non disponibile o già chiusa');
+    if (!['HANDLED_MANUALLY', 'NOT_COMMERCIAL'].includes(resolution)) throw new Error('Esito non valido');
+    if (previous.operation_id && resolution !== 'HANDLED_MANUALLY') throw new Error('Verificare prima l’operazione in Odoo');
+    if (typeof note !== 'string' || note.trim().length < 10 || note.length > 2000) throw new Error('Descrivere il controllo eseguito (10–2000 caratteri)');
+    const item = { ...previous, status: 'RESOLVED', resolution, resolution_note: note.trim(),
+      resolved_at: new Date().toISOString(), resolved_by_role: actor };
+    const operation = previous.operation_id ? this.state.mail_operations[previous.operation_id] : null;
+    if (previous.operation_id && (!operation || operation.status !== 'STARTED')) throw new Error('Registro operazione incoerente: verificare prima della chiusura');
+    if (operation) this.state.mail_operations[previous.operation_id] = {
+      ...operation, status: 'COMPLETED', completed_at: item.resolved_at,
+      result: { handled_manually: true, review_id: id },
+      reconciliation: { note: item.resolution_note, actor, review_id: id },
+    };
+    this.state.classification_reviews[id] = item;
+    try { this.save(); } catch (error) {
+      this.state.classification_reviews[id] = previous;
+      if (operation) this.state.mail_operations[previous.operation_id] = operation;
+      throw error;
+    }
+    return item;
   }
 }

@@ -1,4 +1,5 @@
-export const COMMERCIAL_PROCEDURE_VERSION = '2026-08-31';
+import { REQUEST_CATEGORIES } from './requestDetails.js';
+export const COMMERCIAL_PROCEDURE_VERSION = '2026-10-21';
 
 export const PIETRO_FINAL_CHECKS = Object.freeze([
   'destinatario e contenuto di ogni comunicazione esterna',
@@ -13,6 +14,7 @@ export const PIETRO_FINAL_CHECKS = Object.freeze([
 
 export const COMMERCIAL_PROCEDURE = Object.freeze({
   version: COMMERCIAL_PROCEDURE_VERSION,
+  request_categories: REQUEST_CATEGORIES,
   incomplete_request: {
     status: 'Da integrare',
     behavior: [
@@ -25,7 +27,7 @@ export const COMMERCIAL_PROCEDURE = Object.freeze({
   creation_rules: {
     lead: 'Creare la lead appena la richiesta è commerciale e il mittente è identificabile.',
     partner: 'Creare una nuova anagrafica soltanto per un cliente identificato da ragione sociale o partita IVA; riutilizzare sempre quella esistente quando trovata.',
-    draft: 'Creare una sola bozza e un solo progetto quando cliente, servizio, mezzo, luogo, periodo o durata, personalizzazione e budget consentono di preparare il prezzo.',
+    draft: 'Raccogliere i dati secondo la categoria. Budget catering e concept brand activation sono facoltativi; il noleggio non richiede obbligatoriamente un budget. Verificare le eventuali personalizzazioni, anche nessuna. Catering e brand activation completi passano al controllo commerciale prima della bozza. Gli eventi food vengono indirizzati a Cristiano.',
   },
   pietro_control: {
     rule: 'Nessuna comunicazione o azione esterna senza comando specifico e conferma finale di Pietro.',
@@ -75,7 +77,6 @@ export function missingDraftData(input) {
   if (!hasValue(request.location)) missing.push('location');
   if (!hasValue(request.start_at)) missing.push('start_at');
   if (!hasValue(request.end_at) && !hasValue(request.duration)) missing.push('end_at_or_duration');
-  if (!hasValue(request.personalization)) missing.push('personalization');
   if (!hasValue(request.budget)) missing.push('budget');
   if (!hasValue(customer.name)) missing.push('customer.name');
   if (!hasValue(customer.email)) missing.push('customer.email');
