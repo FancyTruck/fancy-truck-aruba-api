@@ -55,3 +55,28 @@ test('failed completion journal leaves uncertain operation for review', async t 
   assert.equal(result.suspended, true); assert.equal(writes, 1);
   args.store.save = save;
 });
+
+test('manual reconciliation survives restart and cross-channel replay without repeating writes', async t => {
+  const args = setup(t); let writes = 0;
+  const execute = async () => { writes++; throw new Error('uncertain'); };
+  await assert.rejects(runMailOperation({ ...args, execute }));
+  const pending = await runMailOperation({ ...args, execute });
+  args.store.resolveClassification(pending.review_id, 'HANDLED_MANUALLY', 'Verificata e completata pratica CRM 42', 'reviewer');
+  const store = new JsonStateStore(args.store.filePath);
+  const replay = await runMailOperation({ ...args, store, account: 'odoo', uid: 99, execute });
+  assert.equal(replay.handled_manually, true);
+  assert.equal(replay.duplicate, true);
+  assert.equal(replay.suspended, undefined);
+  assert.equal(writes, 1);
+});
+
+test('failed reconciliation save rolls back both review and journal', async t => {
+  const args = setup(t);
+  await assert.rejects(runMailOperation({ ...args, execute: async () => { throw new Error('uncertain'); } }));
+  const pending = await runMailOperation({ ...args, execute: async () => assert.fail('must not execute') });
+  const before = args.store.snapshot();
+  args.store.save = () => { throw new Error('disk full'); };
+  assert.throws(() => args.store.resolveClassification(pending.review_id, 'HANDLED_MANUALLY', 'Verificata e completata pratica CRM 42', 'reviewer'), /disk full/);
+  assert.deepEqual(args.store.snapshot(), before);
+  assert.deepEqual(new JsonStateStore(args.store.filePath).snapshot(), before);
+});

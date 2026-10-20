@@ -34,7 +34,7 @@ function render() {
       const noteLabel = node('label', 'Controllo eseguito e riferimento della pratica');
       const note = document.createElement('textarea'); note.required = true; note.minLength = 10; note.maxLength = 2000; noteLabel.append(note);
       const button = node('button', 'Registra esito e chiudi'); button.type = 'submit';
-      form.append(label, noteLabel, node('p', 'La chiusura registra il tuo controllo. Non invia messaggi e non ripete operazioni su Odoo.'), button);
+      form.append(label, noteLabel, node('p', row.operation_id ? 'Chiudi solo dopo aver verificato e completato la pratica in Odoo. Il registro verrà riconciliato senza ripetere scritture o invii.' : 'La chiusura registra il tuo controllo. Non invia messaggi e non ripete operazioni su Odoo.'), button);
       form.addEventListener('submit', async event => {
         event.preventDefault(); button.disabled = true;
         try {

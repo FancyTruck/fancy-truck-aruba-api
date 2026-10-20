@@ -16,7 +16,8 @@ test('review closure persists audit details without re-running uncertain operati
   store.resolveClassification(item.id,'HANDLED_MANUALLY','Controllata e completata pratica CRM 42','reviewer');
   const restored=new JsonStateStore(store.filePath);
   assert.equal(restored.state.classification_reviews[item.id].status,'RESOLVED');
-  assert.equal(restored.state.mail_operations.op.status,'STARTED');
+  assert.equal(restored.state.mail_operations.op.status,'COMPLETED');
+  assert.equal(restored.state.mail_operations.op.result.handled_manually,true);
   assert.throws(() => restored.resolveClassification(item.id,'HANDLED_MANUALLY','Seconda chiusura','reviewer'));
 });
 test('roles restrict readers and reviewers to their explicit operations', () => {

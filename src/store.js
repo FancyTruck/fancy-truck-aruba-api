@@ -232,8 +232,19 @@ export class JsonStateStore {
     if (typeof note !== 'string' || note.trim().length < 10 || note.length > 2000) throw new Error('Descrivere il controllo eseguito (10–2000 caratteri)');
     const item = { ...previous, status: 'RESOLVED', resolution, resolution_note: note.trim(),
       resolved_at: new Date().toISOString(), resolved_by_role: actor };
+    const operation = previous.operation_id ? this.state.mail_operations[previous.operation_id] : null;
+    if (previous.operation_id && (!operation || operation.status !== 'STARTED')) throw new Error('Registro operazione incoerente: verificare prima della chiusura');
+    if (operation) this.state.mail_operations[previous.operation_id] = {
+      ...operation, status: 'COMPLETED', completed_at: item.resolved_at,
+      result: { handled_manually: true, review_id: id },
+      reconciliation: { note: item.resolution_note, actor, review_id: id },
+    };
     this.state.classification_reviews[id] = item;
-    try { this.save(); } catch (error) { this.state.classification_reviews[id] = previous; throw error; }
+    try { this.save(); } catch (error) {
+      this.state.classification_reviews[id] = previous;
+      if (operation) this.state.mail_operations[previous.operation_id] = operation;
+      throw error;
+    }
     return item;
   }
 }
