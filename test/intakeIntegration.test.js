@@ -22,6 +22,7 @@ test('four production intake paths use Odoo contract and approval queue without 
       else if (model==='crm.lead') result=lead ? [lead] : [];
       else if (model==='crm.stage') result=[{id:1,name:'Nuove richieste'},{id:2,name:'Qualificate'}];
       else if (model==='sale.order') result=body.domain.some(term=>Array.isArray(term)&&term[0]==='id') ? orders : [];
+      else if (model==='sale.order.line') result=[{is_rental:true,price_unit:1200,product_uom_qty:1}];
       else if (model==='product.product') result=[{id:40,name:'Airstream Replica 4m XA855XY',sale_ok:false,rent_ok:true,list_price:50000}];
       else if (model==='res.users') result=[{id:1,name:'Pietro'}];
       else if (model==='ir.model') result=[{id:1,model:'crm.lead'}];
@@ -86,9 +87,11 @@ test('four production intake paths use Odoo contract and approval queue without 
     if(item.kind==='rental') {
       assert.equal(orders.length,1);
       assert.equal(orders[0].pricelist_id,1);
-      assert.equal(orders[0].order_line[0][2].display_type,'line_note');
+      assert.equal(orders[0].order_line[0][2].product_id,40);
+      assert.equal(orders[0].order_line[0][2].is_rental,true);
+      assert.equal(orders[0].rental_start_date,'2026-12-20 09:00:00');
       assert.equal(orders[0].order_line[0][2].price_unit,undefined);
-      assert.match(orders[0].order_line[0][2].name,/Airstream Replica 4m/);
+      assert.match(orders[0].order_line[1][2].name,/LOGISTICA DA COMPLETARE/);
     } else {
       assert.equal(orders.length,0);
       assert.equal(writes.includes('project.project'),false);

@@ -1,3 +1,5 @@
+import { logisticsDistancesFromRoutes } from './logisticsRoutes.js';
+import { italianRentalDates } from './rentalDates.js';
 import { standardLogisticsLines } from './standardLogistics.js';
 import { classifyRentalBookings, unavailableVehicleAction } from './rentalAvailability.js';
 import { accessControl } from './accessControl.js';
@@ -122,17 +124,6 @@ function extractCustomerData(text) {
   return { vat, fiscalCode, sdi, pec, phone, issues };
 }
 
-function italianDateTimeValues(text) {
-  const value = String(text || '');
-  const dateMatches = [...value.matchAll(/\b(0?[1-9]|[12]\d|3[01])[\/.\-](0?[1-9]|1[0-2])[\/.\-]((?:20)?\d{2})\b/g)];
-  const timeMatches = [...value.matchAll(/\b([01]?\d|2[0-3])[:.](\d{2})\b/g)];
-  if (dateMatches.length < 2 || timeMatches.length < 2) return null;
-  const compose = (dateMatch, timeMatch) => {
-    const year = String(dateMatch[3]).length === 2 ? `20${dateMatch[3]}` : dateMatch[3];
-    return `${year}-${String(dateMatch[2]).padStart(2, '0')}-${String(dateMatch[1]).padStart(2, '0')} ${String(timeMatch[1]).padStart(2, '0')}:${timeMatch[2]}:00`;
-  };
-  return { start: compose(dateMatches[0], timeMatches[0]), end: compose(dateMatches[1], timeMatches[1]) };
-}
 
 function vehicleSearchTerm(text) {
   const value = String(text || '').toLowerCase();
@@ -436,7 +427,7 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
   if (existing.length) return { order: existing[0], duplicate: true };
   store.cancelActionGroup(`missing-details:odoo-lead-${lead.id}`, 'REQUEST_COMPLETED');
 
-  const dates = italianDateTimeValues(combinedText);
+  const dates = italianRentalDates(combinedText);
   const isRental = kind === 'rental';
   const vehicle = vehicleSearchTerm(combinedText);
   const template = await quotationTemplate(kind);
@@ -461,7 +452,10 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
     return { awaiting_customer_choice: true, approval_id: action.id, availability: 'UNAVAILABLE' };
   }
 
-  const line = draftProductLine(product, isRental, combinedText);
+  const nativeRental = Boolean(product && dates && availability.checked);
+  const line = nativeRental
+    ? [0, 0, { product_id: product.id, product_uom_qty: 1, is_rental: true }]
+    : draftProductLine(product, isRental, combinedText);
   const pricingPartners = await odooCall('res.partner', 'search_read', [[['id', '=', partner.id]]], {
     fields: ['company_type', 'vat', 'property_product_pricelist'], limit: 1,
   });
@@ -469,7 +463,8 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
   const pricelistId = quotationPricelist(pricingPartners[0]);
   const values = {
     partner_id: partner.id, pricelist_id: pricelistId, opportunity_id: lead.id, client_order_ref: `AUTO:${key}`,
-    origin: lead.name, is_rental_order: isRental, order_line: [line],
+    origin: lead.name, is_rental_order: isRental, order_line: [line,
+      [0, 0, { display_type: 'line_note', name: 'LOGISTICA DA COMPLETARE: distanze di consegna e ritiro da verificare; importi non inclusi. Non inviare come preventivo completo.' }]],
   };
   if (template) {
     values.sale_order_template_id = template.id;
@@ -486,8 +481,19 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
     fields: ['name', 'state', 'opportunity_id', 'is_rental_order', 'amount_total'], limit: 1,
   });
   const reviewItems = [...PIETRO_FINAL_CHECKS];
+  let rentalPriceVerified = false;
+  if (nativeRental) {
+    const pricedLines = await odooCall('sale.order.line', 'search_read', [[['order_id', '=', orderId], ['product_id', '=', product.id]]], {
+      fields: ['is_rental', 'price_unit', 'product_uom_qty'], limit: 2,
+    });
+    rentalPriceVerified = pricedLines.length === 1 && pricedLines[0].is_rental === true
+      && pricedLines[0].product_uom_qty === 1 && Number.isFinite(pricedLines[0].price_unit) && pricedLines[0].price_unit > 0;
+    reviewItems.push(rentalPriceVerified ? `Tariffa calcolata da Odoo: ${pricedLines[0].price_unit}. Verificare condizioni e imposte.`
+      : 'BLOCCO ECONOMICO: tariffa Odoo nulla o non verificabile. Non inviare.');
+  }
+  reviewItems.push('LOGISTICA NON INCLUSA: occorrono distanze verificate di consegna e ritiro. Preventivo incompleto.');
   reviewItems.push(template ? `Modello applicato: ${template.name}` : 'Modello di preventivo da verificare');
-  reviewItems.push(product ? (isRental ? `Mezzo individuato: ${product.name}. Tariffa del noleggio da verificare: il listino prodotto non è stato applicato.` : `Prodotto individuato: ${product.name}. Verificare il prezzo prima dell’invio.`) : 'Prodotto e prezzo da selezionare');
+  reviewItems.push(product ? (isRental ? `Mezzo individuato: ${product.name}. ${nativeRental ? "Calcolo tariffa affidato a Odoo." : "Periodo, modello o disponibilità da verificare: tariffa non calcolata."}` : `Prodotto individuato: ${product.name}. Verificare il prezzo prima dell’invio.`) : 'Prodotto e prezzo da selezionare');
   if (isRental) {
     reviewItems.push(dates ? `Periodo: ${dates.start} — ${dates.end}` : 'Periodo da verificare');
     if (!availability.checked) reviewItems.push('Disponibilità non verificabile senza prodotto e periodo certi');
@@ -508,7 +514,7 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
     message_type: 'comment', subtype_xmlid: 'mail.mt_note',
   });
   store.audit('ODOO_DRAFT_BUNDLE_CREATED', { lead_id: lead.id, order_id: orderId, project_id: economicProject.id });
-  return { order: order[0] || { id: orderId }, project: economicProject, duplicate: false };
+  return { order: order[0] || { id: orderId }, project: economicProject, duplicate: false, rental_price_verified: rentalPriceVerified, logistics_status: 'DISTANCES_REQUIRED' };
 }
 
 async function findReplyLead(senderEmail, subject) {
@@ -964,7 +970,13 @@ app.post('/v1/odoo/sales/drafts', async (req, res) => {
     if (lines.some(line => Number(line?.product_id) === 7 && !['line_note', 'line_section'].includes(line?.display_type))) {
       throw new Error('Per Logistica usare standard_logistics con deliveryKm e collectionKm separati');
     }
-    const logistics = req.body?.standard_logistics === undefined ? [] : standardLogisticsLines(req.body.standard_logistics);
+    if (req.body?.standard_logistics !== undefined && req.body?.standard_logistics_routes !== undefined) {
+      throw new Error('Fornire percorsi oppure totali verificati, non entrambi');
+    }
+    const logisticsInput = req.body?.standard_logistics_routes !== undefined
+      ? logisticsDistancesFromRoutes(req.body.standard_logistics_routes) : req.body?.standard_logistics;
+    // Flat totals, when supplied by the operator, already include both journeys.
+    const logistics = logisticsInput === undefined ? [] : standardLogisticsLines(logisticsInput);
     const marker = `AUTO:${idempotencyKey}`;
     const existing = await odooCall('sale.order', 'search_read', [[['client_order_ref', '=', marker]]], {
       fields: ['name', 'state', 'partner_id', 'opportunity_id', 'amount_total', 'is_rental_order'], limit: 1,
