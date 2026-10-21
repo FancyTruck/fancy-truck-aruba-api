@@ -184,7 +184,12 @@ async function odooCall(model, method, args = [], kwargs = {}) {
   });
   const payload = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new Error(payload?.message || payload?.error || `Errore Odoo ${model}.${method} (${response.status})`);
+    const error = new Error(payload?.message || payload?.error || `Errore Odoo ${model}.${method} (${response.status})`);
+    error.status = response.status;
+    const retryAfter = response.headers.get('retry-after');
+    error.retryAfterMs = retryAfter == null ? 0 : /^\d+(\.\d+)?$/.test(retryAfter)
+      ? Number(retryAfter) * 1000 : Math.max(0, Date.parse(retryAfter) - Date.now()) || 0;
+    throw error;
   }
   return payload;
 }
@@ -916,9 +921,12 @@ app.get('/ready', (_req, res) => {
 app.use('/v1', requireToken);
 app.use('/v1', readOnlyMiddleware(runtime));
 
+let briefingInFlight = null;
 app.get('/v1/briefing', async (_req, res) => {
   res.set('Cache-Control', 'no-store');
-  res.json(await buildBriefing({ call: odooCall, state: store.snapshot() }));
+  briefingInFlight ??= buildBriefing({ call: odooCall, state: store.snapshot() })
+    .finally(() => { briefingInFlight = null; });
+  res.json(await briefingInFlight);
 });
 
 app.get('/v1/classification-reviews', (_req, res) => {
