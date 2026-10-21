@@ -1,12 +1,29 @@
 import {problem,transaction} from './peuMailDb.js';
 import {readFolder,reconcileSent} from './peuMailSync.js';
-function publicMessage(row){const payload=JSON.parse(row.payload);return {...row,payload:{...payload,text:String(payload.text||'').slice(0,200000),text_truncated:String(payload.text||'').length>200000,attachments:(payload.attachments||[]).map(({content,...meta})=>meta)}};}
+// Project legacy cache rows inside SQLite BEFORE crossing into JS. Older rows
+// may contain base64 attachment bodies; stripping them after JSON.parse is too late.
+const publicPayload = `CASE WHEN length(payload)>16777216 THEN
+ json_object('text','','attachments',json('[]'),'content_status','requires_large_message_download')
+ ELSE json_object(
+ 'subject',substr(json_extract(payload,'$.subject'),1,2000),
+ 'text',substr(coalesce(json_extract(payload,'$.text'),''),1,20000),
+ 'text_truncated',length(coalesce(json_extract(payload,'$.text'),''))>20000,
+ 'date',json_extract(payload,'$.date'),
+ 'from',json(coalesce(json_extract(payload,'$.from'),'[]')),
+ 'to',json(coalesce(json_extract(payload,'$.to'),'[]')),
+ 'inReplyTo',json_extract(payload,'$.inReplyTo'),
+ 'references',json(coalesce(json_extract(payload,'$.references'),'[]')),
+ 'attachments',json(coalesce((SELECT json_group_array(json_object(
+ 'index',key,'filename',json_extract(value,'$.filename'),
+ 'contentType',json_extract(value,'$.contentType'),'size',json_extract(value,'$.size')))
+ FROM json_each(payload,'$.attachments')),'[]'))) END AS payload`;
+function publicMessage(row){return {...row,payload:JSON.parse(row.payload)};}
 // Runs inside Fancy using its existing authenticated clients and approval service.
 export class ArubaService {
  constructor({db,withImap,parse,smtp,approvals,accounts}){Object.assign(this,{db,withImap,parse,smtp,approvals,accounts});}
  account(id){if(!this.accounts.includes(id))throw problem('account_not_authorized',403);}
  async folders(account){this.account(account);return this.withImap(account,async client=>({folders:(await client.list()).filter(f=>f.path==='INBOX'||f.specialUse==='\\Sent').map(f=>({path:f.path,role:f.path==='INBOX'?'inbox':'sent'}))}));}
- thread(account,key){this.account(account);return {messages:Array.from(this.db.prepare('SELECT folder,validity,uid,message_id,thread_key,payload,flags FROM mail_messages WHERE account=? AND thread_key=? AND deleted=0 ORDER BY uid LIMIT 100').iterate(account,key),publicMessage)};}
+ thread(account,key){this.account(account);return {messages:Array.from(this.db.prepare(`SELECT folder,validity,uid,message_id,thread_key,${publicPayload},flags FROM mail_messages WHERE account=? AND thread_key=? AND deleted=0 ORDER BY uid LIMIT 100`).iterate(account,key),publicMessage)};}
  async sync(account,folder){this.account(account);return this.withImap(account,async client=>{
    const folders=await client.list();if(!folders.some(f=>f.path===folder&&(f.path==='INBOX'||f.specialUse==='\\Sent')))throw problem('folder_not_authorized',403);
    let cursor=this.db.prepare('SELECT validity,last_uid uid FROM mail_cursors WHERE account=? AND folder=?').get(account,folder),total=0;
@@ -27,12 +44,13 @@ export class ArubaService {
    }finally{lock.release();}
    return {status:'synced',new_messages:total,cursor};
  });}
- messages(account,folder){this.account(account);return Array.from(this.db.prepare('SELECT account,folder,validity,uid,message_id,thread_key,flags,deleted,payload FROM mail_messages WHERE account=? AND folder=? AND deleted=0 ORDER BY uid DESC LIMIT 100').iterate(account,folder),publicMessage);}
- async attachment(account,folder,validity,uid,index){this.account(account);const r=this.db.prepare('SELECT payload FROM mail_messages WHERE account=? AND folder=? AND validity=? AND uid=? AND deleted=0').get(account,folder,validity,uid);if(!r)throw problem('message_not_found',404);if(!JSON.parse(r.payload).attachments[index])throw problem('attachment_not_found',404);
+ messages(account,folder){this.account(account);return Array.from(this.db.prepare(`SELECT account,folder,validity,uid,message_id,thread_key,flags,deleted,${publicPayload} FROM mail_messages WHERE account=? AND folder=? AND deleted=0 ORDER BY uid DESC LIMIT 100`).iterate(account,folder),publicMessage);}
+ async attachment(account,folder,validity,uid,index){this.account(account);const r=this.db.prepare('SELECT uid FROM mail_messages WHERE account=? AND folder=? AND validity=? AND uid=? AND deleted=0').get(account,folder,validity,uid);if(!r)throw problem('message_not_found',404);
    return this.withImap(account,async client=>{const lock=await client.getMailboxLock(folder,{readOnly:true});try{
      if(String(client.mailbox.uidValidity)!==validity)throw problem('uidvalidity_changed_retry',409);
      const meta=await client.fetchOne(uid,{size:true},{uid:true});if(!meta)throw problem('message_not_found',404);if(meta.size>20*1024*1024)throw problem('attachment_requires_large_message_download',413);
-     const raw=await client.fetchOne(uid,{source:true},{uid:true});if(!raw?.source)throw problem('message_not_found',404);
+     const raw=await client.fetchOne(uid,{source:{start:0,maxLength:20*1024*1024+1}},{uid:true});if(!raw?.source)throw problem('message_not_found',404);
+     if(raw.source.length>20*1024*1024)throw problem('attachment_requires_large_message_download',413);
      const parsed=await this.parse(raw.source),a=parsed.attachments?.[index];if(!a)throw problem('attachment_not_found',404);
      return {index,filename:a.filename||null,contentType:a.contentType,size:a.size,content:a.content.toString('base64')};
    }finally{lock.release();}});
