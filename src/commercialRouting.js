@@ -6,6 +6,9 @@ export async function routeCommercialMessage({ parsed, uid, account, uidValidity
   if (!sender || sender.endsWith('@fancytruck.it') || /no-?reply|mailer-daemon/.test(sender)) {
     return { action: 'skip', reason: 'mittente interno o automatico' };
   }
+  if (sender === 'grafichefancytruck@gmail.com' && /FANCY-AI-(?:COLLAUDO|ROUTED-INTAKE)/i.test(String(parsed.subject || ''))) {
+    return { action: 'skip', reason: 'authorized_test_message' };
+  }
   const classification = classifyCommercialMessage(parsed.subject, parsed.text, parsed.headers);
   if (['automatic_or_mailing_list', 'administrative_or_marketing', 'supplier_offer'].includes(classification.reason)) {
     return { action: 'skip', reason: classification.reason };
