@@ -101,4 +101,22 @@ test('four production intake paths use Odoo contract and approval queue without 
     assert.ok(Object.values(app.store.state.actions).filter(action=>action.case_id===`odoo-lead-${lead.id}`)
       .every(action=>['PENDING_APPROVAL','CANCELLED'].includes(action.status)));
   });
+  await t.test('draft endpoint applies separate logistics minima and delegates price to Odoo', async()=>{
+    orders=[];
+    const endpoint=`http://127.0.0.1:${app.server.address().port}/v1/odoo/sales/drafts`;
+    const response=await realFetch(endpoint,{method:'POST',headers:{authorization:'Bearer test-only','content-type':'application/json'},
+      body:JSON.stringify({partner_id:7,idempotency_key:'logistics-check',order_type:'rental',
+        rental_start_date:'2026-12-20 09:00:00',rental_return_date:'2026-12-21 09:00:00',
+        lines:[],standard_logistics:{deliveryKm:180,collectionKm:20}})});
+    assert.equal(response.status,201);
+    assert.equal(orders.length,1);
+    assert.equal(orders[0].pricelist_id,1);
+    assert.deepEqual(orders[0].order_line.map(line=>line[2].product_uom_qty),[180,100]);
+    assert(orders[0].order_line.every(line=>line[2].product_id===7 && !('price_unit' in line[2])));
+    const rejected=await realFetch(endpoint,{method:'POST',headers:{authorization:'Bearer test-only','content-type':'application/json'},
+      body:JSON.stringify({partner_id:7,idempotency_key:'logistics-without-distances',lines:[{product_id:7,name:'Logistica',quantity:20,price_unit:2}]})});
+    assert.equal(rejected.status,502);
+    assert.equal(orders.length,1);
+  });
+
 });
