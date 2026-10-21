@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { gzipSync, gunzipSync } from 'node:zlib';
-import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectVersionsCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { validateState } from './stateBackup.js';
 const prefix = 'fancy-ai-state-v1/';
 const maxBytes = 32 * 1024 * 1024;
@@ -47,26 +47,31 @@ export async function runExternalBackup({store,env,now=new Date(),client}) {
   try {
     const bucket=env.BACKUP_S3_BUCKET, snapshot=store.snapshot();
     const body=encryptState(snapshot,env.BACKUP_ENCRYPTION_KEY);
-    const objects=[]; let token;
+    const objects=[]; let keyMarker, versionMarker;
     do {
-      const page=await send(client,new ListObjectsV2Command({Bucket:bucket,Prefix:prefix,ContinuationToken:token}));
-      objects.push(...(page.Contents||[]));
+      const page=await send(client,new ListObjectVersionsCommand({Bucket:bucket,Prefix:prefix,KeyMarker:keyMarker,VersionIdMarker:versionMarker}));
+      objects.push(...(page.Versions||[]), ...(page.DeleteMarkers||[]));
       if(objects.length>10000)throw Error('Troppi backup: verifica manuale richiesta');
-      token=page.IsTruncated?page.NextContinuationToken:undefined;
-      if(page.IsTruncated&&!token)throw Error('Elenco backup incompleto');
-    } while(token);
+      const previous = JSON.stringify([keyMarker,versionMarker]);
+      keyMarker=page.IsTruncated?page.NextKeyMarker:undefined;
+      versionMarker=page.IsTruncated?page.NextVersionIdMarker:undefined;
+      if(page.IsTruncated&&(!keyMarker || JSON.stringify([keyMarker,versionMarker])===previous))throw Error('Elenco versioni backup incompleto');
+    } while(keyMarker);
     if(objects.reduce((sum,o)=>sum+(o.Size||0),0)+body.length>1024*1024*1024)throw Error('Limite prudenziale di 1 GB raggiunto');
     const key=`${prefix}${now.toISOString().replace(/[:.]/g,'-')}-${crypto.randomUUID()}.json.enc`;
     await send(client,new PutObjectCommand({Bucket:bucket,Key:key,Body:body,ContentType:'application/octet-stream'}));
     const restored=await downloadBackup(client,bucket,key,env.BACKUP_ENCRYPTION_KEY);
     if(JSON.stringify(restored)!==JSON.stringify(snapshot))throw Error('Ripristino di controllo non corrispondente');
     const result={status:'VERIFIED',key,bytes:body.length,verified_at:now.toISOString()};
-    store.remember(marker,result);
     // Only our dated backup objects, after successful download/decryption of a new copy.
     for(const item of objects) {
       if(/^fancy-ai-state-v1\/\d{4}-\d{2}-\d{2}T[\d-]+Z-[a-f0-9-]+\.json\.enc$/.test(item.Key||'') && new Date(item.LastModified).getTime()<now.getTime()-30*86400000)
-        await send(client,new DeleteObjectCommand({Bucket:bucket,Key:item.Key}));
+        {
+          if (!item.VersionId) throw Error('Versione backup mancante: cancellazione interrotta');
+          await send(client,new DeleteObjectCommand({Bucket:bucket,Key:item.Key,VersionId:item.VersionId}));
+        }
     }
+    store.remember(marker,result);
     return result;
   } finally { if(owned)client.destroy(); }
 }

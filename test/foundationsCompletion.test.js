@@ -37,18 +37,18 @@ test('encrypted backup round-trip validates schema and rejects tampering or wron
 test('external backup verifies downloaded copy before recording success and deleting old managed backup',async()=>{
  const s=state();let uploaded;const calls=[];let marked=false;
  const old='fancy-ai-state-v1/2020-01-01T00-00-00-000Z-abc.json.enc';
- const client={async send(c){calls.push(c.constructor.name);if(c.constructor.name==='ListObjectsV2Command')return {Contents:[{Key:old,LastModified:new Date('2020-01-01'),Size:12},{Key:'unrelated.txt',LastModified:new Date('2020-01-01'),Size:1}]};
+ const client={async send(c){calls.push(c.constructor.name);if(c.constructor.name==='ListObjectVersionsCommand')return {Versions:[{Key:old,VersionId:'old-version',LastModified:new Date('2020-01-01'),Size:12},{Key:'unrelated.txt',LastModified:new Date('2020-01-01'),Size:1}]};
  if(c.constructor.name==='PutObjectCommand'){uploaded=c.input.Body;return {};}
  if(c.constructor.name==='GetObjectCommand')return {Body:{transformToByteArray:async()=>uploaded}};
- if(c.constructor.name==='DeleteObjectCommand'){assert(marked);assert.equal(c.input.Key,old);return {};}
+ if(c.constructor.name==='DeleteObjectCommand'){assert(!marked);assert.equal(c.input.Key,old);assert.equal(c.input.VersionId,'old-version');return {};}
  }};
  const store={has:()=>false,snapshot:()=>s,remember(){marked=true;}};
  const r=await runExternalBackup({client,store,env:{EXTERNAL_BACKUP_ENABLED:'true',BACKUP_S3_BUCKET:'test',BACKUP_ENCRYPTION_KEY:'a'.repeat(64)}});
- assert.equal(r.status,'VERIFIED');assert.deepEqual(calls,['ListObjectsV2Command','PutObjectCommand','GetObjectCommand','DeleteObjectCommand']);
+ assert.equal(r.status,'VERIFIED');assert.deepEqual(calls,['ListObjectVersionsCommand','PutObjectCommand','GetObjectCommand','DeleteObjectCommand']);
 });
 test('failed download never marks backup verified or deletes old copies',async()=>{
  const store={has:()=>false,snapshot:state,remember(){throw Error('must not mark success');}};
- const client={async send(c){if(c.constructor.name==='ListObjectsV2Command')return {};if(c.constructor.name==='PutObjectCommand')return {};throw Error('download failed');}};
+ const client={async send(c){if(c.constructor.name==='ListObjectVersionsCommand')return {};if(c.constructor.name==='PutObjectCommand')return {};throw Error('download failed');}};
  await assert.rejects(runExternalBackup({client,store,env:{EXTERNAL_BACKUP_ENABLED:'true',BACKUP_S3_BUCKET:'test',BACKUP_ENCRYPTION_KEY:'a'.repeat(64)}}),/download failed/);
 });
 test('briefing serializes reads and retries only rate-limited reads with bounded delay',async()=>{
@@ -71,4 +71,8 @@ test('briefing stops after bounded 429 retries and never retries permission fail
  let calls=0;
  await buildBriefing({state:state(),sleep:async()=>{},call:async()=>{calls++;throw Object.assign(Error('wait'),{status:429,retryAfterMs:60000});}});
  assert.equal(calls,3);
+});
+test('hidden version storage counts towards cap before upload',async()=>{
+ const client={async send(c){assert.equal(c.constructor.name,'ListObjectVersionsCommand');return {Versions:[{Key:'old',Size:1024*1024*1024,IsLatest:false}]};}};
+ await assert.rejects(runExternalBackup({client,store:{has:()=>false,snapshot:state,remember(){assert.fail();}},env:{EXTERNAL_BACKUP_ENABLED:'true',BACKUP_S3_BUCKET:'test',BACKUP_ENCRYPTION_KEY:'a'.repeat(64)}}),/1 GB/);
 });
