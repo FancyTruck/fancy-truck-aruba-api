@@ -67,9 +67,14 @@ test('four production intake paths use Odoo contract and approval queue without 
     }
     assert.equal(orders.length,0);
     assert.equal(lead.stage_id,1);
-    const partial=await app.processQuoteReply({...parsed,text:'Grazie, confermo Milano.',messageId:`<${item.kind}-partial>`},2,lead);
+    const partial=await app.processQuoteReply({...parsed,text:'Grazie, confermo Milano.\n\nOn Wed, 21 Oct 2026 06:44:18 +0000, Fancy Truck <hello@fancytruck.it> wrote:\n> Data: 20/12/2026. 80 ospiti, 4 ore, 2 foodtruck. Cena.\n> Personalizzazioni: nessuna. Attrezzature: nessuna. Allestimenti: nessuno. Richieste particolari: nessuna.\n> Staff: nostro. Gestione del servizio: nostra. Permessi: nostri. Adempimenti: nostri.',messageId:`<${item.kind}-partial>`},2,lead);
     assert.equal(partial.lead_id,first.lead_id);
     assert.ok(partial.missing.length>0);
+    assert.doesNotMatch(lead.description, /On Wed|> Personalizzazioni/);
+    if(item.kind==='rental') for(const field of ['personalizzazioni','attrezzature','allestimenti','richieste particolari']) {
+      assert(partial.missing.some(value=>value.includes(field)), `Quoted question must not complete ${field}`);
+    }
+    if(item.kind==='catering') assert(partial.missing.includes('numero di ospiti'));
     assert.equal(orders.length,0);
     assert.equal(lead.stage_id,1);
     const completedMessage={...parsed,text:item.reply,messageId:`<${item.kind}-reply>`};
