@@ -2,6 +2,8 @@ import { matchQuotationThread } from './threadReferences.js';
 import { linkThreadMessage } from './threadLinking.js';
 import { pollSentMailbox } from './sentTracking.js';
 import { reconcileCrm } from './crmReconciliation.js';
+import { buildBriefing } from './briefing.js';
+import { runExternalBackup } from './externalBackup.js';
 import { depositAmount, rentalTerms, PAYMENT_TERM_NAME } from './commercialTerms.js';
 import { prepareRentalLogistics } from './aiLogistics.js';
 import { logisticsDistancesFromRoutes } from './logisticsRoutes.js';
@@ -736,6 +738,20 @@ async function runOperationalCycle({ force = false } = {}) {
   try {
     cycle = store.beginCycle(['aruba:hello', 'aruba:pietro', 'odoo:crm']);
     const summary = { read: 0, created: 0, updated: 0, duplicates: 0, suspended: 0, failed: 0, errors: [] };
+    if (process.env.EXTERNAL_BACKUP_ENABLED === 'true') {
+      try {
+        const backup = await runExternalBackup({store, env:process.env});
+        if (backup.status === 'VERIFIED') {
+          store.integration('backup:external', {status:'OK',last_success_at:backup.verified_at,key:backup.key,bytes:backup.bytes});
+          console.log('BACKUP ESTERNO: caricamento e ripristino di controllo verificati');
+        }
+      } catch {
+        store.integration('backup:external', {status:'ERROR',error:'Backup esterno non verificato; controllare configurazione e spazio'});
+        summary.failed++;
+        summary.errors.push('Backup esterno non verificato');
+        console.error('BACKUP ESTERNO: controllo non completato');
+      }
+    }
     if (process.env.CRM_NOTIFICATION_CLEANUP_ENABLED === 'true') {
       try {
         const result = await reconcileCrm({ call: odooCall, store });
@@ -851,6 +867,7 @@ function reviewHeaders(_req, res, next) {
   next();
 }
 app.get('/reviews', reviewHeaders, (_req, res) => res.sendFile('reviews.html', { root: reviewDirectory }));
+app.get('/briefing', reviewHeaders, (_req, res) => res.sendFile('briefing.html', { root: reviewDirectory }));
 app.use('/review-assets', reviewHeaders, express.static(reviewDirectory, { index: false, dotfiles: 'deny' }));
 
 app.get('/health', (_req, res) => {
@@ -898,6 +915,11 @@ app.get('/ready', (_req, res) => {
 
 app.use('/v1', requireToken);
 app.use('/v1', readOnlyMiddleware(runtime));
+
+app.get('/v1/briefing', async (_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json(await buildBriefing({ call: odooCall, state: store.snapshot() }));
+});
 
 app.get('/v1/classification-reviews', (_req, res) => {
   res.set('Cache-Control', 'no-store');
