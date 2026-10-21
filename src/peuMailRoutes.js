@@ -16,10 +16,12 @@ export function mountPeuMail(app,{withImap,parse,stateFile}) {
   const folder=req=>{const value=req.body?.folder||req.query.folder;if(value!=='INBOX')throw problem('folder_not_authorized',403);return value;};
   app.get('/v1/peu/aruba/:account/folders',wrap(async()=>({folders:(await service.folders('pietro')).folders.filter(f=>f.path==='INBOX')})));
   app.post('/v1/peu/aruba/:account/sync',wrap(async req=>{
-    folder(req); if(!syncing) syncing=service.sync('pietro','INBOX').finally(()=>{syncing=null;});
-    const result=await syncing;
-    console.log(JSON.stringify({event:'peu_aruba_sync',account:'pietro',status:result.status,new_messages:result.new_messages}));
-    return result;
+    folder(req); if(!syncing) syncing=service.sync('pietro','INBOX').then(result=>{console.log(JSON.stringify({event:'peu_aruba_sync',account:'pietro',status:result.status,new_messages:result.new_messages}));return result;}).finally(()=>{syncing=null;});
+    // The initial history import outlives an HTTP request. Keep one job and
+    // expose partial coverage instead of repeatedly timing out or duplicating it.
+    let timer;
+    try{return await Promise.race([syncing,new Promise(resolve=>{timer=setTimeout(()=>resolve({status:'syncing',coverage:'backfill_in_progress'}),8000);})]);}
+    finally{clearTimeout(timer);}
   }));
   app.get('/v1/peu/aruba/:account/messages',wrap(req=>({messages:service.messages('pietro',folder(req))})));
   app.get('/v1/peu/aruba/:account/thread',wrap(req=>service.thread('pietro',String(req.query.thread||''))));
