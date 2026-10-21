@@ -24,3 +24,63 @@ test('CRM only writes after Fancy approval and verifies result',async()=>{const 
 test('incorrect confirmation rejected',async()=>{const f=fixture(),c=f.command('mail.prepare',mail,'prep');c.confirmation.payload_hash='bad';await assert.rejects(f.contract.execute(c));assert.equal(f.sent,0);});
 test('ledger survives database close/reopen and interrupted effects become unknown',async()=>{const file=join(mkdtempSync(join(tmpdir(),'peu-ledger-')),'ledger.sqlite'),f=fixture(file),p=(await f.contract.execute(f.command('mail.prepare',mail,'prep'))).result;f.approve(p.action_id);const params={action_id:p.action_id,payload_hash:p.payload_hash};await f.contract.execute(f.command('mail.send',params,'send'));f.config.db.prepare("INSERT INTO peu_effects VALUES('interrupted','hash','executing',NULL)").run();f.config.db.close();const db=new DatabaseSync(file),restarted=makePeuContract({...f.config,db});await restarted.execute(f.command('mail.send',params,'new-request'));assert.equal(f.sent,1);assert.equal(db.prepare("SELECT status FROM peu_effects WHERE action_id='interrupted'").get().status,'unknown');db.close();});
 test('Peu token denies admin, approvals, direct sending and hello',()=>{const middleware=accessControl({PEU_ACCESS_TOKEN:'scoped'});for(const [method,url,expected] of [['GET','/v1/peu/aruba/pietro/folders',200],['POST','/v1/peu/commands',200],['GET','/v1/peu/aruba/hello/folders',403],['GET','/v1/diagnostics',403],['POST','/v1/approvals/a/confirm',403],['POST','/v1/pietro/send',403],['POST','/v1/actions/a/execute',403]]){let status=200;middleware({method,originalUrl:url,headers:{authorization:'Bearer scoped'}},{status(s){status=s;return this;},json(){}},()=>{});assert.equal(status,expected);}});
+
+function review(f,key='review',extra={}) {return f.approvals.store.queueClassification({source_key:key,account:'hello',sender:'service@example.invalid',subject:'Account notification',excerpt:'Untrusted message',reason:'commercial_intent_not_established',...extra}).item;}
+async function snapshot(f,row){return (await f.contract.execute(f.command('reviews.get',{review_id:row.id},'get-'+row.id))).result.item.snapshot_hash;}
+test('review listing is bounded, exposes no routing internals and creates no business effects',async()=>{
+ const f=fixture();review(f,'a');review(f,'b');
+ const first=(await f.contract.execute(f.command('reviews.list',{limit:1},'list'))).result;
+ assert.equal(first.total,2);assert.equal(first.items.length,1);assert(first.next_after_id);
+ const next=(await f.contract.execute(f.command('reviews.list',{limit:1,after_id:first.next_after_id},'next'))).result;
+ assert.equal(next.items.length,1);assert.notEqual(first.items[0].id,next.items[0].id);assert.equal(next.next_after_id,null);
+ assert.equal('source_key' in first.items[0],false);assert.equal(f.writes,0);assert.equal(f.sent,0);assert.equal(Object.keys(f.approvals.store.state.actions).length,0);
+});
+test('confirmed exact review closes once, replay works after contract restart',async()=>{
+ const f=fixture(),row=review(f),p={review_id:row.id,snapshot_hash:await snapshot(f,row),resolution:'NOT_COMMERCIAL',note:'Notifica di servizio non commerciale'};
+ const cmd=f.command('reviews.resolve',p,'close');const result=await f.contract.execute(cmd);
+ assert.equal(result.result.status,'resolved');assert.equal(f.approvals.store.state.classification_reviews[row.id].resolved_by_role,'peu_owner');
+ assert.deepEqual(await makePeuContract(f.config).execute(cmd),result);
+ await assert.rejects(f.contract.execute(f.command('reviews.resolve',p,'close-again')),e=>e.code==='review_already_closed');
+ assert.equal(f.writes,0);assert.equal(f.sent,0);assert.equal(Object.keys(f.approvals.store.state.actions).length,0);
+});
+test('review close requires exact confirmation and never accepts a chosen actor',async()=>{
+ const f=fixture(),r=review(f),p={review_id:r.id,snapshot_hash:await snapshot(f,r),resolution:'NOT_COMMERCIAL',note:'Non pertinente alle richieste'};
+ const c=f.command('reviews.resolve',p,'close');c.confirmation.confirmed=false;
+ await assert.rejects(f.contract.execute(c),e=>e.code==='exact_confirmation_required');
+ await assert.rejects(f.contract.execute(f.command('reviews.resolve',{...p,actor:'admin'},'spoof')));
+ assert.equal(r.status,'DA_CLASSIFICARE');
+});
+test('changed review and an altered command cannot close a different case',async()=>{
+ const f=fixture(),r=review(f),other=review(f,'other'),p={review_id:r.id,snapshot_hash:await snapshot(f,r),resolution:'NOT_COMMERCIAL',note:'Non pertinente alle richieste'};
+ r.excerpt='Changed since read';await assert.rejects(f.contract.execute(f.command('reviews.resolve',p,'stale')),e=>e.code==='review_changed_reconfirm');
+ const c=f.command('reviews.resolve',p,'tampered');c.parameters={...p,review_id:other.id};await assert.rejects(f.contract.execute(c),e=>e.code==='exact_confirmation_required');
+ assert.equal(r.status,'DA_CLASSIFICARE');assert.equal(other.status,'DA_CLASSIFICARE');
+});
+test('interrupted operations cannot be dismissed or reconciled through Peu',async()=>{
+ const f=fixture(),r=review(f,'uncertain',{operation_id:'unfinished'});
+ const detail=(await f.contract.execute(f.command('reviews.get',{review_id:r.id},'details'))).result.item;
+ assert.deepEqual(detail.allowed_resolutions,[]);
+ for(const resolution of ['NOT_COMMERCIAL','HANDLED_MANUALLY'])await assert.rejects(f.contract.execute(f.command('reviews.resolve',{review_id:r.id,snapshot_hash:detail.snapshot_hash,resolution,note:'Controllo generico via voce'},resolution)),e=>e.code==='manual_reconciliation_required');
+ assert.equal(r.status,'DA_CLASSIFICARE');
+});
+test('read-only and restore quarantine block review closure',async()=>{
+ for(const mode of ['readOnly','recovery']){
+ const f=fixture(),r=review(f),p={review_id:r.id,snapshot_hash:await snapshot(f,r),resolution:'NOT_COMMERCIAL',note:'Notifica di servizio non commerciale'};
+ if(mode==='recovery')f.approvals.store.state.recovery={required:true};
+ else f.config.assertWritable=()=>{throw Object.assign(new Error('read_only'),{status:403,code:'read_only'});};
+ await assert.rejects(makePeuContract(f.config).execute(f.command('reviews.resolve',p,mode)));
+ assert.equal(r.status,'DA_CLASSIFICARE');
+ }
+});
+test('failed persistence leaves the review open and no successful receipt',async()=>{
+ const f=fixture(),r=review(f),p={review_id:r.id,snapshot_hash:await snapshot(f,r),resolution:'NOT_COMMERCIAL',note:'Notifica di servizio non commerciale'};
+ f.approvals.store.save=()=>{throw Error('disk failure');};
+ await assert.rejects(f.contract.execute(f.command('reviews.resolve',p,'failure')),e=>e.code==='review_persistence_failed');
+ assert.equal(f.approvals.store.state.classification_reviews[r.id].status,'DA_CLASSIFICARE');assert.equal(f.contract.status('failure').status,'unknown');
+});
+test('reader and reviewer credentials cannot invoke Peu commands',()=>{
+ const middleware=accessControl({REVIEW_READ_TOKEN:'read',REVIEW_WRITE_TOKEN:'write',PEU_ACCESS_TOKEN:'owner-bridge'});
+ for(const token of ['read','write','invalid']){
+ let status=200;middleware({method:'POST',originalUrl:'/v1/peu/commands',headers:{authorization:'Bearer '+token}},{status(s){status=s;return this;},json(){}},()=>{});assert.equal(status,token==='invalid'?401:403);
+ }
+});
