@@ -17,7 +17,7 @@ export const BUNDLE_LIMITS=Object.freeze({state:32*MiB,sqlite:1024*MiB,manifest:
 export const bundleKeyPattern=/^fancy-ai-state-v1\/\d{4}-\d{2}-\d{2}T[\d-]+Z-[a-f0-9-]+\.bundle\.enc$/;
 const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 function keyBytes(key){if(!/^[a-f0-9]{64}$/i.test(key||''))throw Error('Chiave backup non valida');return Buffer.from(key,'hex');}
-export function byteLimit(max){let size=0;return new Transform({transform(chunk,_enc,done){size+=chunk.length;done(size>max?Error('Limite dimensioni backup superato'):null,chunk);}});}
+export function byteLimit(max,progress=()=>{}){let size=0;return new Transform({transform(chunk,_enc,done){size+=chunk.length;progress(size);done(size>max?Error('Limite dimensioni backup superato'):null,chunk);}});}
 export function privateDirectory(prefix='fancy-backup-'){return fs.mkdtempSync(join(tmpdir(),prefix));}
 export function removePrivateDirectory(directory){fs.rmSync(directory,{recursive:true,force:true});}
 async function fileHash(file,algorithm='sha256',encoding='hex'){const h=crypto.createHash(algorithm);for await(const chunk of fs.createReadStream(file))h.update(chunk);return h.digest(encoding);}
@@ -74,7 +74,7 @@ export async function sealBundle(capture,directory,key){
 
 // Never imports the server, SMTP, Odoo, or polling code. Extraction is into a
 // freshly created private directory; no caller-selected file is overwritten.
-export async function restoreBundle(file,destination,key){
+export async function restoreBundle(file,destination,key,progress=()=>{}){
  if(fs.existsSync(destination))throw Error('Destinazione già esistente: non sovrascrivo');
  const size=fs.statSync(file).size;
  if(size<37||size>BUNDLE_LIMITS.encrypted)throw Error('Dimensioni backup non valide');
@@ -86,6 +86,7 @@ export async function restoreBundle(file,destination,key){
   const raw=join(staging,'payload'),decipher=crypto.createDecipheriv('aes-256-gcm',keyBytes(key),header.subarray(8));
   decipher.setAAD(MAGIC);decipher.setAuthTag(tag);
   await pipeline(fs.createReadStream(file,{start:20,end:size-17}),decipher,createGunzip(),byteLimit(BUNDLE_LIMITS.plain),fs.createWriteStream(raw,{flags:'wx',mode:0o600}));
+  progress('decrypted');
   const input=fs.openSync(raw,'r');let manifest,offset,stateBytes;
   try {
    const length=Buffer.alloc(4);if(fs.readSync(input,length,0,4,0)!==4)throw Error('Backup parziale');
@@ -102,8 +103,10 @@ export async function restoreBundle(file,destination,key){
   if(digest(stateBytes)!==manifest.files[0].sha256)throw Error('Hash stato non valido');
   const state=validateState(JSON.parse(stateBytes.toString())),sqliteFile=join(staging,'peu-aruba.sqlite');
   await pipeline(fs.createReadStream(raw,{start:offset}),fs.createWriteStream(sqliteFile,{flags:'wx',mode:0o600}));
+  progress('extracted');
   if(await fileHash(sqliteFile)!==manifest.files[1].sha256)throw Error('Hash SQLite non valido');
   const counts=checkSqlite(sqliteFile,state);
+  progress('integrity_checked');
   if(JSON.stringify(counts)!==JSON.stringify(manifest.counts))throw Error('Conteggi registro non corrispondenti');
   const recovery={required:true,backup_id:manifest.id,captured_at:manifest.captured_at,reason:'Reconcile Odoo, SMTP and approvals after backup before ANY external write'};
   state.recovery=recovery;

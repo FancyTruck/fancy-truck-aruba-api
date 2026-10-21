@@ -8,7 +8,7 @@ let input='';
 for await(const chunk of process.stdin){input+=chunk;if(input.length>65)throw Error('Invalid key input');}
 try{
  const [file,destination]=process.argv.slice(2);
- const result=await restoreBundle(file,destination,input.trim());
+ const result=await restoreBundle(file,destination,input.trim(),stage=>process.stderr.write(JSON.stringify({stage,rss:process.memoryUsage().rss})+'\n'));
  input='';
  const stateFile=join(destination,'fancy-truck-state.json');
  if(!recoveryRequired(stateFile,JSON.parse(fs.readFileSync(stateFile,'utf8'))))throw Error('Recovery quarantine missing');

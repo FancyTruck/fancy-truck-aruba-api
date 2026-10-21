@@ -8,7 +8,16 @@ export function isolatedBackupRestore(file,destination,key){
   child.on('error',()=>{failed=true;clearTimeout(timeout);reject(Error('Isolated restore process failed'));});
   child.stdin.on('error',()=>{failed=true;});
   child.stdout.on('data',chunk=>{output+=chunk;if(output.length>16384){failed=true;child.kill('SIGKILL');}});
-  child.stderr.resume();
+  let diagnostics='';
+  child.stderr.on('data',chunk=>{
+   diagnostics+=chunk;
+   if(diagnostics.length>16384){diagnostics='';return;}
+   let end;
+   while((end=diagnostics.indexOf('\n'))>=0){
+    const line=diagnostics.slice(0,end);diagnostics=diagnostics.slice(end+1);
+    try{const value=JSON.parse(line);if(['decrypted','extracted','integrity_checked'].includes(value.stage)&&Number.isSafeInteger(value.rss))console.log(JSON.stringify({event:'external_backup_restore_progress',stage:value.stage,rss:value.rss}));}catch{}
+   }
+  });
   child.on('close',code=>{
    clearTimeout(timeout);
    if(failed||code!==0)return reject(Error('Isolated restore failed'));

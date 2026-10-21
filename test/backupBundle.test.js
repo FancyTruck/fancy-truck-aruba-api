@@ -122,6 +122,16 @@ test('upload then download and isolated restore verify the new format even after
  assert.equal((await runExternalBackup({...f,env,client,now,canCapture:()=>true})).isolated_process,true);
  assert.equal(client.calls.filter(c=>c==='PutObjectCommand').length,before);
 });
+test('interrupted verification resumes the uploaded object without another capture or upload',async t=>{
+ const f=fixture(t),versions=[],client=mockBucket({versions}),now=new Date();
+ const first=await runExternalBackup({...f,env,client,now,canCapture:()=>true});
+ delete f.store.state.idempotency[`external-bundle-v2:${now.toISOString().slice(0,10)}`];
+ versions.push({Key:first.key,Size:first.bytes,LastModified:now,IsLatest:true,VersionId:'existing'});
+ const before=client.calls.filter(c=>c==='PutObjectCommand').length;
+ const resumed=await runExternalBackup({...f,env,client,now,canCapture:()=>false});
+ assert.equal(resumed.resumed,true);assert.equal(resumed.key,first.key);assert.equal(resumed.isolated_process,true);
+ assert.equal(client.calls.filter(c=>c==='PutObjectCommand').length,before);
+});
 for(const failure of ['upload','download','partial','tamper'])test(`${failure} failure never marks verified or deletes old backups`,async t=>{
  const f=fixture(t),client=mockBucket({failure});
  await assert.rejects(runExternalBackup({...f,env,client,canCapture:()=>true}));

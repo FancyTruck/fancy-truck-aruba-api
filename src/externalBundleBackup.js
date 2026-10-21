@@ -21,10 +21,23 @@ export async function downloadBundle(client,bucket,key,file){
  const result=await send(client,new GetObjectCommand({Bucket:bucket,Key:key}));
  if(result.ContentLength>BUNDLE_LIMITS.encrypted)throw Error('Backup troppo grande');
  const body=result.Body?.[Symbol.asyncIterator]?result.Body:Readable.fromWeb(result.Body.transformToWebStream());
- await pipeline(body,byteLimit(BUNDLE_LIMITS.encrypted),fs.createWriteStream(file,{flags:'wx',mode:0o600}));
+ let reported=0;
+ await pipeline(body,byteLimit(BUNDLE_LIMITS.encrypted,size=>{if(size-reported>=64*1024*1024){reported=size;console.log(JSON.stringify({event:'external_backup_download_progress',bytes:size,rss:process.memoryUsage().rss}));}}),fs.createWriteStream(file,{flags:'wx',mode:0o600}));
  if(result.ContentLength!==undefined&&fs.statSync(file).size!==result.ContentLength)throw Error('Download parziale');
  const h=crypto.createHash('sha256');for await(const chunk of fs.createReadStream(file))h.update(chunk);
  return h.digest('hex');
+}
+async function listBackupObjects(client,bucket){
+ const objects=[];let keyMarker,versionMarker;
+ do{
+  const page=await send(client,new ListObjectVersionsCommand({Bucket:bucket,Prefix:prefix,KeyMarker:keyMarker,VersionIdMarker:versionMarker}));
+  objects.push(...(page.Versions||[]),...(page.DeleteMarkers||[]));
+  if(objects.length>10000)throw Error('Troppi backup: verifica conservazione richiesta');
+  const previous=JSON.stringify([keyMarker,versionMarker]);
+  keyMarker=page.IsTruncated?page.NextKeyMarker:undefined;versionMarker=page.IsTruncated?page.NextVersionIdMarker:undefined;
+  if(page.IsTruncated&&(!keyMarker||JSON.stringify([keyMarker,versionMarker])===previous))throw Error('Elenco versioni incompleto');
+ }while(keyMarker);
+ return objects;
 }
 export async function runBundleBackup({store,db,env,client,now=new Date(),canCapture}){
  const marker=`external-bundle-v2:${now.toISOString().slice(0,10)}`;
@@ -45,26 +58,34 @@ export async function runBundleBackup({store,db,env,client,now=new Date(),canCap
   }finally{removePrivateDirectory(directory);}
  }
  const directory=privateDirectory();
- let stage='capture';
+ let stage='list';
  try {
-  // Capture happens before the first await: no interleaving with application
-  // handlers, background mail cache writes, or approval state changes.
+  const objects=await listBackupObjects(client,env.BACKUP_S3_BUCKET);
+  const storedBytes=objects.reduce((n,o)=>n+(o.Size||0),0);
+  // An upload may have completed before a process interruption. Reuse today's
+  // authenticated encrypted object instead of making duplicate large uploads.
+  const existing=objects.filter(o=>o.IsLatest!==false&&o.Size>0&&bundleKeyPattern.test(o.Key||'')&&o.Key.startsWith(prefix+now.toISOString().slice(0,10)+'T'))
+    .sort((a,b)=>new Date(b.LastModified)-new Date(a.LastModified))[0];
+  if(existing){
+   console.log(JSON.stringify({event:'external_backup_progress',stage:'resume_uploaded',bytes:existing.Size}));
+   stage='download';const file=join(directory,'download.enc');
+   const sha256=await downloadBundle(client,env.BACKUP_S3_BUCKET,existing.Key,file);
+   console.log(JSON.stringify({event:'external_backup_progress',stage:'downloaded',bytes:fs.statSync(file).size}));
+   stage='restore';const restored=await isolatedBackupRestore(file,join(directory,'isolated-restore'),env.BACKUP_ENCRYPTION_KEY);
+   const result={status:'VERIFIED',format:2,key:existing.Key,bytes:fs.statSync(file).size,stored_bytes_before:storedBytes,sha256,
+    captured_at:restored.manifest.captured_at,verified_at:new Date().toISOString(),counts:restored.counts,restore_writes_blocked:true,isolated_process:true,
+    source_bytes:{state:restored.manifest.files[0].bytes,sqlite:restored.manifest.files[1].bytes},estimated_daily_copies_within_quota:Math.floor((1024*1024*1024-storedBytes)/existing.Size),resumed:true};
+   stage='record';store.remember(marker,result);return result;
+  }
+  stage='capture';
+  // captureBundle is synchronous after its quiescence check: no interleaving
+  // with handlers, mail cache writes, or approval changes during the snapshot.
   const capture=captureBundle({store,db,directory,canCapture});
   console.log(JSON.stringify({event:'external_backup_progress',stage:'captured',sqlite_bytes:fs.statSync(capture.sqliteFile).size}));
   stage='encrypt';
   const sealed=await sealBundle(capture,directory,env.BACKUP_ENCRYPTION_KEY);
   console.log(JSON.stringify({event:'external_backup_progress',stage:'encrypted',bytes:sealed.bytes}));
-  stage='list';
-  const objects=[];let keyMarker,versionMarker;
-  do {
-   const page=await send(client,new ListObjectVersionsCommand({Bucket:env.BACKUP_S3_BUCKET,Prefix:prefix,KeyMarker:keyMarker,VersionIdMarker:versionMarker}));
-   objects.push(...(page.Versions||[]),...(page.DeleteMarkers||[]));
-   if(objects.length>10000)throw Error('Troppi backup: verifica conservazione richiesta');
-   const previous=JSON.stringify([keyMarker,versionMarker]);
-   keyMarker=page.IsTruncated?page.NextKeyMarker:undefined;versionMarker=page.IsTruncated?page.NextVersionIdMarker:undefined;
-   if(page.IsTruncated&&(!keyMarker||JSON.stringify([keyMarker,versionMarker])===previous))throw Error('Elenco versioni incompleto');
-  }while(keyMarker);
-  const storedBytes=objects.reduce((n,o)=>n+(o.Size||0),0);
+  stage='quota';
   if(storedBytes+sealed.bytes>1024*1024*1024)throw Error('Limite prudenziale backup di 1 GB raggiunto');
   const key=`${prefix}${now.toISOString().replace(/[:.]/g,'-')}-${sealed.manifest.id}.bundle.enc`;
   stage='upload';
@@ -76,6 +97,7 @@ export async function runBundleBackup({store,db,env,client,now=new Date(),canCap
   const downloaded=join(directory,'download.enc');
   stage='download';
   if(await downloadBundle(client,env.BACKUP_S3_BUCKET,key,downloaded)!==sealed.sha256)throw Error('Oggetto scaricato non corrispondente');
+  console.log(JSON.stringify({event:'external_backup_progress',stage:'downloaded',bytes:sealed.bytes}));
   stage='restore';
   const restored=await isolatedBackupRestore(downloaded,join(directory,'isolated-restore'),env.BACKUP_ENCRYPTION_KEY);
   // Verification uses only native file/SQLite access. No application is started,
