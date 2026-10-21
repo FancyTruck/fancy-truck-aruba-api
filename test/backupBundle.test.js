@@ -51,7 +51,7 @@ test('coherent encrypted bundle restores both stores, deduplicates success and b
  // This external effect happened after the snapshot and is absent from it.
  await f.contract.execute(f.command('mail.send',pending,'send-later'));assert.equal(f.sent,2);
  const destination=join(f.directory,'restore'),r=await restoreBundle(sealed.file,destination,key);
- assert.equal(r.counts.mail_messages,1);assert.equal(r.counts.peu_effects,1);assert.equal(r.recovery_required,true);
+ assert.equal(r.counts.mail_messages,0);assert.equal(r.counts.peu_effects,1);assert.equal(r.recovery_required,true);
  const store=new JsonStateStore(join(destination,'fancy-truck-state.json')),db=openMailDb(join(destination,'peu-aruba.sqlite'));
  try{
   const restored=makePeuContract({...f.config,db,approvals:new ApprovalService(store,'test-only')});
@@ -113,10 +113,10 @@ test('upload then download and isolated restore verify the new format even after
  const result=await runExternalBackup({...f,env,client,now,canCapture:()=>true});
  assert.equal(result.format,2);assert.equal(result.status,'VERIFIED');assert.equal(result.restore_writes_blocked,true);
  assert.equal(result.isolated_process,true);
- assert.equal(result.counts.mail_messages,1);
+ assert.equal(result.counts.mail_messages,0);
  assert.deepEqual(client.calls,['ListObjectVersionsCommand','PutObjectCommand','GetObjectCommand','DeleteObjectCommand']);
  assert.equal((await runExternalBackup({...f,env,client,now,canCapture:()=>true})).status,'ALREADY_VERIFIED_TODAY');
- const marker=`external-bundle-v2:${now.toISOString().slice(0,10)}`;
+ const marker=`external-bundle-operational-v1:${now.toISOString().slice(0,10)}`;
  delete f.store.state.idempotency[marker].result.isolated_process;
  const before=client.calls.filter(c=>c==='PutObjectCommand').length;
  assert.equal((await runExternalBackup({...f,env,client,now,canCapture:()=>true})).isolated_process,true);
@@ -125,7 +125,7 @@ test('upload then download and isolated restore verify the new format even after
 test('interrupted verification resumes the uploaded object without another capture or upload',async t=>{
  const f=fixture(t),versions=[],client=mockBucket({versions}),now=new Date();
  const first=await runExternalBackup({...f,env,client,now,canCapture:()=>true});
- delete f.store.state.idempotency[`external-bundle-v2:${now.toISOString().slice(0,10)}`];
+ delete f.store.state.idempotency[`external-bundle-operational-v1:${now.toISOString().slice(0,10)}`];
  versions.push({Key:first.key,Size:first.bytes,LastModified:now,IsLatest:true,VersionId:'existing'});
  const before=client.calls.filter(c=>c==='PutObjectCommand').length;
  const resumed=await runExternalBackup({...f,env,client,now,canCapture:()=>false});
@@ -136,11 +136,11 @@ for(const failure of ['upload','download','partial','tamper'])test(`${failure} f
  const f=fixture(t),client=mockBucket({failure});
  await assert.rejects(runExternalBackup({...f,env,client,canCapture:()=>true}));
  assert(!client.calls.includes('DeleteObjectCommand'));
- assert(!Object.keys(f.store.state.idempotency).some(k=>k.startsWith('external-bundle-v2:')));
+ assert(!Object.keys(f.store.state.idempotency).some(k=>k.startsWith('external-bundle-operational-v1:')));
 });
 test('quota includes hidden versions and prevents upload; legacy objects never deleted by bundle retention',async t=>{
- const f=fixture(t),client=mockBucket({versions:[{Key:'old',Size:1024*1024*1024,IsLatest:false}]});
- await assert.rejects(runExternalBackup({...f,env,client,canCapture:()=>true}),/1 GB/);
+ const f=fixture(t),client=mockBucket({versions:[{Key:'old',Size:10_000_000_000,IsLatest:false}]});
+ await assert.rejects(runExternalBackup({...f,env,client,canCapture:()=>true}),/10 GB/);
  assert.deepEqual(client.calls,['ListObjectVersionsCommand']);
  const legacy=mockBucket({versions:[{Key:'fancy-ai-state-v1/2020-01-01T00-00-00-000Z-abc.json.enc',VersionId:'legacy',Size:20,LastModified:new Date('2020-01-01')}]});
  await runExternalBackup({...f,env,client:legacy,canCapture:()=>true});assert(!legacy.calls.includes('DeleteObjectCommand'));
@@ -160,11 +160,11 @@ test('restored server overrides writable settings and exposes recovery and missi
 
 test('configured quota counts uploaded bytes, hidden versions and rejects invalid policies',async t=>{
  const {bundleBackupPolicy,bundleCapacity}=await import('../src/externalBundleBackup.js');
- assert.deepEqual(bundleBackupPolicy({}),{quotaBytes:1073741824,retentionDays:30});
+ assert.deepEqual(bundleBackupPolicy({}),{quotaBytes:10000000000,retentionDays:30});
  assert.equal(bundleCapacity(821923596,410865722,1073741824).capacity_status,'NEXT_BACKUP_BLOCKED');
  assert.equal(bundleCapacity(900,100,1000).estimated_daily_copies_within_quota,1);
  assert.equal(bundleCapacity(1001,100,1000).estimated_daily_copies_within_quota,0);
- for(const value of ['0','NaN','8000000001'])assert.throws(()=>bundleBackupPolicy({BACKUP_MAX_STORAGE_BYTES:value}));
+ for(const value of ['0','NaN','10000000001'])assert.throws(()=>bundleBackupPolicy({BACKUP_MAX_STORAGE_BYTES:value}));
  assert.throws(()=>bundleBackupPolicy({BACKUP_RETENTION_DAYS:'0'}));
  const f=fixture(t),client=mockBucket({versions:[{Key:'hidden',Size:1073741824,IsLatest:false}]});
  const result=await runExternalBackup({...f,env:{...env,BACKUP_MAX_STORAGE_BYTES:'8000000000'},client,canCapture:()=>true});
@@ -180,9 +180,26 @@ test('shorter retention is opt in and applies after verified resume without dele
  assert.equal(daily.verified_at,first.verified_at);
  assert.equal(daily.stored_bytes,first.bytes+100);
  assert(!client.calls.includes('DeleteObjectCommand'));
- delete f.store.state.idempotency[`external-bundle-v2:${now.toISOString().slice(0,10)}`];
+ delete f.store.state.idempotency[`external-bundle-operational-v1:${now.toISOString().slice(0,10)}`];
  const resumed=await runExternalBackup({...f,env:{...env,BACKUP_RETENTION_DAYS:'7'},client,now,canCapture:()=>false});
  assert.equal(client.calls.filter(c=>c==='DeleteObjectCommand').length,1);
  assert.equal(resumed.stored_bytes,first.bytes);
  assert.equal(client.calls.filter(c=>c==='PutObjectCommand').length,1);
+});
+
+test('operational snapshot excludes received mail and cursors, keeps source and exact approvals intact',async t=>{
+ const f=fixture(t);await f.prepare('approval-preserved');
+ f.db.prepare('UPDATE mail_messages SET payload=?').run('{"text":"CACHE_ONLY_SENTINEL"}');
+ f.store.state.classification_reviews.review={excerpt:'private received message',message_id:'source-id'};
+ f.store.state.events=Array.from({length:200},(_,i)=>({i}));
+ f.store.state.cycles=Array.from({length:50},(_,i)=>({i}));
+ const before=JSON.stringify(f.store.snapshot()),c=capture(f);
+ assert.equal(JSON.stringify(f.store.snapshot()),before);
+ assert.equal(f.db.prepare('SELECT count(*) n FROM mail_messages').get().n,1);
+ assert.equal(f.db.prepare('SELECT count(*) n FROM mail_cursors').get().n,1);
+ assert.equal(c.capture.counts.mail_messages,0);assert.equal(c.capture.counts.mail_cursors,0);
+ assert.equal(c.capture.state.classification_reviews.review.excerpt,undefined);
+ assert.equal(c.capture.state.events.length,100);assert.equal(c.capture.state.cycles.length,30);
+ assert.deepEqual(c.capture.state.actions,f.store.state.actions);
+ assert(!fs.readFileSync(c.capture.sqliteFile).includes(Buffer.from('CACHE_ONLY_SENTINEL')));
 });

@@ -7,6 +7,7 @@ import {pipeline} from 'node:stream/promises';
 import {createGzip, createGunzip} from 'node:zlib';
 import {DatabaseSync} from 'node:sqlite';
 import {validateState} from './stateBackup.js';
+import {openMailDb} from './peuMailDb.js';
 
 const MAGIC=Buffer.from('FANCYB02');
 const MiB=1024*1024;
@@ -14,7 +15,8 @@ const MiB=1024*1024;
 // streamed; this is not a corresponding RAM allocation. Bucket quota remains
 // independently enforced against the compressed/encrypted object size.
 export const BUNDLE_LIMITS=Object.freeze({state:32*MiB,sqlite:1024*MiB,manifest:64*1024,encrypted:1060*MiB,plain:1057*MiB});
-export const bundleKeyPattern=/^fancy-ai-state-v1\/\d{4}-\d{2}-\d{2}T[\d-]+Z-[a-f0-9-]+\.bundle\.enc$/;
+export const bundleKeyPattern=/^fancy-ai-state-v1\/\d{4}-\d{2}-\d{2}T[\d-]+Z-[a-f0-9-]+(?:\.operational)?\.bundle\.enc$/;
+export const BACKUP_SCOPE='operational-only-v1';
 const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 function keyBytes(key){if(!/^[a-f0-9]{64}$/i.test(key||''))throw Error('Chiave backup non valida');return Buffer.from(key,'hex');}
 export function byteLimit(max,progress=()=>{}){let size=0;return new Transform({transform(chunk,_enc,done){size+=chunk.length;progress(size);done(size>max?Error('Limite dimensioni backup superato'):null,chunk);}});}
@@ -45,11 +47,29 @@ export function captureBundle({store,db,directory,canCapture=()=>false}){
  if(page*size>BUNDLE_LIMITS.sqlite)throw Error('SQLite oltre 1 GiB: rivedere capacità e conservazione');
  const disk=fs.statfsSync(directory);
  if(disk.bavail*disk.bsize<6*(page*size+BUNDLE_LIMITS.state))throw Error('Spazio temporaneo insufficiente per backup e ripristino isolato');
- const state=validateState(store.snapshot()), stateBytes=Buffer.from(JSON.stringify(state));
+ const state=validateState(store.snapshot());
+ // Diagnostic history is reconstructible; approvals and deduplication are not.
+ state.events=state.events.slice(-100);state.cycles=state.cycles.slice(-30);
+ for(const review of Object.values(state.classification_reviews))delete review.excerpt;
+ const stateBytes=Buffer.from(JSON.stringify(state));
  if(stateBytes.length>BUNDLE_LIMITS.state)throw Error('Stato oltre 32 MiB');
  const stateFile=join(directory,'state.json'),sqliteFile=join(directory,'peu-aruba.sqlite');
  fs.writeFileSync(stateFile,stateBytes,{flag:'wx',mode:0o600});
- db.prepare('VACUUM INTO ?').run(sqliteFile);
+ // Build a fresh DB rather than copying/deleting mail pages (which can retain
+ // deleted contents). Empty mail cursors force a fresh read after recovery.
+ const target=openMailDb(sqliteFile);
+ try {
+  target.exec('PRAGMA journal_mode=DELETE; BEGIN');
+  for(const table of ['peu_operations','peu_effects','peu_recovery']){
+   const schema=db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name=?").get(table);
+   if(!schema){if(table==='peu_recovery')continue;throw Error('Registro Peu incompleto');}
+   target.exec(schema.sql);
+   const columns=db.prepare(`PRAGMA table_info(${table})`).all().map(c=>c.name);
+   const insert=target.prepare(`INSERT INTO ${table} VALUES(${columns.map(()=>'?').join(',')})`);
+   for(const row of db.prepare(`SELECT * FROM ${table}`).iterate())insert.run(...columns.map(c=>row[c]));
+  }
+  target.exec('COMMIT');
+ } finally {target.close();}
  fs.chmodSync(sqliteFile,0o600);
  const bytes=fs.statSync(sqliteFile).size;
  if(bytes>BUNDLE_LIMITS.sqlite)throw Error('SQLite oltre limite');
@@ -58,7 +78,7 @@ export function captureBundle({store,db,directory,canCapture=()=>false}){
 
 export async function sealBundle(capture,directory,key){
  const manifest={format:2,id:crypto.randomUUID(),started_at:capture.started_at,captured_at:capture.captured_at,
-  consistency:'single-process-quiescent-synchronous',reconciliation_required:true,counts:capture.counts,
+  consistency:'single-process-quiescent-synchronous',scope:BACKUP_SCOPE,mail_cache_included:false,reconciliation_required:true,counts:capture.counts,
   files:[{name:'state.json',bytes:fs.statSync(capture.stateFile).size,sha256:await fileHash(capture.stateFile)},
          {name:'peu-aruba.sqlite',bytes:fs.statSync(capture.sqliteFile).size,sha256:await fileHash(capture.sqliteFile)}]};
  const json=Buffer.from(JSON.stringify(manifest)),length=Buffer.alloc(4);length.writeUInt32BE(json.length);
@@ -108,6 +128,7 @@ export async function restoreBundle(file,destination,key,progress=()=>{}){
   const counts=checkSqlite(sqliteFile,state);
   progress('integrity_checked');
   if(JSON.stringify(counts)!==JSON.stringify(manifest.counts))throw Error('Conteggi registro non corrispondenti');
+  if(manifest.scope===BACKUP_SCOPE&&(counts.mail_messages!==0||counts.mail_cursors!==0))throw Error('Cache mail presente nel backup operativo');
   const recovery={required:true,backup_id:manifest.id,captured_at:manifest.captured_at,reason:'Reconcile Odoo, SMTP and approvals after backup before ANY external write'};
   state.recovery=recovery;
   const db=new DatabaseSync(sqliteFile);

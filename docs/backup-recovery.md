@@ -2,30 +2,39 @@
 
 ## Ambito
 
-Una copia cifra insieme lo stato JSON Fancy e **tutto** `peu-aruba.sqlite`
-(cache, cursori, richieste ed effetti). Non è un backup del database separato
-del servizio Peu AI, né degli allegati non conservati nella cache.
+Una copia cifra insieme lo stato operativo JSON Fancy e il registro SQLite
+di richieste, effetti e quarantena. Esclude messaggi e cursori della cache mail:
+le tabelle sono ricreate vuote, senza copiare pagine contenenti messaggi.
+Non esegue backup di Odoo, delle caselle Aruba o del database separato Peu AI.
+Conserva dettagli esatti delle operazioni approvate, esiti e riferimenti CRM
+necessari a riconciliazione e protezione dai duplicati: non è un backup privo
+di dati personali. Esclude gli estratti delle email dalla coda di classificazione;
+limita la diagnostica a 100 eventi e 30 cicli, senza tagliare il registro effetti.
 Riutilizza bucket, chiave AES-256-GCM, credenziali e prefisso
-`fancy-ai-state-v1/` esistenti; il suffisso nuovo è `.bundle.enc`.
+`fancy-ai-state-v1/` esistenti; il suffisso nuovo è `.operational.bundle.enc`.
+Il manifest dichiara `scope: operational-only-v1`. Vecchie copie restano leggibili
+ma non valgono come prova giornaliera della nuova politica.
 Nessuna credenziale amministrativa viene distribuita a Peu.
 
 ## Coerenza e verifica
 
 - Il servizio ha un solo processo proprietario degli archivi. Sono escluse
   richieste API attive, cicli operativi concorrenti e registri `executing`.
-  JSON e `VACUUM INTO` SQLite sono catturati senza alcun `await`: nessun callback
+  JSON e copia selettiva delle tabelle SQLite sono catturati senza alcun `await`: nessun callback
   applicativo può modificarli tra le due copie. Non avviare writer esterni o
   processi aggiuntivi sugli stessi file: invaliderebbero questa garanzia.
 - Manifest cifrato con identificativo, inizio/fine cattura, nomi fissi,
   dimensioni, SHA-256 e conteggi. Hash e tag GCM verificano l'intera copia.
 - Compressione/cifratura, upload, download e decifratura sono in streaming.
   Limiti distinti: JSON 32 MiB, SQLite 1 GiB (dimensione del disco esistente),
-  oggetto cifrato 1060 MiB. La quota del bucket di 1 GiB è comunque verificata
+  oggetto cifrato 1060 MiB. La quota di 10 GB decimali è comunque verificata
   PRIMA dell'upload e può rifiutare un oggetto entro questi limiti tecnici.
   Verifica spazio temporaneo prima della cattura. Superare un limite produce
   allarme, non un backup incompleto né una cancellazione della cache.
 - Prima dell'upload sono elencate tutte le versioni sotto il prefisso autorizzato,
-  inclusi oggetti nascosti; quota prudenziale invariata 1 GiB. La quota non è
+  inclusi oggetti nascosti; quota di 10.000.000.000 byte sul prefisso gestito.
+  Non misura altri prefissi o bucket dell'account e non garantisce gratuità.
+  La quota non è
   una garanzia di spazio del fornitore: errori del bucket restano errori.
 - Dopo l'upload si scarica l'oggetto reale, confronta SHA-256, decifra ed estrae
   in directory temporanea privata, tramite processo separato con ambiente vuoto
@@ -38,7 +47,7 @@ Nessuna credenziale amministrativa viene distribuita a Peu.
   I contenuti delle email e le chiavi non sono scritti nei log.
 - Copie formato 2 più vecchie di 30 giorni sono eliminate per versione solo
   dopo la prova riuscita. Le copie JSON precedenti restano invariate.
-  Se il budget 1 GiB non basta per la conservazione, serve una scelta esplicita
+  Se il budget 10 GB non basta per la conservazione, serve una scelta esplicita
   su capacità/conservazione: nessun aumento di costo o cancellazione anticipata
   è automatico.
 
@@ -71,6 +80,10 @@ Ripristinare prima in un ambiente isolato senza credenziali CRM/SMTP e senza
 uscita di rete; non sostituire archivi live.
 
 Il JSON e SQLite contengono inoltre marcatori persistenti di quarantena.
+La cache ricevuta va riletta da Aruba dopo il ripristino: mail eliminate dal
+provider non sono recuperabili da queste copie. Non riutilizzare vecchi cursori
+di sincronizzazione Peu con la cache vuota. I checkpoint del flusso commerciale
+Fancy rimangono invece nel JSON per evitare di rielaborare le email passate.
 L'avvio del backend con anche uno solo dei marcatori impone sola lettura e
 disabilita i cicli automatici, indipendentemente da READ_ONLY/AUTOMATION_ENABLED.
 Il contratto Peu impone anch'esso la quarantena. Gli effetti conclusi restano
@@ -117,18 +130,16 @@ conservazione e rifiuto sovrascrittura. SMTP/Odoo nei test sono funzioni sinteti
 
 ### Capacity and restart reporting
 
-Bundle backups accept `BACKUP_MAX_STORAGE_BYTES` (default 1073741824,
-maximum 8000000000) and `BACKUP_RETENTION_DAYS` (default 30, range 1–365).
-Changing retention requires an explicit operator decision; deploying this code
-alone preserves the existing limits. Shorter retention deletes only expired
-managed bundle versions after a replacement has passed isolated verification,
-including when verification resumes an interrupted upload. Legacy JSON backups
-are unchanged. Capacity includes hidden versions and the newly uploaded copy;
-`NEXT_BACKUP_BLOCKED` means the next same-sized copy does not fit. It is an
-estimate, not a promise about growth or provider billing. Daily verification
-markers retain their original verification timestamp when capacity is refreshed.
+Bundle backups accept `BACKUP_MAX_STORAGE_BYTES` (default and maximum
+10000000000 decimal bytes) and `BACKUP_RETENTION_DAYS` (default 30, range 1–365).
+Changing retention requires an explicit operator decision. Shorter retention
+deletes only expired managed bundle versions after isolated verification,
+including resumed uploads. Legacy JSON backups remain unchanged. Capacity
+includes hidden versions and the newly uploaded copy; `NEXT_BACKUP_BLOCKED`
+means the next same-sized copy does not fit. Estimates do not guarantee costs
+or future growth. Daily verification retains the original verification time.
 
-On writable server startup, previous RUNNING cycles become INTERRUPTED with an
-audit entry. Checkpoints, mail operations and approvals are untouched; the
-interrupted cycle is never represented as completed or replayed by this repair.
-Read-only and recovery-quarantined starts do not perform this mutation.
+On writable startup, previous RUNNING cycles become INTERRUPTED with an audit
+entry. Checkpoints, operations and approvals are untouched; cycles are not
+replayed or marked completed. Quarantined/read-only startup makes no such change.
+

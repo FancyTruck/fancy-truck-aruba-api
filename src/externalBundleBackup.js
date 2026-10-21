@@ -4,14 +4,14 @@ import {join} from 'node:path';
 import {Readable} from 'node:stream';
 import {pipeline,finished} from 'node:stream/promises';
 import {PutObjectCommand,GetObjectCommand,ListObjectVersionsCommand,DeleteObjectCommand} from '@aws-sdk/client-s3';
-import {captureBundle,sealBundle,privateDirectory,removePrivateDirectory,byteLimit,BUNDLE_LIMITS,bundleKeyPattern} from './backupBundle.js';
+import {captureBundle,sealBundle,privateDirectory,removePrivateDirectory,byteLimit,BUNDLE_LIMITS,bundleKeyPattern,BACKUP_SCOPE} from './backupBundle.js';
 import {isolatedBackupRestore} from './isolatedBackupRestore.js';
 
 const prefix='fancy-ai-state-v1/';
 export function bundleBackupPolicy(env) {
- const quotaBytes=Number(env.BACKUP_MAX_STORAGE_BYTES ?? 1024*1024*1024);
+ const quotaBytes=Number(env.BACKUP_MAX_STORAGE_BYTES ?? 10_000_000_000);
  const retentionDays=Number(env.BACKUP_RETENTION_DAYS ?? 30);
- if(!Number.isSafeInteger(quotaBytes)||quotaBytes<1||quotaBytes>8_000_000_000)throw Error('Quota backup non valida: massimo 8 GB');
+ if(!Number.isSafeInteger(quotaBytes)||quotaBytes<1||quotaBytes>10_000_000_000)throw Error('Quota backup non valida: massimo 10 GB');
  if(!Number.isInteger(retentionDays)||retentionDays<1||retentionDays>365)throw Error('Conservazione backup non valida');
  return {quotaBytes,retentionDays};
 }
@@ -31,7 +31,7 @@ async function pruneVerifiedObjects(client,bucket,objects,now,policy,verifiedKey
 const send=(client,command)=>client.send(command,{abortSignal:AbortSignal.timeout(120000)});
 export function backupFailureDetails(error){
  const message=String(error?.message||'');
- const rules=[['operazioni in corso','BUSY'],['registro in esecuzione','EXECUTING'],['SQLite oltre','SQLITE_SIZE_LIMIT'],['Spazio temporaneo','TEMP_SPACE'],['non coerenti','INCONSISTENT_STORES'],['no such table','MISSING_TABLE'],['1 GB','BUCKET_QUOTA'],['non corrispondente','HASH_MISMATCH']];
+ const rules=[['operazioni in corso','BUSY'],['registro in esecuzione','EXECUTING'],['SQLite oltre','SQLITE_SIZE_LIMIT'],['Spazio temporaneo','TEMP_SPACE'],['non coerenti','INCONSISTENT_STORES'],['no such table','MISSING_TABLE'],['10 GB','BUCKET_QUOTA'],['non corrispondente','HASH_MISMATCH']];
  const reason=rules.find(([text])=>message.includes(text))?.[1]||'BACKUP_FAILED';
  const names=['Error','InvalidArgument','InvalidRequest','NotImplemented','AccessDenied','NoSuchBucket','TimeoutError','AbortError','TypeError','InternalError','ServiceUnavailable','RequestTimeout','BadRequest'];
  return {stage:error?.backupStage||'configuration',reason,type:names.includes(error?.name)?error.name:'OTHER',http_status:Number.isInteger(error?.$metadata?.httpStatusCode)?error.$metadata.httpStatusCode:undefined};
@@ -61,7 +61,7 @@ async function listBackupObjects(client,bucket){
 }
 export async function runBundleBackup({store,db,env,client,now=new Date(),canCapture}){
  const policy=bundleBackupPolicy(env);
- const marker=`external-bundle-v2:${now.toISOString().slice(0,10)}`;
+ const marker=`external-bundle-operational-v1:${now.toISOString().slice(0,10)}`;
  if(store.has(marker)){
   const previous=store.remember(marker).result;
   if(previous?.isolated_process===true){
@@ -90,14 +90,15 @@ export async function runBundleBackup({store,db,env,client,now=new Date(),canCap
   // An upload may have completed before a process interruption. Reuse today's
   // authenticated encrypted object instead of making duplicate large uploads.
   const existing=objects.filter(o=>o.IsLatest!==false&&o.Size>0&&bundleKeyPattern.test(o.Key||'')&&o.Key.startsWith(prefix+now.toISOString().slice(0,10)+'T'))
-    .sort((a,b)=>new Date(b.LastModified)-new Date(a.LastModified))[0];
+    .filter(o=>o.Key.endsWith('.operational.bundle.enc')).sort((a,b)=>new Date(b.LastModified)-new Date(a.LastModified))[0];
   if(existing){
    console.log(JSON.stringify({event:'external_backup_progress',stage:'resume_uploaded',bytes:existing.Size}));
    stage='download';const file=join(directory,'download.enc');
    const sha256=await downloadBundle(client,env.BACKUP_S3_BUCKET,existing.Key,file);
    console.log(JSON.stringify({event:'external_backup_progress',stage:'downloaded',bytes:fs.statSync(file).size}));
    stage='restore';const restored=await isolatedBackupRestore(file,join(directory,'isolated-restore'),env.BACKUP_ENCRYPTION_KEY);
-   const result={status:'VERIFIED',format:2,key:existing.Key,bytes:fs.statSync(file).size,stored_bytes_before:storedBytes,sha256,
+   if(restored.manifest.scope!==BACKUP_SCOPE)throw Error('Ambito backup non valido');
+   const result={status:'VERIFIED',scope:BACKUP_SCOPE,format:2,key:existing.Key,bytes:fs.statSync(file).size,stored_bytes_before:storedBytes,sha256,
     captured_at:restored.manifest.captured_at,verified_at:new Date().toISOString(),counts:restored.counts,restore_writes_blocked:true,isolated_process:true,
     source_bytes:{state:restored.manifest.files[0].bytes,sqlite:restored.manifest.files[1].bytes},...bundleCapacity(storedBytes,existing.Size,policy.quotaBytes),resumed:true};
    stage='retention';
@@ -114,8 +115,8 @@ export async function runBundleBackup({store,db,env,client,now=new Date(),canCap
   const sealed=await sealBundle(capture,directory,env.BACKUP_ENCRYPTION_KEY);
   console.log(JSON.stringify({event:'external_backup_progress',stage:'encrypted',bytes:sealed.bytes}));
   stage='quota';
-  if(storedBytes+sealed.bytes>policy.quotaBytes)throw Error('Limite prudenziale backup raggiunto (predefinito 1 GB)');
-  const key=`${prefix}${now.toISOString().replace(/[:.]/g,'-')}-${sealed.manifest.id}.bundle.enc`;
+  if(storedBytes+sealed.bytes>policy.quotaBytes)throw Error('Limite prudenziale backup raggiunto (massimo 10 GB)');
+  const key=`${prefix}${now.toISOString().replace(/[:.]/g,'-')}-${sealed.manifest.id}.operational.bundle.enc`;
   stage='upload';
   const body=fs.createReadStream(sealed.file);
   const closed=finished(body).catch(()=>{});
@@ -130,7 +131,7 @@ export async function runBundleBackup({store,db,env,client,now=new Date(),canCap
   const restored=await isolatedBackupRestore(downloaded,join(directory,'isolated-restore'),env.BACKUP_ENCRYPTION_KEY);
   // Verification uses only native file/SQLite access. No application is started,
   // and no credentials or external-action adapters reach the restore function.
-  const result={status:'VERIFIED',format:2,key,bytes:sealed.bytes,stored_bytes_before:storedBytes,sha256:sealed.sha256,
+  const result={status:'VERIFIED',scope:BACKUP_SCOPE,format:2,key,bytes:sealed.bytes,stored_bytes_before:storedBytes,sha256:sealed.sha256,
    captured_at:sealed.manifest.captured_at,verified_at:new Date().toISOString(),counts:restored.counts,restore_writes_blocked:restored.recovery_required,isolated_process:restored.isolated_process,
    source_bytes:{state:sealed.manifest.files[0].bytes,sqlite:sealed.manifest.files[1].bytes},
    ...bundleCapacity(storedBytes+sealed.bytes,sealed.bytes,policy.quotaBytes)};
