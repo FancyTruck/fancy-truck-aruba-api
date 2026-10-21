@@ -7,6 +7,7 @@ import { missingRequestDetails, requiredRequestDetails, REQUEST_CATEGORIES } fro
 import { fileURLToPath } from 'node:url';
 import { pollOdooMessages } from './odooPolling.js';
 import { runMailOperation } from './mailOperations.js';
+import { quotationPricelist, procedureStage } from './commercialSafeguards.js';
 import { pollMailbox } from './mailPolling.js';
 import crypto from 'node:crypto';
 import express from 'express';
@@ -312,17 +313,16 @@ async function askCustomerForMissingDetails(leadId, partner, senderName, missing
 }
 
 async function setLeadProcedureStatus(leadId, status) {
-  const label = status === 'DA_INTEGRARE' ? 'Da integrare' : 'Qualificate';
-  const stages = await odooCall('crm.stage', 'search_read', [[['name', '=ilike', label]]], {
-    fields: ['name'], limit: 5,
-  }).catch(() => []);
-  const exact = stages.filter((stage) => String(stage.name).trim().toLowerCase() === label.toLowerCase());
-  if (exact.length === 1) await odooCall('crm.lead', 'write', [[leadId], { stage_id: exact[0].id }]);
+  const stages = await odooCall('crm.stage', 'search_read', [[]], {
+    fields: ['name'], limit: 100,
+  });
+  const selectedStage = procedureStage(stages, status);
+  await odooCall('crm.lead', 'write', [[leadId], { stage_id: selectedStage.id }]);
   await odooCall('crm.lead', 'message_post', [[leadId]], {
     body: `<p><strong>Stato procedura: ${escapeHtml(status)}</strong></p>`,
     message_type: 'comment', subtype_xmlid: 'mail.mt_note',
   });
-  store.audit('ODOO_LEAD_PROCEDURE_STATUS', { lead_id: leadId, status, stage_updated: exact.length === 1 });
+  store.audit('ODOO_LEAD_PROCEDURE_STATUS', { lead_id: leadId, status, stage_updated: true, stage_id: selectedStage.id });
 }
 
 async function quotationTemplate(kind) {
@@ -422,6 +422,7 @@ async function createEconomicProject(lead, order, partner) {
 }
 
 async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
+  if (kind !== 'rental') throw new Error('I veicoli Fancy Truck sono esclusivamente a noleggio');
   const existing = await odooCall('sale.order', 'search_read', [[['opportunity_id', '=', lead.id]]], {
     fields: ['name', 'state', 'opportunity_id', 'is_rental_order'], limit: 1,
   });
@@ -454,8 +455,13 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
   }
 
   const line = draftProductLine(product, isRental, combinedText);
+  const pricingPartners = await odooCall('res.partner', 'search_read', [[['id', '=', partner.id]]], {
+    fields: ['company_type', 'vat', 'property_product_pricelist'], limit: 1,
+  });
+  if (!pricingPartners.length) throw new Error('Anagrafica per il listino non disponibile');
+  const pricelistId = quotationPricelist(pricingPartners[0]);
   const values = {
-    partner_id: partner.id, opportunity_id: lead.id, client_order_ref: `AUTO:${key}`,
+    partner_id: partner.id, pricelist_id: pricelistId, opportunity_id: lead.id, client_order_ref: `AUTO:${key}`,
     origin: lead.name, is_rental_order: isRental, order_line: [line],
   };
   if (template) {
