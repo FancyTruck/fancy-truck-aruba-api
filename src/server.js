@@ -4,6 +4,7 @@ import { pollSentMailbox } from './sentTracking.js';
 import { reconcileCrm } from './crmReconciliation.js';
 import { buildBriefing } from './briefing.js';
 import { runExternalBackup } from './externalBackup.js';
+import { applyRecoveryGuard } from './recoveryGuard.js';
 import { depositAmount, rentalTerms, PAYMENT_TERM_NAME } from './commercialTerms.js';
 import { prepareRentalLogistics } from './aiLogistics.js';
 import { logisticsDistancesFromRoutes } from './logisticsRoutes.js';
@@ -43,10 +44,15 @@ app.use(express.json({ limit: '2mb' }));
 
 const port = Number(process.env.PORT || 3000);
 const apiToken = process.env.API_TOKEN || '';
-const runtime = runtimeConfig();
+const initialRuntime = runtimeConfig();
 const startedAt = Date.now();
-const store = new JsonStateStore(runtime.stateFile);
+const store = new JsonStateStore(initialRuntime.stateFile);
+const runtime = applyRecoveryGuard(initialRuntime,store.state);
 const approvals = new ApprovalService(store);
+let activeApiRequests=0, backupInFlight=null;
+// Do not decrement on client disconnect: an aborted response can still have a
+// handler doing external work. Fail closed until restart if it never finishes.
+app.use('/v1',(_req,res,next)=>{activeApiRequests++;res.once('finish',()=>{activeApiRequests--;});next();});
 
 function accountConfig(accountName) {
   const key = String(accountName || '').toLowerCase();
@@ -746,7 +752,7 @@ async function runOperationalCycle({ force = false } = {}) {
     const summary = { read: 0, created: 0, updated: 0, duplicates: 0, suspended: 0, failed: 0, errors: [] };
     if (process.env.EXTERNAL_BACKUP_ENABLED === 'true') {
       try {
-        const backup = await runExternalBackup({store, env:process.env});
+        const backup = await verifiedExternalBackup();
         if (backup.status === 'VERIFIED') {
           store.integration('backup:external', {status:'OK',last_success_at:backup.verified_at,key:backup.key,bytes:backup.bytes});
           console.log('BACKUP ESTERNO: caricamento e ripristino di controllo verificati');
@@ -898,6 +904,17 @@ app.get('/v1/diagnostics', requireToken, (_req, res) => {
     automation_status: runtime.readOnly || !runtime.automationEnabled ? 'DISABLED' : stale ? 'DEGRADED' : 'OK',
     environment: runtime.environment,
     read_only: runtime.readOnly,
+    recovery_required: Boolean(runtime.recoveryRequired),
+    backup: {
+      required_format: process.env.PEU_ACCESS_TOKEN ? 2 : 1,
+      enabled: process.env.EXTERNAL_BACKUP_ENABLED === 'true',
+      last_verified_at: state.integrations['backup:external']?.last_success_at || null,
+      status: process.env.EXTERNAL_BACKUP_ENABLED !== 'true' ? 'DISABLED' :
+        (!state.integrations['backup:external']?.last_success_at ||
+         (process.env.PEU_ACCESS_TOKEN && state.integrations['backup:external']?.format !== 2) ||
+         Date.now()-Date.parse(state.integrations['backup:external'].last_success_at)>26*60*60*1000)
+          ? 'MISSING_OR_STALE' : state.integrations['backup:external'].status,
+    },
     automation_stale: stale,
     operating_window: '08:00-19:59 Europe/Rome',
     state_file: store.filePath,
@@ -924,6 +941,26 @@ let peuDb;
 if (process.env.PEU_ACCESS_TOKEN) {
   const {mountPeuMail}=await import('./peuMailRoutes.js');
   peuDb=mountPeuMail(app,{withImap,parse:simpleParser,stateFile:runtime.stateFile});
+}
+function verifiedExternalBackup(){
+ if(backupInFlight)return backupInFlight;
+ backupInFlight=runExternalBackup({store,env:process.env,db:peuDb,canCapture:()=>activeApiRequests===0})
+ .then(result=>{
+   if(result.status==='VERIFIED'){
+     store.integration('backup:external',{...result,status:'OK',last_success_at:result.verified_at});
+     console.log(JSON.stringify({event:'external_backup_verified',...result}));
+   }
+   return result;
+ }).finally(()=>{backupInFlight=null;});
+ return backupInFlight;
+}
+async function scheduledBackup(){
+ if(operationalCycleRunning||backupInFlight)return;
+ try{await verifiedExternalBackup();}
+ catch{
+   store.integration('backup:external',{status:'ERROR',error:'Backup completo non verificato: controllare registro, spazio e accesso al bucket'});
+   console.error(JSON.stringify({event:'external_backup_alarm',code:'BACKUP_NOT_VERIFIED'}));
+ }
 }
 app.use('/v1', readOnlyMiddleware(runtime));
 if (peuDb) {
@@ -1337,6 +1374,16 @@ const server = app.listen(port, runtime.host, (error) => {
     return;
   }
   console.log(`Fancy Truck Aruba API in ascolto sulla porta ${server.address().port}`);
+  if(runtime.recoveryRequired)console.error('RECOVERY_REQUIRED: scritture e automazioni bloccate fino a riconciliazione');
+  // Backup runs independently of business hours and never starts a CRM/mail
+  // cycle. Retry a busy/failed capture hourly; a new format is verified today
+  // even if the older JSON-only backup already succeeded.
+  if(process.env.EXTERNAL_BACKUP_ENABLED==='true'){
+    setTimeout(scheduledBackup,5000);
+    setInterval(scheduledBackup,60*60*1000);
+  }else if(peuDb){
+    console.error(JSON.stringify({event:'external_backup_alarm',code:'BACKUP_DISABLED'}));
+  }
   if (runtime.startupChecks) {
   Promise.allSettled(['hello', 'pietro'].map(verifyAccountConnections)).catch(() => {});
   odooCall('crm.stage', 'search_count', [[]])

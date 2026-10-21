@@ -14,6 +14,12 @@ const defs={
  'operation.execute':{effect:'write',parameters:approved},
 };
 export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritable}){
+ const applicationAssertWritable=assertWritable;
+ assertWritable=()=>{
+   if(approvals.store.state.recovery?.required||
+     (db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='peu_recovery'").get()&&db.prepare('SELECT 1 FROM peu_recovery WHERE required!=0 LIMIT 1').get()))throw problem('recovery_reconciliation_required',403);
+   applicationAssertWritable();
+ };
  db.exec(`CREATE TABLE IF NOT EXISTS peu_operations(key TEXT PRIMARY KEY,digest TEXT NOT NULL,status TEXT NOT NULL,result TEXT);
  CREATE TABLE IF NOT EXISTS peu_effects(action_id TEXT PRIMARY KEY,digest TEXT NOT NULL,status TEXT NOT NULL,result TEXT);`);
  // Interrupted effects are never automatically retried.

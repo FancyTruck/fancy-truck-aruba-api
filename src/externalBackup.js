@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectVersionsCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { validateState } from './stateBackup.js';
+import { runBundleBackup } from './externalBundleBackup.js';
 const prefix = 'fancy-ai-state-v1/';
 const maxBytes = 32 * 1024 * 1024;
 function keyBytes(key) {
@@ -38,8 +39,15 @@ export async function downloadBackup(client, bucket, key, encryptionKey) {
   if(result.ContentLength>maxBytes*2)throw Error('Backup troppo grande');
   return decryptState(Buffer.from(await result.Body.transformToByteArray()),encryptionKey);
 }
-export async function runExternalBackup({store,env,now=new Date(),client}) {
+export async function runExternalBackup({store,env,now=new Date(),client,db,canCapture}) {
   if(env.EXTERNAL_BACKUP_ENABLED!=='true')return {status:'DISABLED'};
+  // A configured Peu integration must never silently fall back to JSON-only.
+  if(env.PEU_ACCESS_TOKEN&&!db)throw Error('Registro Peu non disponibile per backup completo');
+  if(db){
+    const owned=!client;client??=backupClient(env);
+    try{return await runBundleBackup({store,env,now,client,db,canCapture});}
+    finally{if(owned)client.destroy();}
+  }
   const marker=`external-backup:${now.toISOString().slice(0,10)}`;
   if(store.has(marker))return {status:'ALREADY_VERIFIED_TODAY'};
   const owned=!client;
