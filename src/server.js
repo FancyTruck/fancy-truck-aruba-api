@@ -1,3 +1,6 @@
+import { matchQuotationThread } from './threadReferences.js';
+import { linkThreadMessage } from './threadLinking.js';
+import { pollSentMailbox } from './sentTracking.js';
 import { depositAmount, rentalTerms, PAYMENT_TERM_NAME } from './commercialTerms.js';
 import { prepareRentalLogistics } from './aiLogistics.js';
 import { logisticsDistancesFromRoutes } from './logisticsRoutes.js';
@@ -548,11 +551,13 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key, pa
   return { order: order[0] || { id: orderId }, project: economicProject, duplicate: false, rental_price_verified: rentalPriceVerified, logistics_status: logistics.status, logistics_price_verified: logisticsPriceVerified };
 }
 
-async function findReplyLead(senderEmail, subject) {
+async function findReplyLead(senderEmail, subject, parsed = {}) {
   const partners = await odooCall('res.partner', 'search_read', [[
     ['email', '=ilike', senderEmail],
   ]], { fields: ['id'], limit: 50 });
   const partnerIds = partners.map((partner) => partner.id);
+  const referenceMatch = await matchQuotationThread({subject,text:currentMessage(parsed.text),partnerIds,call:odooCall});
+  if(referenceMatch)return referenceMatch;
   const senderDomain = partnerIds.length
     ? ['|', ['email_from', '=ilike', senderEmail], ['partner_id', 'in', partnerIds]]
     : [['email_from', '=ilike', senderEmail]];
@@ -564,8 +569,13 @@ async function findReplyLead(senderEmail, subject) {
     const leadSubject = normalizeCommercialSubject(lead.name);
     return normalized && leadSubject && (normalized.includes(leadSubject) || leadSubject.includes(normalized));
   });
-  if (matched.length === 1) return { lead: matched[0], ambiguous: false };
+  if (matched.length === 1) {
+    const orders=await odooCall('sale.order','search_read',[[['opportunity_id','=',matched[0].id]]],{fields:['id'],limit:101});
+    if(orders.length>=101)return {ambiguous:true,candidate_ids:[matched[0].id],reason:'too_many_related_orders'};
+    return { lead: matched[0], ambiguous: false, ...(orders.length?{order_ids:orders.map(o=>o.id)}:{}) };
+  }
   if (matched.length > 1) return { lead: null, ambiguous: true, candidate_ids: matched.map((lead) => lead.id) };
+  if(leads.length)return {lead:null,ambiguous:true,candidate_ids:leads.map(l=>l.id),reason:'new_thread_existing_customer'};
   return { lead: null, ambiguous: false, candidate_ids: [] };
 }
 
@@ -628,6 +638,7 @@ async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
   });
   if (decision.action === 'skip') return { skipped: true, reason: decision.reason };
   if (decision.action === 'review') return { suspended: true, ...decision };
+  if (decision.action === 'link') return linkThreadMessage({parsed,match:decision.match,direction:'incoming',call:odooCall,store});
   if (decision.action === 'reply') return processQuoteReply(parsed, uid, decision.lead);
   const kind = decision.kind;
 
@@ -697,6 +708,22 @@ async function pollQuoteRequests(accountName) {
   return { rows: results, created, suspended };
 }
 
+async function processSentMessage(parsed, uid, account, validity, mailbox) {
+  const sender=String(parsed.from?.value?.[0]?.address||'').toLowerCase();
+  if(sender!==accountConfig(account).email.toLowerCase())return {skipped:true,reason:'mittente diverso dalla casella'};
+  const recipients=[...new Set([...(parsed.to?.value||[]),...(parsed.cc?.value||[])].map(v=>String(v.address||'').toLowerCase()).filter(v=>v&&!v.endsWith('@fancytruck.it')))];
+  const queue=(reason,candidates=[])=>{
+    const {item}=store.queueClassification({source_key:JSON.stringify(['sent',account,parsed.messageId||`${validity}:${uid}`]),account,mailbox,uid,uid_validity:validity,
+      message_id:parsed.messageId||null,sender,subject:parsed.subject||'',excerpt:currentMessage(parsed.text).slice(0,4000),reason,candidate_ids:candidates});
+    return {suspended:true,review_id:item.id,reason};
+  };
+  if(!recipients.length)return {skipped:true,reason:'messaggio interno'};
+  if(recipients.length!==1)return queue('outgoing_multiple_recipients');
+  const match=await findReplyLead(recipients[0],parsed.subject,parsed);
+  if(match.ambiguous||!match.lead)return queue(match.reason||'outgoing_thread_unmatched',match.candidate_ids);
+  return linkThreadMessage({parsed,match,direction:'outgoing',call:odooCall,store});
+}
+
 let operationalCycleRunning = false;
 
 async function runOperationalCycle({ force = false } = {}) {
@@ -740,6 +767,17 @@ async function runOperationalCycle({ force = false } = {}) {
       summary.errors.push(`odoo: ${error instanceof Error ? error.message : 'errore sconosciuto'}`);
       store.integration('odoo:crm', { status: 'CONTROLLO NON COMPLETATO', error: summary.errors.at(-1) });
     }
+    if(process.env.SENT_TRACKING_ENABLED==='true')for(const account of ['hello','pietro']){
+      try{
+        const result=await withImap(account,client=>pollSentMailbox({client,account,store,parse:simpleParser,
+          processMessage:(parsed,uid,validity,mailbox)=>runMailOperation({store,account,mailbox,validity,uid,parsed,
+            execute:()=>processSentMessage(parsed,uid,account,validity,mailbox)})}));
+        const suspended=result.rows.filter(r=>r.suspended).length;
+        summary.suspended+=suspended;
+        store.integration(`sent:${account}`,{status:suspended?'OK_WITH_SUSPENSIONS':'OK',mailbox:result.mailbox,initialized:result.initialized,last_success_at:new Date().toISOString()});
+        console.log(`POSTA INVIATA ${account}: ${result.initialized?'punto di partenza salvato':result.rows.length+' messaggi'}, ${suspended} da verificare`);
+      }catch(error){summary.failed++;summary.errors.push(`sent:${account}: ${error.message}`);store.integration(`sent:${account}`,{status:'CONTROLLO NON COMPLETATO',error:error.message});}
+    }
     return store.finishCycle(cycle.id, {
       ...summary,
       status: summary.failed ? 'CONTROLLO NON COMPLETATO' : summary.suspended ? 'COMPLETATO_CON_SOSPENSIONI' : 'COMPLETED',
@@ -771,9 +809,10 @@ async function pollOdooLeadReplies() {
     const senderEmail = String(emailMatch?.[1] || '').trim().toLowerCase();
     if (!senderEmail || senderEmail.endsWith('@fancytruck.it')) return { skipped: true };
     const leads = await odooCall('crm.lead', 'search_read', [[['id', '=', message.res_id]]], {
-      fields: ['name', 'description', 'partner_id', 'stage_id', 'create_date'], limit: 1,
+      fields: ['name', 'description', 'partner_id', 'stage_id', 'create_date', 'active'], context: { active_test: false }, limit: 1,
     });
     if (!leads.length) throw new Error(`Opportunità ${message.res_id} non disponibile per il messaggio ${message.id}`);
+    if (!leads[0].active) return { skipped: true, reason: 'opportunità archiviata', lead_id: message.res_id };
     const authorName = Array.isArray(message.author_id) ? message.author_id[1] : null;
     const parsed = {
       messageId: message.message_id || `odoo-mail-message-${message.id}`,
@@ -1249,4 +1288,4 @@ const server = app.listen(port, runtime.host, (error) => {
 });
 
 // Module exports permit isolated contract tests without exposing extra HTTP routes.
-export { processQuoteRequest, processQuoteReply, findReplyLead, server, store, approvals };
+export { processQuoteRequest, processQuoteReply, processSentMessage, findReplyLead, server, store, approvals };
