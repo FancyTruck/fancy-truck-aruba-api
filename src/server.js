@@ -5,6 +5,7 @@ import { reconcileCrm } from './crmReconciliation.js';
 import { buildBriefing } from './briefing.js';
 import { runExternalBackup } from './externalBackup.js';
 import { applyRecoveryGuard } from './recoveryGuard.js';
+import { backupFailureDetails } from './externalBundleBackup.js';
 import { depositAmount, rentalTerms, PAYMENT_TERM_NAME } from './commercialTerms.js';
 import { prepareRentalLogistics } from './aiLogistics.js';
 import { logisticsDistancesFromRoutes } from './logisticsRoutes.js';
@@ -757,11 +758,12 @@ async function runOperationalCycle({ force = false } = {}) {
           store.integration('backup:external', {status:'OK',last_success_at:backup.verified_at,key:backup.key,bytes:backup.bytes});
           console.log('BACKUP ESTERNO: caricamento e ripristino di controllo verificati');
         }
-      } catch {
+      } catch(error) {
         store.integration('backup:external', {status:'ERROR',error:'Backup esterno non verificato; controllare configurazione e spazio'});
         summary.failed++;
         summary.errors.push('Backup esterno non verificato');
         console.error('BACKUP ESTERNO: controllo non completato');
+        console.error(JSON.stringify({event:'external_backup_alarm',...backupFailureDetails(error)}));
       }
     }
     if (process.env.CRM_NOTIFICATION_CLEANUP_ENABLED === 'true') {
@@ -957,9 +959,9 @@ function verifiedExternalBackup(){
 async function scheduledBackup(){
  if(operationalCycleRunning||backupInFlight)return;
  try{await verifiedExternalBackup();}
- catch{
+ catch(error){
    store.integration('backup:external',{status:'ERROR',error:'Backup completo non verificato: controllare registro, spazio e accesso al bucket'});
-   console.error(JSON.stringify({event:'external_backup_alarm',code:'BACKUP_NOT_VERIFIED'}));
+   console.error(JSON.stringify({event:'external_backup_alarm',code:'BACKUP_NOT_VERIFIED',...backupFailureDetails(error)}));
  }
 }
 app.use('/v1', readOnlyMiddleware(runtime));
