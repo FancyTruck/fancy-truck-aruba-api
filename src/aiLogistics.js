@@ -42,7 +42,8 @@ export function verifiedGeocode(data, address) {
     const p = feature.properties || {}, c = feature.geometry?.coordinates;
     return p.layer === 'address' && p.country_a === 'ITA' && p.confidence >= 0.9
       && p.housenumber && p.street && (p.locality || p.localadmin)
-      && [p.housenumber, p.street, p.locality || p.localadmin].every(v => containsPart(address, v))
+      && [p.housenumber, p.street].every(v => containsPart(address, v))
+      && [p.locality, p.localadmin].filter(Boolean).some(city => containsPart(address, ({milan:'Milano',genoa:'Genova',rome:'Roma',florence:'Firenze',turin:'Torino',naples:'Napoli'})[norm(city)] || city))
       && Array.isArray(c) && c.length === 2 && c.every(Number.isFinite)
       && Math.abs(c[0]) <= 180 && Math.abs(c[1]) <= 90;
   });
@@ -58,8 +59,8 @@ export async function routeAddresses(addresses, { env = process.env, fetchImpl =
   const points = new Map();
   for (const address of new Set([config.depotAddress, addresses.delivery, addresses.collection])) {
     if (!address) throw failure('ADDRESS_MISSING');
-    if (address === config.depotAddress && env.LOGISTICS_VERIFIED_DEPOT) {
-      let verified; try { verified = JSON.parse(env.LOGISTICS_VERIFIED_DEPOT); } catch { throw failure('INVALID_DEPOT_OVERRIDE'); }
+    if (address === config.depotAddress && (env.LOGISTICS_VERIFIED_DEPOT || config.verifiedDepot)) {
+      let verified; try { verified = env.LOGISTICS_VERIFIED_DEPOT ? JSON.parse(env.LOGISTICS_VERIFIED_DEPOT) : config.verifiedDepot; } catch { throw failure('INVALID_DEPOT_OVERRIDE'); }
       if (verified.address !== config.depotAddress || !verified.source || !Array.isArray(verified.coordinates)
         || verified.coordinates.length !== 2 || !verified.coordinates.every(Number.isFinite)
         || Math.abs(verified.coordinates[0]) > 180 || Math.abs(verified.coordinates[1]) > 90) throw failure('INVALID_DEPOT_OVERRIDE');
@@ -75,13 +76,14 @@ export async function routeAddresses(addresses, { env = process.env, fetchImpl =
       method: 'POST', headers, body: JSON.stringify({ coordinates: [points.get(from).coordinates, points.get(to).coordinates], instructions: false }),
     }, fetchImpl);
     const route = data.routes?.[0], metres = route?.summary?.distance;
-    if (data.routes?.length !== 1 || typeof metres !== 'number' || !Number.isFinite(metres) || metres <= 0 || route.warnings?.length) throw failure('ROUTE_NOT_VERIFIED');
-    return metres / 1000;
+    if (data.routes?.length !== 1 || typeof metres !== 'number' || !Number.isFinite(metres) || metres <= 0 || (route.warnings || []).some(w => w.code !== 1)) throw failure('ROUTE_NOT_VERIFIED');
+    return { km: metres / 1000, warnings: (route.warnings || []).map(w => ({code:w.code, message:String(w.message || '').slice(0,300)})) };
   }
   const routes = { depotAddress: config.depotAddress, provider: 'openrouteservice', profile: 'driving-car', calculatedAt: new Date().toISOString(), delivery: {}, collection: {}, addresses };
   for (const service of ['delivery', 'collection']) {
-    routes[service].outboundKm = await leg(config.depotAddress, addresses[service]);
-    routes[service].returnKm = await leg(addresses[service], config.depotAddress);
+    const outbound = await leg(config.depotAddress, addresses[service]);
+    const returning = await leg(addresses[service], config.depotAddress);
+    routes[service] = { outboundKm:outbound.km, returnKm:returning.km, outboundWarnings:outbound.warnings, returnWarnings:returning.warnings };
   }
   return routes;
 }

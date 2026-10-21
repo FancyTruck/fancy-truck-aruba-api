@@ -40,8 +40,8 @@ test('four independent route legs are summed and minima separate; no price suppl
  assert.deepEqual(result.lines.map(l=>l[2].product_uom_qty),[100,170]);
  assert(result.lines.every(l=>!('price_unit' in l[2])));
 });
-test('route errors and warnings cannot become billable distances',async()=>{
- const fetchImpl=async url=>String(url).includes('geocode')?reply({features:[feature()]}):reply({routes:[{summary:{distance:1000},warnings:[{code:1}]}]});
+test('unrecognized routing warnings block billing',async()=>{
+ const fetchImpl=async url=>String(url).includes('geocode')?reply({features:[feature()]}):reply({routes:[{summary:{distance:1000},warnings:[{code:3}]}]});
  await assert.rejects(routeAddresses({delivery:addr,collection:addr},{env,fetchImpl,config:{depotAddress:addr}}),/ROUTE_NOT_VERIFIED/);
 });
 
@@ -49,4 +49,10 @@ test('house suffix is significant and warehouse override cannot survive an addre
  assert.throws(()=>verifiedGeocode({features:[feature()]},'Via Test 10R, Genova'));
  const result=await prepareRentalLogistics(addr+'. Ritiro stesso indirizzo',{env:{...env,LOGISTICS_VERIFIED_DEPOT:JSON.stringify({address:'Old warehouse',coordinates:[8,44],source:'operator'})},config:{depotAddress:addr},fetchImpl:ai(data)});
  assert.equal(result.status,'MANUAL_REVIEW');assert.equal(result.reason,'INVALID_DEPOT_OVERRIDE');
+});
+
+test('access restriction warning remains attached to the proposed route for human review',async()=>{
+ const fetchImpl=async url=>String(url).includes('geocode')?reply({features:[feature()]}):reply({routes:[{summary:{distance:1000},warnings:[{code:1,message:'There may be restrictions on some roads'}]}]});
+ const routes=await routeAddresses({delivery:addr,collection:addr},{env,fetchImpl,config:{depotAddress:addr}});
+ assert.equal(routes.delivery.outboundWarnings[0].code,1);assert.equal(routes.collection.returnWarnings[0].code,1);
 });

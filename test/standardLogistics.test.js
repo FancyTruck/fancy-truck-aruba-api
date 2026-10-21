@@ -23,3 +23,7 @@ test('missing, textual or invalid distances cannot become a minimum quote', () =
     assert.throws(() => standardLogisticsLines({ deliveryKm: 100, collectionKm: invalid }));
   }
 });
+
+test('fractional route totals match Odoo quantity precision without lowering minima',()=>{
+ assert.deepEqual(standardLogisticsLines({deliveryKm:291.02380000000005,collectionKm:99.999}).map(line=>line[2].product_uom_qty),[291.02,100]);
+});
