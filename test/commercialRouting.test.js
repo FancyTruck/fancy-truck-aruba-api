@@ -107,3 +107,8 @@ test('reused UID in a different mailbox generation is a distinct review', async 
   const second = await routeCommercialMessage({ ...args, uidValidity: '200' });
   assert.notEqual(first.review_id, second.review_id);
 });
+
+test('authorized test mailbox messages cannot enter production intake',async()=>{
+ const decision=await routeCommercialMessage({parsed:{subject:'Re: [FANCY-AI-COLLAUDO-20261021 / NOLEGGIO] Richiesta',text:'Noleggio Airstream',from:{value:[{address:'grafichefancytruck@gmail.com'}]}},store:{queueClassification:()=>{throw Error('Must not queue');}},findLead:()=>{throw Error('Must not read CRM');}});
+ assert.equal(decision.action,'skip');assert.equal(decision.reason,'authorized_test_message');
+});

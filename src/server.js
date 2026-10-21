@@ -1249,4 +1249,4 @@ const server = app.listen(port, runtime.host, (error) => {
 });
 
 // Module exports permit isolated contract tests without exposing extra HTTP routes.
-export { processQuoteRequest, processQuoteReply, server, store, approvals };
+export { processQuoteRequest, processQuoteReply, findReplyLead, server, store, approvals };
