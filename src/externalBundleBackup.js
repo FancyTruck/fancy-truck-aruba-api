@@ -8,6 +8,26 @@ import {captureBundle,sealBundle,privateDirectory,removePrivateDirectory,byteLim
 import {isolatedBackupRestore} from './isolatedBackupRestore.js';
 
 const prefix='fancy-ai-state-v1/';
+export function bundleBackupPolicy(env) {
+ const quotaBytes=Number(env.BACKUP_MAX_STORAGE_BYTES ?? 1024*1024*1024);
+ const retentionDays=Number(env.BACKUP_RETENTION_DAYS ?? 30);
+ if(!Number.isSafeInteger(quotaBytes)||quotaBytes<1||quotaBytes>8_000_000_000)throw Error('Quota backup non valida: massimo 8 GB');
+ if(!Number.isInteger(retentionDays)||retentionDays<1||retentionDays>365)throw Error('Conservazione backup non valida');
+ return {quotaBytes,retentionDays};
+}
+export function bundleCapacity(storedBytes,copyBytes,quotaBytes) {
+ const copies=copyBytes>0?Math.max(0,Math.floor((quotaBytes-storedBytes)/copyBytes)):0;
+ return {stored_bytes:storedBytes,quota_bytes:quotaBytes,estimated_daily_copies_within_quota:copies,capacity_status:copies?'OK':'NEXT_BACKUP_BLOCKED'};
+}
+async function pruneVerifiedObjects(client,bucket,objects,now,policy,verifiedKey) {
+ let deletedBytes=0;
+ for(const item of objects)if(item.Key!==verifiedKey&&bundleKeyPattern.test(item.Key||'')&&new Date(item.LastModified).getTime()<now.getTime()-policy.retentionDays*86400000){
+  if(!item.VersionId)throw Error('Versione backup mancante: conservazione interrotta');
+  await send(client,new DeleteObjectCommand({Bucket:bucket,Key:item.Key,VersionId:item.VersionId}));
+  deletedBytes+=item.Size||0;
+ }
+ return deletedBytes;
+}
 const send=(client,command)=>client.send(command,{abortSignal:AbortSignal.timeout(120000)});
 export function backupFailureDetails(error){
  const message=String(error?.message||'');
@@ -40,10 +60,15 @@ async function listBackupObjects(client,bucket){
  return objects;
 }
 export async function runBundleBackup({store,db,env,client,now=new Date(),canCapture}){
+ const policy=bundleBackupPolicy(env);
  const marker=`external-bundle-v2:${now.toISOString().slice(0,10)}`;
  if(store.has(marker)){
   const previous=store.remember(marker).result;
-  if(previous?.isolated_process===true)return {status:'ALREADY_VERIFIED_TODAY',format:2};
+  if(previous?.isolated_process===true){
+   const objects=await listBackupObjects(client,env.BACKUP_S3_BUCKET);
+   const storedBytes=objects.reduce((n,o)=>n+(o.Size||0),0);
+   return {...previous,...bundleCapacity(storedBytes,previous.bytes,policy.quotaBytes),status:'ALREADY_VERIFIED_TODAY',format:2};
+  }
   // Upgrade today's earlier in-process verification without uploading a second
   // large object or consuming more bucket quota.
   const directory=privateDirectory();
@@ -74,7 +99,10 @@ export async function runBundleBackup({store,db,env,client,now=new Date(),canCap
    stage='restore';const restored=await isolatedBackupRestore(file,join(directory,'isolated-restore'),env.BACKUP_ENCRYPTION_KEY);
    const result={status:'VERIFIED',format:2,key:existing.Key,bytes:fs.statSync(file).size,stored_bytes_before:storedBytes,sha256,
     captured_at:restored.manifest.captured_at,verified_at:new Date().toISOString(),counts:restored.counts,restore_writes_blocked:true,isolated_process:true,
-    source_bytes:{state:restored.manifest.files[0].bytes,sqlite:restored.manifest.files[1].bytes},estimated_daily_copies_within_quota:Math.floor((1024*1024*1024-storedBytes)/existing.Size),resumed:true};
+    source_bytes:{state:restored.manifest.files[0].bytes,sqlite:restored.manifest.files[1].bytes},...bundleCapacity(storedBytes,existing.Size,policy.quotaBytes),resumed:true};
+   stage='retention';
+   const deletedBytes=await pruneVerifiedObjects(client,env.BACKUP_S3_BUCKET,objects,now,policy,result.key);
+   Object.assign(result,bundleCapacity(result.stored_bytes-deletedBytes,result.bytes,policy.quotaBytes));
    stage='record';store.remember(marker,result);return result;
   }
   stage='capture';
@@ -86,7 +114,7 @@ export async function runBundleBackup({store,db,env,client,now=new Date(),canCap
   const sealed=await sealBundle(capture,directory,env.BACKUP_ENCRYPTION_KEY);
   console.log(JSON.stringify({event:'external_backup_progress',stage:'encrypted',bytes:sealed.bytes}));
   stage='quota';
-  if(storedBytes+sealed.bytes>1024*1024*1024)throw Error('Limite prudenziale backup di 1 GB raggiunto');
+  if(storedBytes+sealed.bytes>policy.quotaBytes)throw Error('Limite prudenziale backup raggiunto (predefinito 1 GB)');
   const key=`${prefix}${now.toISOString().replace(/[:.]/g,'-')}-${sealed.manifest.id}.bundle.enc`;
   stage='upload';
   const body=fs.createReadStream(sealed.file);
@@ -105,14 +133,11 @@ export async function runBundleBackup({store,db,env,client,now=new Date(),canCap
   const result={status:'VERIFIED',format:2,key,bytes:sealed.bytes,stored_bytes_before:storedBytes,sha256:sealed.sha256,
    captured_at:sealed.manifest.captured_at,verified_at:new Date().toISOString(),counts:restored.counts,restore_writes_blocked:restored.recovery_required,isolated_process:restored.isolated_process,
    source_bytes:{state:sealed.manifest.files[0].bytes,sqlite:sealed.manifest.files[1].bytes},
-   estimated_daily_copies_within_quota:Math.floor((1024*1024*1024-storedBytes)/sealed.bytes)};
-  // Keep legacy JSON copies unchanged; only this format's exact managed keys
-  // older than 30 days can be removed after a verified replacement exists.
+   ...bundleCapacity(storedBytes+sealed.bytes,sealed.bytes,policy.quotaBytes)};
+  // Delete only managed expired versions after a verified replacement exists.
   stage='retention';
-  for(const item of objects)if(bundleKeyPattern.test(item.Key||'')&&new Date(item.LastModified).getTime()<now.getTime()-30*86400000){
-   if(!item.VersionId)throw Error('Versione backup mancante: conservazione interrotta');
-   await send(client,new DeleteObjectCommand({Bucket:env.BACKUP_S3_BUCKET,Key:item.Key,VersionId:item.VersionId}));
-  }
+  const deletedBytes=await pruneVerifiedObjects(client,env.BACKUP_S3_BUCKET,objects,now,policy,key);
+  Object.assign(result,bundleCapacity(result.stored_bytes-deletedBytes,result.bytes,policy.quotaBytes));
   stage='record';store.remember(marker,result);return result;
  }catch(error){error.backupStage=stage;throw error;}
  finally{removePrivateDirectory(directory);}

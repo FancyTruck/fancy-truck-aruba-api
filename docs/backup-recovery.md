@@ -114,3 +114,21 @@ Include doppio archivio, cache/cursori, effetto concluso con nuova chiave,
 effetto successivo alla copia bloccato, esclusione operazioni attive, integrità,
 upload/download falliti, parzialità, alterazione, chiave errata, quota/versioni,
 conservazione e rifiuto sovrascrittura. SMTP/Odoo nei test sono funzioni sintetiche.
+
+### Capacity and restart reporting
+
+Bundle backups accept `BACKUP_MAX_STORAGE_BYTES` (default 1073741824,
+maximum 8000000000) and `BACKUP_RETENTION_DAYS` (default 30, range 1–365).
+Changing retention requires an explicit operator decision; deploying this code
+alone preserves the existing limits. Shorter retention deletes only expired
+managed bundle versions after a replacement has passed isolated verification,
+including when verification resumes an interrupted upload. Legacy JSON backups
+are unchanged. Capacity includes hidden versions and the newly uploaded copy;
+`NEXT_BACKUP_BLOCKED` means the next same-sized copy does not fit. It is an
+estimate, not a promise about growth or provider billing. Daily verification
+markers retain their original verification timestamp when capacity is refreshed.
+
+On writable server startup, previous RUNNING cycles become INTERRUPTED with an
+audit entry. Checkpoints, mail operations and approvals are untouched; the
+interrupted cycle is never represented as completed or replayed by this repair.
+Read-only and recovery-quarantined starts do not perform this mutation.

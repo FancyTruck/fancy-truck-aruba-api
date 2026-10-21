@@ -126,6 +126,22 @@ export class JsonStateStore {
     return cycle;
   }
 
+  reconcileInterruptedCycles() {
+    const pending = this.state.cycles.filter(cycle => cycle.status === 'RUNNING');
+    if (!pending.length) return 0;
+    const previous = clone(this.state);
+    const at = new Date().toISOString();
+    for (const cycle of pending) {
+      cycle.status = 'INTERRUPTED';
+      cycle.ended_at = at;
+      cycle.errors = [...(cycle.errors || []), 'Processo riavviato prima della chiusura del ciclo'];
+    }
+    this.state.events.push({id: crypto.randomUUID(), at, type: 'CYCLES_INTERRUPTED_ON_STARTUP', cycle_ids: pending.map(cycle => cycle.id)});
+    try { this.save(); }
+    catch (error) { this.state = previous; throw error; }
+    return pending.length;
+  }
+
   finishCycle(id, patch = {}) {
     const cycle = this.state.cycles.find((item) => item.id === id);
     if (!cycle) throw new Error(`Ciclo ${id} non trovato`);
