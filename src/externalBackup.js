@@ -30,6 +30,9 @@ export function backupClient(env) {
   if(new URL(env.BACKUP_S3_ENDPOINT).protocol!=='https:')throw Error('Backup richiede HTTPS');
   keyBytes(env.BACKUP_ENCRYPTION_KEY);
   return new S3Client({endpoint:env.BACKUP_S3_ENDPOINT,region:env.BACKUP_S3_REGION,forcePathStyle:true,maxAttempts:2,
+    // Avoid SDK-added aws-chunked CRC trailers on S3-compatible storage. Bundle
+    // uploads supply Content-MD5 and verify downloaded SHA-256 + AES-GCM.
+    requestChecksumCalculation:'WHEN_REQUIRED',responseChecksumValidation:'WHEN_REQUIRED',
     credentials:{accessKeyId:env.BACKUP_S3_ACCESS_KEY_ID,secretAccessKey:env.BACKUP_S3_SECRET_ACCESS_KEY}});
 }
 async function send(client, command) { return client.send(command,{abortSignal:AbortSignal.timeout(30000)}); }

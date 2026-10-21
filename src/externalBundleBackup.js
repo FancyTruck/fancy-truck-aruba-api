@@ -4,7 +4,8 @@ import {join} from 'node:path';
 import {Readable} from 'node:stream';
 import {pipeline,finished} from 'node:stream/promises';
 import {PutObjectCommand,GetObjectCommand,ListObjectVersionsCommand,DeleteObjectCommand} from '@aws-sdk/client-s3';
-import {captureBundle,sealBundle,restoreBundle,privateDirectory,removePrivateDirectory,byteLimit,BUNDLE_LIMITS,bundleKeyPattern} from './backupBundle.js';
+import {captureBundle,sealBundle,privateDirectory,removePrivateDirectory,byteLimit,BUNDLE_LIMITS,bundleKeyPattern} from './backupBundle.js';
+import {isolatedBackupRestore} from './isolatedBackupRestore.js';
 
 const prefix='fancy-ai-state-v1/';
 const send=(client,command)=>client.send(command,{abortSignal:AbortSignal.timeout(120000)});
@@ -12,7 +13,7 @@ export function backupFailureDetails(error){
  const message=String(error?.message||'');
  const rules=[['operazioni in corso','BUSY'],['registro in esecuzione','EXECUTING'],['SQLite oltre','SQLITE_SIZE_LIMIT'],['Spazio temporaneo','TEMP_SPACE'],['non coerenti','INCONSISTENT_STORES'],['no such table','MISSING_TABLE'],['1 GB','BUCKET_QUOTA'],['non corrispondente','HASH_MISMATCH']];
  const reason=rules.find(([text])=>message.includes(text))?.[1]||'BACKUP_FAILED';
- const names=['Error','InvalidArgument','InvalidRequest','NotImplemented','AccessDenied','NoSuchBucket','TimeoutError','AbortError','TypeError'];
+ const names=['Error','InvalidArgument','InvalidRequest','NotImplemented','AccessDenied','NoSuchBucket','TimeoutError','AbortError','TypeError','InternalError','ServiceUnavailable','RequestTimeout','BadRequest'];
  return {stage:error?.backupStage||'configuration',reason,type:names.includes(error?.name)?error.name:'OTHER',http_status:Number.isInteger(error?.$metadata?.httpStatusCode)?error.$metadata.httpStatusCode:undefined};
 }
 export async function downloadBundle(client,bucket,key,file){
@@ -27,15 +28,32 @@ export async function downloadBundle(client,bucket,key,file){
 }
 export async function runBundleBackup({store,db,env,client,now=new Date(),canCapture}){
  const marker=`external-bundle-v2:${now.toISOString().slice(0,10)}`;
- if(store.has(marker))return {status:'ALREADY_VERIFIED_TODAY',format:2};
+ if(store.has(marker)){
+  const previous=store.remember(marker).result;
+  if(previous?.isolated_process===true)return {status:'ALREADY_VERIFIED_TODAY',format:2};
+  // Upgrade today's earlier in-process verification without uploading a second
+  // large object or consuming more bucket quota.
+  const directory=privateDirectory();
+  try{
+   const file=join(directory,'download.enc');
+   if(await downloadBundle(client,env.BACKUP_S3_BUCKET,previous.key,file)!==previous.sha256)throw Error('Oggetto scaricato non corrispondente');
+   const restored=await isolatedBackupRestore(file,join(directory,'isolated-restore'),env.BACKUP_ENCRYPTION_KEY);
+   const result={...previous,verified_at:new Date().toISOString(),isolated_process:true,restore_writes_blocked:restored.recovery_required};
+   store.state.idempotency[marker].result=result;
+   try{store.save();}catch(error){store.state.idempotency[marker].result=previous;throw error;}
+   return result;
+  }finally{removePrivateDirectory(directory);}
+ }
  const directory=privateDirectory();
  let stage='capture';
  try {
   // Capture happens before the first await: no interleaving with application
   // handlers, background mail cache writes, or approval state changes.
   const capture=captureBundle({store,db,directory,canCapture});
+  console.log(JSON.stringify({event:'external_backup_progress',stage:'captured',sqlite_bytes:fs.statSync(capture.sqliteFile).size}));
   stage='encrypt';
   const sealed=await sealBundle(capture,directory,env.BACKUP_ENCRYPTION_KEY);
+  console.log(JSON.stringify({event:'external_backup_progress',stage:'encrypted',bytes:sealed.bytes}));
   stage='list';
   const objects=[];let keyMarker,versionMarker;
   do {
@@ -52,17 +70,18 @@ export async function runBundleBackup({store,db,env,client,now=new Date(),canCap
   stage='upload';
   const body=fs.createReadStream(sealed.file);
   const closed=finished(body).catch(()=>{});
-  try {await send(client,new PutObjectCommand({Bucket:env.BACKUP_S3_BUCKET,Key:key,Body:body,ContentLength:sealed.bytes,ContentType:'application/octet-stream'}));}
+  try {await send(client,new PutObjectCommand({Bucket:env.BACKUP_S3_BUCKET,Key:key,Body:body,ContentLength:sealed.bytes,ContentMD5:sealed.contentMD5,ContentType:'application/octet-stream'}));}
   finally {body.destroy();await closed;}
+  console.log(JSON.stringify({event:'external_backup_progress',stage:'uploaded',bytes:sealed.bytes}));
   const downloaded=join(directory,'download.enc');
   stage='download';
   if(await downloadBundle(client,env.BACKUP_S3_BUCKET,key,downloaded)!==sealed.sha256)throw Error('Oggetto scaricato non corrispondente');
   stage='restore';
-  const restored=await restoreBundle(downloaded,join(directory,'isolated-restore'),env.BACKUP_ENCRYPTION_KEY);
+  const restored=await isolatedBackupRestore(downloaded,join(directory,'isolated-restore'),env.BACKUP_ENCRYPTION_KEY);
   // Verification uses only native file/SQLite access. No application is started,
   // and no credentials or external-action adapters reach the restore function.
   const result={status:'VERIFIED',format:2,key,bytes:sealed.bytes,stored_bytes_before:storedBytes,sha256:sealed.sha256,
-   captured_at:sealed.manifest.captured_at,verified_at:new Date().toISOString(),counts:restored.counts,restore_writes_blocked:restored.recovery_required,
+   captured_at:sealed.manifest.captured_at,verified_at:new Date().toISOString(),counts:restored.counts,restore_writes_blocked:restored.recovery_required,isolated_process:restored.isolated_process,
    source_bytes:{state:sealed.manifest.files[0].bytes,sqlite:sealed.manifest.files[1].bytes},
    estimated_daily_copies_within_quota:Math.floor((1024*1024*1024-storedBytes)/sealed.bytes)};
   // Keep legacy JSON copies unchanged; only this format's exact managed keys

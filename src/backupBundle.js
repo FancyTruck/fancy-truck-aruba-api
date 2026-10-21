@@ -20,7 +20,7 @@ function keyBytes(key){if(!/^[a-f0-9]{64}$/i.test(key||''))throw Error('Chiave b
 export function byteLimit(max){let size=0;return new Transform({transform(chunk,_enc,done){size+=chunk.length;done(size>max?Error('Limite dimensioni backup superato'):null,chunk);}});}
 export function privateDirectory(prefix='fancy-backup-'){return fs.mkdtempSync(join(tmpdir(),prefix));}
 export function removePrivateDirectory(directory){fs.rmSync(directory,{recursive:true,force:true});}
-async function fileHash(file){const h=crypto.createHash('sha256');for await(const chunk of fs.createReadStream(file))h.update(chunk);return h.digest('hex');}
+async function fileHash(file,algorithm='sha256',encoding='hex'){const h=crypto.createHash(algorithm);for await(const chunk of fs.createReadStream(file))h.update(chunk);return h.digest(encoding);}
 function checkSqlite(file,state){
  const db=new DatabaseSync(file,{readOnly:true});
  try {
@@ -69,7 +69,7 @@ export async function sealBundle(capture,directory,key){
  async function* plain(){yield length;yield json;for(const path of [capture.stateFile,capture.sqliteFile])yield* fs.createReadStream(path);}
  await pipeline(Readable.from(plain()),createGzip(),cipher,byteLimit(BUNDLE_LIMITS.encrypted-36),fs.createWriteStream(file,{flags:'a'}));
  fs.appendFileSync(file,cipher.getAuthTag());
- return {file,manifest,bytes:fs.statSync(file).size,sha256:await fileHash(file)};
+ return {file,manifest,bytes:fs.statSync(file).size,sha256:await fileHash(file),contentMD5:await fileHash(file,'md5','base64')};
 }
 
 // Never imports the server, SMTP, Odoo, or polling code. Extraction is into a

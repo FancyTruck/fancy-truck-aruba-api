@@ -5,17 +5,31 @@ import {join} from 'node:path';
 import {Readable} from 'node:stream';
 import {spawn} from 'node:child_process';
 import {once} from 'node:events';
+import crypto from 'node:crypto';
+import {PutObjectCommand} from '@aws-sdk/client-s3';
 import {openMailDb} from '../src/peuMailDb.js';
 import {JsonStateStore} from '../src/store.js';
 import {ApprovalService} from '../src/policy.js';
 import {makePeuContract} from '../src/peuContract.js';
 import {hash} from '../src/peuCommon.js';
 import {captureBundle,sealBundle,restoreBundle,privateDirectory,removePrivateDirectory} from '../src/backupBundle.js';
-import {runExternalBackup} from '../src/externalBackup.js';
+import {runExternalBackup,backupClient} from '../src/externalBackup.js';
 import {recoveryRequired,applyRecoveryGuard} from '../src/recoveryGuard.js';
 import {assertWritable,readOnlyMiddleware} from '../src/runtime.js';
 
 const key='c'.repeat(64);
+test('S3-compatible streaming upload has fixed length and MD5, no chunked CRC trailer (no network)',async()=>{
+ const client=backupClient({BACKUP_S3_ENDPOINT:'https://synthetic.invalid',BACKUP_S3_REGION:'test',BACKUP_S3_BUCKET:'test',BACKUP_S3_ACCESS_KEY_ID:'synthetic',BACKUP_S3_SECRET_ACCESS_KEY:'synthetic',BACKUP_ENCRYPTION_KEY:key});
+ const data=Buffer.from('synthetic encrypted content'),md5=crypto.createHash('md5').update(data).digest('base64');let handled=false;
+ client.config.requestHandler.handle=async request=>{
+  handled=true;assert.equal(request.headers['content-length'],String(data.length));assert.equal(request.headers['content-md5'],md5);
+  assert.equal(request.headers['x-amz-trailer'],undefined);assert.notEqual(request.headers['content-encoding'],'aws-chunked');
+  const chunks=[];for await(const chunk of request.body)chunks.push(chunk);assert.deepEqual(Buffer.concat(chunks),data);
+  return {response:{statusCode:200,headers:{},body:Readable.from([])}};
+ };
+ try{await client.send(new PutObjectCommand({Bucket:'test',Key:'test',Body:Readable.from([data]),ContentLength:data.length,ContentMD5:md5}));assert(handled);}
+ finally{client.destroy();}
+});
 function fixture(t){
  const directory=privateDirectory('fancy-bundle-test-'),store=new JsonStateStore(join(directory,'state.json')),db=openMailDb(join(directory,'peu-aruba.sqlite'));
  const approvals=new ApprovalService(store,'test-only');let sent=0;
@@ -98,9 +112,15 @@ test('upload then download and isolated restore verify the new format even after
  f.store.remember(`external-backup:${now.toISOString().slice(0,10)}`,{});
  const result=await runExternalBackup({...f,env,client,now,canCapture:()=>true});
  assert.equal(result.format,2);assert.equal(result.status,'VERIFIED');assert.equal(result.restore_writes_blocked,true);
+ assert.equal(result.isolated_process,true);
  assert.equal(result.counts.mail_messages,1);
  assert.deepEqual(client.calls,['ListObjectVersionsCommand','PutObjectCommand','GetObjectCommand','DeleteObjectCommand']);
  assert.equal((await runExternalBackup({...f,env,client,now,canCapture:()=>true})).status,'ALREADY_VERIFIED_TODAY');
+ const marker=`external-bundle-v2:${now.toISOString().slice(0,10)}`;
+ delete f.store.state.idempotency[marker].result.isolated_process;
+ const before=client.calls.filter(c=>c==='PutObjectCommand').length;
+ assert.equal((await runExternalBackup({...f,env,client,now,canCapture:()=>true})).isolated_process,true);
+ assert.equal(client.calls.filter(c=>c==='PutObjectCommand').length,before);
 });
 for(const failure of ['upload','download','partial','tamper'])test(`${failure} failure never marks verified or deletes old backups`,async t=>{
  const f=fixture(t),client=mockBucket({failure});

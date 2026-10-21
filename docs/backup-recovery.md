@@ -28,9 +28,11 @@ Nessuna credenziale amministrativa viene distribuita a Peu.
   inclusi oggetti nascosti; quota prudenziale invariata 1 GiB. La quota non è
   una garanzia di spazio del fornitore: errori del bucket restano errori.
 - Dopo l'upload si scarica l'oggetto reale, confronta SHA-256, decifra ed estrae
-  in directory temporanea privata. Si verifica `PRAGMA integrity_check`, tutte
-  le tabelle e il collegamento effetti/approvazioni. Non viene avviato il server
-  ripristinato e non sono importati adattatori SMTP/Odoo.
+  in directory temporanea privata, tramite processo separato con ambiente vuoto
+  (nessuna credenziale di servizi esterni). Si verifica `PRAGMA integrity_check`,
+  tutte le tabelle, il collegamento effetti/approvazioni e la quarantena.
+  Non viene avviato il server ripristinato né importato alcun adattatore SMTP/Odoo.
+  La sola chiave di decifratura arriva tramite pipe privata, mai argomenti/log.
 - Solo dopo questa prova è registrato `external_backup_verified`, formato 2,
   chiave oggetto, dimensioni, conteggi, data e `restore_writes_blocked:true`.
   I contenuti delle email e le chiavi non sono scritti nei log.
