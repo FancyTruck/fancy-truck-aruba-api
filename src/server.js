@@ -14,7 +14,7 @@ import express from 'express';
 import { ImapFlow } from 'imapflow';
 import { simpleParser } from 'mailparser';
 import nodemailer from 'nodemailer';
-import { classifyCommercialMessage } from './commercialFilter.js';
+import { classifyCommercialMessage, currentMessage } from './commercialFilter.js';
 import { routeCommercialMessage } from './commercialRouting.js';
 import { runtimeConfig, assertWritable, assertOdooMethod, readOnlyMiddleware } from './runtime.js';
 import { JsonStateStore } from './store.js';
@@ -532,6 +532,7 @@ async function findReplyLead(senderEmail, subject) {
 }
 
 async function processQuoteReply(parsed, uid, lead) {
+  parsed = { ...parsed, text: currentMessage(parsed.text) };
   const sender = parsed.from?.value?.[0];
   const key = emailMarker(parsed, uid);
   const marker = `[AUTO:${key}]`;
@@ -581,6 +582,7 @@ async function processQuoteReply(parsed, uid, lead) {
 }
 
 async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
+  parsed = { ...parsed, text: currentMessage(parsed.text) };
   const sender = parsed.from?.value?.[0];
   const senderEmail = String(sender?.address || '').trim().toLowerCase();
   const decision = await routeCommercialMessage({
