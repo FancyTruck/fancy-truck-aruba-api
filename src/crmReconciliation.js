@@ -26,7 +26,7 @@ export async function reconcileCrm({ call, store }) {
    last=lead.id;report.inspected++;
    const reason=nonCommercialCrmReason(lead.name);if(!reason)continue;
    // Quotes, including drafts, protect a case from automatic housekeeping.
-   const orders=await call('sale.order','search_count',[[['opportunity_id','=',lead.id]]]);
+   const orders=await call('sale.order','search_count',[[['opportunity_id','=',lead.id]]],{context:{active_test:false}});
    if(orders){report.protected++;continue;}
    const latest=await call('crm.lead','search_read',[[['id','=',lead.id],['active','=',true],['stage_id','=',stageId],['write_date','=',lead.write_date]]],{fields:['id'],limit:1});
    if(!latest.length){report.protected++;continue;}
