@@ -27,6 +27,11 @@ test('four production intake paths use Odoo contract and approval queue without 
     if (method==='search_read') {
       if (model==='res.partner') result=[partner];
       else if (model==='crm.lead') result=lead ? [lead] : [];
+      else if (model==='ir.model.fields' && body.domain.some(term=>Array.isArray(term)&&term[0]==='model'&&term[2]==='sale.order.template')) result=[{name:'note'}];
+      else if (model==='sale.order.template') {
+        assert.deepEqual(body.fields,['name','note']);
+        result=[{id:42,name:'Noleggio Fancy Truck',note:'Condizioni noleggio test'}];
+      }
       else if (model==='crm.stage') result=[{id:1,name:'Nuove richieste'},{id:2,name:'Qualificate'}];
       else if (model==='sale.order') result=body.domain.some(term=>Array.isArray(term)&&term[0]==='id') ? orders : [];
       else if (model==='sale.order.line') result=body.domain.some(term=>Array.isArray(term)&&term[0]==='product_id'&&term[2]===7)
@@ -96,6 +101,9 @@ test('four production intake paths use Odoo contract and approval queue without 
     if(item.kind==='rental') {
       assert.equal(orders.length,1);
       assert.equal(orders[0].pricelist_id,1);
+      assert.equal(orders[0].sale_order_template_id,42);
+      assert.equal(orders[0].note,'Condizioni noleggio test');
+      assert.equal(orders[0].payment_term_id,undefined);
       assert.equal(orders[0].order_line[0][2].product_id,40);
       assert.equal(orders[0].order_line[0][2].is_rental,true);
       assert.equal(orders[0].rental_start_date,'2026-12-20 09:00:00');
