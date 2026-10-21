@@ -329,9 +329,13 @@ async function quotationTemplate(kind) {
     ? ['Noleggio Fancy Truck', 'Noleggio']
     : ['Brand Activation', 'Roadtour', 'Vendite Fancy Truck'];
   try {
+    const schema = await odooCall('ir.model.fields', 'search_read', [[
+      ['model', '=', 'sale.order.template'], ['name', 'in', ['note', 'payment_term_id']],
+    ]], { fields: ['name'], limit: 10 });
+    const optionalFields = ['note', 'payment_term_id'].filter(field => schema.some(item => item.name === field));
     for (const name of names) {
       const templates = await odooCall('sale.order.template', 'search_read', [[['name', 'ilike', name]]], {
-        fields: ['name', 'note', 'payment_term_id'], limit: 5,
+        fields: ['name', ...optionalFields], limit: 5,
       });
       if (templates.length === 1) return templates[0];
     }
