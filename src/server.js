@@ -1,3 +1,4 @@
+import { depositAmount, rentalTerms, PAYMENT_TERM_NAME } from './commercialTerms.js';
 import { prepareRentalLogistics } from './aiLogistics.js';
 import { logisticsDistancesFromRoutes } from './logisticsRoutes.js';
 import { italianRentalDates } from './rentalDates.js';
@@ -442,7 +443,7 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key, pa
     const verifiedIds = VERIFIED_ODOO_MODELS.filter(item => models.includes(item.model)).map(item => item.productId);
     const domain = verifiedIds.length ? ['|', ['id', 'in', verifiedIds], ['name', 'ilike', vehicle]] : [['name', 'ilike', vehicle]];
     const products = await odooCall('product.product', 'search_read', [domain], {
-      fields: ['name', 'list_price', 'sale_ok', 'rent_ok'], limit: 20,
+      fields: ['name', 'list_price', 'sale_ok', 'rent_ok', 'description_sale'], limit: 20,
     });
     product = selectExactProduct(products, vehicle, isRental);
   }
@@ -484,6 +485,11 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key, pa
     if (template.note) values.note = template.note;
     if (Array.isArray(template.payment_term_id)) values.payment_term_id = template.payment_term_id[0];
   }
+  const approvedTerms = await odooCall('account.payment.term', 'search_read', [[['name', '=', PAYMENT_TERM_NAME]]], {fields:['name'],limit:2});
+  if (approvedTerms.length !== 1) throw Error('Condizione saldo alla conferma non configurata univocamente in Odoo');
+  values.payment_term_id = approvedTerms[0].id;
+  const deposit = depositAmount(product?.description_sale);
+  values.note = rentalTerms(values.note, deposit);
   if (isRental && dates) {
     values.rental_start_date = dates.start;
     values.rental_return_date = dates.end;
@@ -494,6 +500,7 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key, pa
     fields: ['name', 'state', 'opportunity_id', 'is_rental_order', 'amount_total'], limit: 1,
   });
   const reviewItems = [...PIETRO_FINAL_CHECKS];
+  if (deposit == null) reviewItems.push('BLOCCO CONDIZIONI: importo cauzione del veicolo non disponibile. Non inviare.');
   let rentalPriceVerified = false;
   if (nativeRental) {
     const pricedLines = await odooCall('sale.order.line', 'search_read', [[['order_id', '=', orderId], ['product_id', '=', product.id]]], {
