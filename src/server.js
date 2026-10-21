@@ -1,6 +1,7 @@
 import { matchQuotationThread } from './threadReferences.js';
 import { linkThreadMessage } from './threadLinking.js';
 import { pollSentMailbox } from './sentTracking.js';
+import { reconcileCrm } from './crmReconciliation.js';
 import { depositAmount, rentalTerms, PAYMENT_TERM_NAME } from './commercialTerms.js';
 import { prepareRentalLogistics } from './aiLogistics.js';
 import { logisticsDistancesFromRoutes } from './logisticsRoutes.js';
@@ -735,6 +736,18 @@ async function runOperationalCycle({ force = false } = {}) {
   try {
     cycle = store.beginCycle(['aruba:hello', 'aruba:pietro', 'odoo:crm']);
     const summary = { read: 0, created: 0, updated: 0, duplicates: 0, suspended: 0, failed: 0, errors: [] };
+    if (process.env.CRM_NOTIFICATION_CLEANUP_ENABLED === 'true') {
+      try {
+        const result = await reconcileCrm({ call: odooCall, store });
+        store.integration('odoo:notification_cleanup', { status: 'OK', last_success_at: new Date().toISOString(), ...result });
+        console.log(`PULIZIA CRM: ${JSON.stringify(result)}`);
+      } catch (error) {
+        summary.failed++;
+        summary.errors.push(`Pulizia CRM: ${error.message}`);
+        store.integration('odoo:notification_cleanup', { status: 'ERROR', error: error.message });
+        console.error(`PULIZIA CRM: ERRORE - ${error.message}`);
+      }
+    }
     for (const source of ['hello', 'pietro']) {
       try {
         const result = await pollQuoteRequests(source);
