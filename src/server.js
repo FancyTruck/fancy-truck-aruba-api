@@ -59,7 +59,8 @@ function accountConfig(accountName) {
   return selected;
 }
 
-const requireToken = accessControl(process.env);
+const peuInternalToken = crypto.randomBytes(32).toString('hex');
+const requireToken = accessControl({...process.env,PEU_INTERNAL_TOKEN:peuInternalToken});
 
 function imapClient(account) {
   return new ImapFlow({
@@ -919,7 +920,31 @@ app.get('/ready', (_req, res) => {
 });
 
 app.use('/v1', requireToken);
+let peuDb;
+if (process.env.PEU_ACCESS_TOKEN) {
+  const {mountPeuMail}=await import('./peuMailRoutes.js');
+  peuDb=mountPeuMail(app,{withImap,parse:simpleParser,stateFile:runtime.stateFile});
+}
 app.use('/v1', readOnlyMiddleware(runtime));
+if (peuDb) {
+  const {makePeuContract,mountPeuContract}=await import('./peuContract.js');
+  const {jsonRequest}=await import('./peuCommon.js');
+  const upstream=(path,options={})=>jsonRequest(fetch,`http://127.0.0.1:${port||server.address().port}${path}`,{...options,headers:{'Content-Type':'application/json',Authorization:`Bearer ${peuInternalToken}`}});
+  mountPeuContract(app,makePeuContract({db:peuDb,approvals,upstream,assertWritable:()=>assertWritable(runtime),
+    verify:async(capability,response,marker)=>{
+      const model=capability==='crm.create'?'crm.lead':'sale.order';
+      const id=response.id||response.lead?.id||response.order?.id;
+      if(!Number.isInteger(id))throw new Error('missing_record_id');
+      const rows=await odooCall(model,'search_read',[[['id','=',id]]],{fields:capability==='crm.create'?['name','description']:['name','state','client_order_ref'],limit:1});
+      if(rows.length!==1||(capability==='crm.create'?!rows[0].description?.includes(`[AUTO:${marker}]`):rows[0].client_order_ref!==`AUTO:${marker}`))throw new Error('record_not_verified');
+      return {ok:true,status:'verified',id,model};
+    },smtp:async payload=>{
+      assertWritable(runtime); const account=accountConfig('pietro');
+      const transport=nodemailer.createTransport({host:process.env.ARUBA_SMTP_HOST||'smtps.aruba.it',port:Number(process.env.ARUBA_SMTP_PORT||465),secure:true,connectionTimeout:10000,greetingTimeout:10000,socketTimeout:15000,auth:{user:account.email,pass:account.password}});
+      try{return await transport.sendMail({from:`Fancy Truck <${account.email}>`,replyTo:account.email,to:payload.to,subject:payload.subject,text:payload.text,messageId:payload.messageId});}finally{transport.close();}
+    }
+  }));
+}
 
 let briefingInFlight = null;
 app.get('/v1/briefing', async (_req, res) => {
@@ -1246,6 +1271,7 @@ app.post('/v1/actions/:id/execute', async (req, res) => {
   try {
     assertWritable(runtime);
     const action = approvals.assertExecutable(req.params.id);
+    if(action.peu_payload_hash)throw new Error('Usare il comando Peu dedicato con registro persistente');
     if (!['SEND_EMAIL', 'SEND_FOLLOW_UP', 'SEND_PAYMENT_REMINDER', 'SEND_QUOTE', 'SEND_CONTRACT', 'SEND_INVOICE'].includes(action.type)) {
       return res.status(409).json({ ok: false, error: 'Questa azione richiede un connettore specifico e non può essere eseguita via SMTP generico' });
     }
