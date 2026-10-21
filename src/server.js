@@ -4,6 +4,7 @@ import { pollSentMailbox } from './sentTracking.js';
 import { reconcileCrm } from './crmReconciliation.js';
 import { buildBriefing } from './briefing.js';
 import { automationHealth } from './automationHealth.js';
+import { quotationDisposition } from './quotationIdentity.js';
 import { runExternalBackup } from './externalBackup.js';
 import { applyRecoveryGuard } from './recoveryGuard.js';
 import { backupFailureDetails } from './externalBundleBackup.js';
@@ -451,9 +452,17 @@ async function createEconomicProject(lead, order, partner) {
 async function createDraftFromCrmLead(lead, partner, kind, combinedText, key, parsed) {
   if (kind !== 'rental') throw new Error('I veicoli Fancy Truck sono esclusivamente a noleggio');
   const existing = await odooCall('sale.order', 'search_read', [[['opportunity_id', '=', lead.id]]], {
-    fields: ['name', 'state', 'opportunity_id', 'is_rental_order'], limit: 1,
+    fields: ['name', 'state', 'opportunity_id', 'partner_id', 'client_order_ref', 'is_rental_order'], limit: 101,
   });
-  if (existing.length) return { order: existing[0], duplicate: true };
+  const disposition = quotationDisposition(existing, { leadId: lead.id, partnerId: partner.id, key,
+    complete: existing.length < 101 });
+  if (disposition.kind === 'replay') return { order: disposition.order, duplicate: true };
+  if (disposition.kind === 'review') {
+    const { item } = store.queueClassification({ source_key: `quotation-scope:${lead.id}:${key}`,
+      account: 'odoo', message_id: parsed?.messageId || null, subject: lead.name || '',
+      reason: disposition.reason, candidate_ids: [lead.id], order_candidate_ids: disposition.order_ids });
+    return { suspended: true, awaiting_scope_review: true, review_id: item.id, reason: disposition.reason };
+  }
   store.cancelActionGroup(`missing-details:odoo-lead-${lead.id}`, 'REQUEST_COMPLETED');
 
   const dates = italianRentalDates(combinedText);
@@ -644,7 +653,7 @@ async function processQuoteReply(parsed, uid, lead) {
     return { lead_id: lead.id, reply: true, kind, ready_for_review: true };
   }
   const draft = await createDraftFromCrmLead(lead, partner, kind, combinedText, key, parsed);
-  if (draft.awaiting_customer_choice || draft.awaiting_customer_details) return { lead_id: lead.id, reply: true, ...draft };
+  if (draft.awaiting_customer_choice || draft.awaiting_customer_details || draft.awaiting_scope_review) return { lead_id: lead.id, reply: true, ...draft };
   await setLeadProcedureStatus(lead.id, 'PRONTA_CONTROLLO_PIETRO');
   return { lead_id: lead.id, reply: true, order_id: draft.order?.id, ready_for_review: true };
 }
@@ -704,7 +713,7 @@ async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
     return { lead_id: leadId, kind, ready_for_review: true };
   }
   const draft = await createDraftFromCrmLead(lead, partner, kind, cleanBody, key, parsed);
-  if (draft.awaiting_customer_choice || draft.awaiting_customer_details) return { lead_id: leadId, ...draft };
+  if (draft.awaiting_customer_choice || draft.awaiting_customer_details || draft.awaiting_scope_review) return { lead_id: leadId, ...draft };
   await setLeadProcedureStatus(leadId, 'PRONTA_CONTROLLO_PIETRO');
   return { lead_id: leadId, partner_id: partner.id, partner_created: created, order_id: draft.order?.id, kind, ready_for_review: true };
 }

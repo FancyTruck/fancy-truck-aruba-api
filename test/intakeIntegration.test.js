@@ -11,7 +11,7 @@ test('four production intake paths use Odoo contract and approval queue without 
     STATE_FILE:path.join(directory,'state.json'),PORT:'0',API_TOKEN:'test-only',
     ODOO_URL:'https://odoo-contract.test',ODOO_DB:'test',ODOO_API_KEY:'test-only',ODOO_PARTNER_AUTOCOMPLETE:'false'});
   const realFetch=globalThis.fetch;
-  let lead=null, orders=[], writes=[], counter=100, aiAddresses=null, routeCount=0;
+  let lead=null, orders=[], writes=[], counter=100, aiAddresses=null, routeCount=0, opportunityOrders=null;
   const partner={id:7,name:'Cliente Test',company_type:'company',property_product_pricelist:[1,'Default'],email:'cliente@example.test',vat:'IT12345678901',phone:'010000000',l10n_it_pec_email:'test@example.test',l10n_it_pa_index:'TEST123'};
   globalThis.fetch=async (url,options) => {
     if (String(url).includes('api.openai.com')) return {ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify(aiAddresses)}]}]})};
@@ -33,7 +33,8 @@ test('four production intake paths use Odoo contract and approval queue without 
         result=[{id:42,name:'Noleggio Fancy Truck',note:'Condizioni noleggio test'}];
       }
       else if (model==='crm.stage') result=[{id:1,name:'Nuove richieste'},{id:2,name:'Qualificate'}];
-      else if (model==='sale.order') result=body.domain.some(term=>Array.isArray(term)&&term[0]==='id') ? orders : [];
+      else if (model==='sale.order') result=body.domain.some(term=>Array.isArray(term)&&term[0]==='id') ? orders
+        : body.domain.some(term=>Array.isArray(term)&&term[0]==='opportunity_id') ? opportunityOrders || [] : [];
       else if (model==='sale.order.line') result=body.domain.some(term=>Array.isArray(term)&&term[0]==='product_id'&&term[2]===7)
         ? orders[0].order_line.filter(line=>line[2].product_id===7).map(line=>({...line[2],price_unit:2,discount:0}))
         : [{is_rental:true,price_unit:1200,product_uom_qty:1}];
@@ -123,6 +124,24 @@ test('four production intake paths use Odoo contract and approval queue without 
     assert.ok(Object.values(app.store.state.actions).filter(action=>action.case_id===`odoo-lead-${lead.id}`)
       .every(action=>['PENDING_APPROVAL','CANCELLED'].includes(action.status)));
   });
+  await t.test('a different request under the same opportunity is reviewed instead of silently reusing its quote', async()=>{
+    lead={id:901,name:'Richiesta noleggio Airstream',description:'',partner_id:[7,'Synthetic customer'],stage_id:2};
+    orders=[];writes=[];
+    opportunityOrders=[{id:902,name:'TEST-OLDER',state:'draft',opportunity_id:[901,'Case'],partner_id:[7,'Customer'],client_order_ref:'AUTO:other-request'}];
+    try {
+      const result=await app.processQuoteReply({subject:lead.name,text:cases[3].reply,messageId:'<different-scope>',
+        from:{value:[{address:partner.email}]}},9,lead);
+      assert.equal(result.suspended,true);
+      assert.equal(result.awaiting_scope_review,true);
+      assert.equal(result.ready_for_review,undefined);
+      assert.equal(result.order_id,undefined);
+      assert.equal(orders.length,0);
+      assert.equal(writes.includes('project.project'),false);
+      const review=app.store.state.classification_reviews[result.review_id];
+      assert.equal(review.reason,'quotation_scope_requires_review');
+      assert.deepEqual(review.order_candidate_ids,[902]);
+    } finally {opportunityOrders=null;}
+  });
   await t.test('AI missing addresses asks customer, then routes into native Odoo lines without sending', async()=>{
     Object.assign(process.env,{AI_LOGISTICS_ENABLED:'true',OPENAI_MODEL:'test',OPENAI_API_KEY:'test',ORS_API_KEY:'test'});
     try {
@@ -159,3 +178,4 @@ test('four production intake paths use Odoo contract and approval queue without 
   });
 
 });
+

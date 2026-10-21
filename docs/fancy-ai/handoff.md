@@ -7,8 +7,11 @@ This is a development checkpoint, not operational acceptance.
 - Diagnostic health does not report OK for failed, interrupted, suspended, stalled or not-yet-observed cycles. Process liveness remains HTTP 200.
 - Backup logging distinguishes the explicit provider download/Class B cap response from generic AccessDenied without exposing raw provider messages.
 - Updated the legacy PR24 test to PR25 metadata-only semantics; no policy of skipping business-request content was introduced.
-- Full local suite: 217 tests passed, 0 failed. npm run check passed. Original baseline: 208 passed, 1 failed (outdated large-message test).
+- Full local suite: 222 tests passed, 0 failed. npm run check passed. Original baseline: 208 passed, 1 failed (outdated large-message test).
 - These are local isolated tests, including existing actual-server tests with read-only startup. No production tests or writes performed.
+
+- Quote creation no longer treats any existing opportunity quote as a duplicate: exact customer/opportunity/source replay is reused; other scopes become persistent review without creating or overwriting a quote. Includes a real intake-path test with a mocked Odoo transport. Explicit draft API retains support for multiple source keys. Scope acceptance remains open.
+- Draft PR: https://github.com/FancyTruck/fancy-truck-aruba-api/pull/26
 
 ## Next executable work
 1. Reconcile this branch/PR and latest upstream before editing. Do not duplicate this patch.
