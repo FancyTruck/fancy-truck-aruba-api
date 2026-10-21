@@ -1,4 +1,6 @@
 import { classifyCommercialMessage, currentMessage } from './commercialFilter.js';
+import { nonCommercialCrmReason } from './crmReconciliation.js';
+import { quotationReferences } from './threadReferences.js';
 
 // Resolve the admission decision before any CRM contact or opportunity writes.
 export async function routeCommercialMessage({ parsed, uid, account, uidValidity, store, findLead }) {
@@ -10,6 +12,8 @@ export async function routeCommercialMessage({ parsed, uid, account, uidValidity
     return { action: 'skip', reason: 'authorized_test_message' };
   }
   const classification = classifyCommercialMessage(parsed.subject, parsed.text, parsed.headers);
+  const excluded = nonCommercialCrmReason(parsed.subject);
+  if (excluded) return { action: 'skip', reason: excluded };
   if (['automatic_or_mailing_list', 'administrative_or_marketing', 'supplier_offer'].includes(classification.reason)) {
     return { action: 'skip', reason: classification.reason };
   }
@@ -26,9 +30,10 @@ export async function routeCommercialMessage({ parsed, uid, account, uidValidity
   if (classification.reason === 'forward_requires_review') return queue(classification.reason);
   const isReply = /^\s*(re|r)\s*:/i.test(String(parsed.subject || ''))
     || Boolean(parsed.inReplyTo || parsed.references?.length);
-  if (!classification.kind && !isReply) return queue(classification.reason);
-  const match = await findLead(sender, parsed.subject);
-  if (match.ambiguous) return queue('multiple_matching_leads', match.candidate_ids || []);
+  if (!classification.kind && !isReply && !quotationReferences(parsed.subject,currentMessage(parsed.text)).length) return queue(classification.reason);
+  const match = await findLead(sender, parsed.subject, parsed);
+  if (match.ambiguous) return queue(match.reason || 'multiple_matching_leads', match.candidate_ids || []);
+  if (match.lead && match.order_ids?.length) return { action: 'link', match };
   if (match.lead) return { action: 'reply', lead: match.lead };
   if (isReply || !classification.kind) return queue('reply_without_matching_lead');
   return { action: 'create', kind: classification.kind };
