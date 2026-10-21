@@ -36,6 +36,8 @@ test('server reale: letture autorizzate, scritture bloccate e stato invariato', 
       API_TOKEN: 'local-test-token', REVIEW_READ_TOKEN: 'test-reader', REVIEW_WRITE_TOKEN: 'test-reviewer', STATE_FILE: stateFile },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
+  let errorLog = '';
+  child.stderr.on('data', data => { errorLog += String(data); });
   t.after(async () => {
     if (child.exitCode === null) {
       const exited = once(child, 'exit');
@@ -77,6 +79,24 @@ test('server reale: letture autorizzate, scritture bloccate e stato invariato', 
   assert.equal(diagnostics.read_only, true);
   assert.equal(diagnostics.automation_status, 'DISABLED');
   assert.deepEqual(diagnostics.automation_reasons, []);
+  const oversized = await fetch(`${base}/v1/automation/run?token=never-log-this-private-value`, {
+    method: 'POST', headers,
+    body: JSON.stringify({ text: 'x'.repeat(2 * 1024 * 1024), secret: 'never-log-this-private-value' }),
+  });
+  assert.equal(oversized.status, 413);
+  await oversized.text();
+  if (!errorLog.includes('"event":"http_request_failed"')) await new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => { child.stderr.off('data', inspect); reject(Error('missing HTTP diagnostics')); }, 2000);
+    function inspect() {
+      if (errorLog.includes('"event":"http_request_failed"')) {
+        clearTimeout(timeout); child.stderr.off('data', inspect); resolve();
+      }
+    }
+    child.stderr.on('data', inspect);
+    inspect();
+  });
+  assert.match(errorLog, /"event":"http_request_failed","http_status":413/);
+  assert(!errorLog.includes('never-log-this-private-value'));
   for (const route of ['/automation/run', '/approvals/test/command', '/approvals/test/confirm',
     '/odoo/contacts', '/odoo/crm/leads', '/odoo/sales/drafts', '/odoo/chatter', '/hello/send', '/actions/test/execute']) {
     const response = await fetch(`${base}/v1${route}`, { method: 'POST', headers, body: '{"force":true}' });

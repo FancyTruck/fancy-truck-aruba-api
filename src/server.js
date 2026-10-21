@@ -5,6 +5,7 @@ import { reconcileCrm } from './crmReconciliation.js';
 import { buildBriefing } from './briefing.js';
 import { automationHealth } from './automationHealth.js';
 import { quotationDisposition } from './quotationIdentity.js';
+import { httpFailureDiagnostics } from './httpDiagnostics.js';
 import { runExternalBackup } from './externalBackup.js';
 import { applyRecoveryGuard } from './recoveryGuard.js';
 import { backupFailureDetails } from './externalBundleBackup.js';
@@ -43,6 +44,8 @@ import {
 } from './commercialProcedure.js';
 
 const app = express();
+// Install before the JSON parser so rejected oversized bodies are observed.
+app.use(httpFailureDiagnostics());
 app.use(express.json({ limit: '2mb' }));
 
 const port = Number(process.env.PORT || 3000);

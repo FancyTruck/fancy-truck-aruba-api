@@ -3,25 +3,27 @@
   "updated_at": "2026-10-22",
   "baseline_commit": "12c701351ce01144e93bb43b4f353b9fdbb0b6fd",
   "branch": "work/fancy-foundations-20261022",
-  "stage": "draft PR26; two development lots tested, not deployed",
+  "stage": "draft PR26; three development lots tested, not deployed",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
     "honest-cycle-diagnostics",
     "explicit-backup-cap-reason",
-    "quotation-source-replay-versus-scope-review"
+    "quotation-source-replay-versus-scope-review",
+    "private-http-failure-telemetry"
   ],
   "tests": {
     "command": "npm test",
-    "passed": 222,
+    "passed": 226,
     "failed": 0,
     "environment": "local isolated; no production credentials"
   },
-  "next_action": "Reconcile draft PR26 and latest upstream, then verify remaining source components and add real-server degraded diagnostics coverage",
+  "next_action": "Inventory authorized Sites automation source; reconcile PR26 and continue independent functional gaps",
   "blocked": [
     "live backup download and isolated restore",
     "browser administrative policy",
-    "production acceptance requires separate authorized rollout"
+    "production acceptance requires separate authorized rollout",
+    "Sites source helper unavailable in this runtime; source credential minted without publish-on-push but not used"
   ],
   "lease": null,
   "draft_pr": "https://github.com/FancyTruck/fancy-truck-aruba-api/pull/26"
