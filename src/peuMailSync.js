@@ -13,8 +13,13 @@ export async function readFolder(client,folder,cursor,limit=100){
     for(const uid of selected){
       const meta=await client.fetchOne(uid,{size:true},{uid:true});
       if(!meta||!Number.isSafeInteger(meta.size))throw problem('message_size_unavailable',502);
+      if(meta.size>MAX_SOURCE_BYTES){
+        const m=await client.fetchOne(uid,{uid:true,envelope:true,flags:true},{uid:true});
+        if(!m||m.uid!==uid)throw problem('message_metadata_unavailable',502);
+        items.push({uid,envelope:m.envelope,flags:[...m.flags],source:null,content_status:'requires_large_message_download',size:meta.size});
+        continue;
+      }
       if(items.length&&totalBytes+meta.size>MAX_SOURCE_BYTES)break;
-      if(meta.size>MAX_SOURCE_BYTES)throw problem('mail_sync_large_message_requires_review',413);
       const m=await client.fetchOne(uid,{uid:true,envelope:true,flags:true,bodyStructure:true,source:{start:0,maxLength:MAX_SOURCE_BYTES+1}},{uid:true});
       if(!m?.source||m.source.length>MAX_SOURCE_BYTES)throw problem('mail_sync_large_message_requires_review',413);
       if(items.length&&totalBytes+m.source.length>MAX_SOURCE_BYTES)break;
