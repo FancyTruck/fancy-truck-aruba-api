@@ -19,7 +19,9 @@ Nessuna credenziale amministrativa viene distribuita a Peu.
 - Manifest cifrato con identificativo, inizio/fine cattura, nomi fissi,
   dimensioni, SHA-256 e conteggi. Hash e tag GCM verificano l'intera copia.
 - Compressione/cifratura, upload, download e decifratura sono in streaming.
-  Limiti distinti: JSON 32 MiB, SQLite 256 MiB, oggetto cifrato 300 MiB.
+  Limiti distinti: JSON 32 MiB, SQLite 1 GiB (dimensione del disco esistente),
+  oggetto cifrato 1060 MiB. La quota del bucket di 1 GiB è comunque verificata
+  PRIMA dell'upload e può rifiutare un oggetto entro questi limiti tecnici.
   Verifica spazio temporaneo prima della cattura. Superare un limite produce
   allarme, non un backup incompleto né una cancellazione della cache.
 - Prima dell'upload sono elencate tutte le versioni sotto il prefisso autorizzato,

@@ -62,7 +62,9 @@ export async function runBundleBackup({store,db,env,client,now=new Date(),canCap
   // Verification uses only native file/SQLite access. No application is started,
   // and no credentials or external-action adapters reach the restore function.
   const result={status:'VERIFIED',format:2,key,bytes:sealed.bytes,stored_bytes_before:storedBytes,sha256:sealed.sha256,
-   captured_at:sealed.manifest.captured_at,verified_at:new Date().toISOString(),counts:restored.counts,restore_writes_blocked:restored.recovery_required};
+   captured_at:sealed.manifest.captured_at,verified_at:new Date().toISOString(),counts:restored.counts,restore_writes_blocked:restored.recovery_required,
+   source_bytes:{state:sealed.manifest.files[0].bytes,sqlite:sealed.manifest.files[1].bytes},
+   estimated_daily_copies_within_quota:Math.floor((1024*1024*1024-storedBytes)/sealed.bytes)};
   // Keep legacy JSON copies unchanged; only this format's exact managed keys
   // older than 30 days can be removed after a verified replacement exists.
   stage='retention';

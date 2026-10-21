@@ -10,7 +10,10 @@ import {validateState} from './stateBackup.js';
 
 const MAGIC=Buffer.from('FANCYB02');
 const MiB=1024*1024;
-export const BUNDLE_LIMITS=Object.freeze({state:32*MiB,sqlite:256*MiB,manifest:64*1024,encrypted:300*MiB,plain:289*MiB});
+// SQLite can occupy the existing 1 GiB persistent disk. All large stages are
+// streamed; this is not a corresponding RAM allocation. Bucket quota remains
+// independently enforced against the compressed/encrypted object size.
+export const BUNDLE_LIMITS=Object.freeze({state:32*MiB,sqlite:1024*MiB,manifest:64*1024,encrypted:1060*MiB,plain:1057*MiB});
 export const bundleKeyPattern=/^fancy-ai-state-v1\/\d{4}-\d{2}-\d{2}T[\d-]+Z-[a-f0-9-]+\.bundle\.enc$/;
 const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 function keyBytes(key){if(!/^[a-f0-9]{64}$/i.test(key||''))throw Error('Chiave backup non valida');return Buffer.from(key,'hex');}
@@ -39,7 +42,7 @@ export function captureBundle({store,db,directory,canCapture=()=>false}){
  for(const table of ['peu_effects','peu_operations'])if(db.prepare(`SELECT 1 FROM ${table} WHERE status='executing' LIMIT 1`).get())throw Error('Backup rinviato: registro in esecuzione');
  const started_at=new Date().toISOString();
  const page=db.prepare('PRAGMA page_count').get().page_count, size=db.prepare('PRAGMA page_size').get().page_size;
- if(page*size>BUNDLE_LIMITS.sqlite)throw Error('SQLite oltre 256 MiB: rivedere capacità e conservazione');
+ if(page*size>BUNDLE_LIMITS.sqlite)throw Error('SQLite oltre 1 GiB: rivedere capacità e conservazione');
  const disk=fs.statfsSync(directory);
  if(disk.bavail*disk.bsize<6*(page*size+BUNDLE_LIMITS.state))throw Error('Spazio temporaneo insufficiente per backup e ripristino isolato');
  const state=validateState(store.snapshot()), stateBytes=Buffer.from(JSON.stringify(state));
