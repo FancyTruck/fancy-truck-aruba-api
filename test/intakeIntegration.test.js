@@ -38,6 +38,7 @@ test('four production intake paths use Odoo contract and approval queue without 
         ? orders[0].order_line.filter(line=>line[2].product_id===7).map(line=>({...line[2],price_unit:2,discount:0}))
         : [{is_rental:true,price_unit:1200,product_uom_qty:1}];
       else if (model==='product.product') result=[{id:40,name:'Airstream Replica 4m XA855XY',sale_ok:false,rent_ok:true,list_price:50000}];
+      else if (model==='account.payment.term') result=[{id:77,name:'Fancy AI — saldo alla conferma'}];
       else if (model==='res.users') result=[{id:1,name:'Pietro'}];
       else if (model==='ir.model') result=[{id:1,model:'crm.lead'}];
       else if (model==='mail.activity.type') result=[{id:1,name:'To do'}];
@@ -102,8 +103,9 @@ test('four production intake paths use Odoo contract and approval queue without 
       assert.equal(orders.length,1);
       assert.equal(orders[0].pricelist_id,1);
       assert.equal(orders[0].sale_order_template_id,42);
-      assert.equal(orders[0].note,'Condizioni noleggio test');
-      assert.equal(orders[0].payment_term_id,undefined);
+      assert.match(orders[0].note,/Condizioni noleggio test/);
+      assert.match(orders[0].note,/saldo alla conferma/);
+      assert.equal(orders[0].payment_term_id,77);
       assert.equal(orders[0].order_line[0][2].product_id,40);
       assert.equal(orders[0].order_line[0][2].is_rental,true);
       assert.equal(orders[0].rental_start_date,'2026-12-20 09:00:00');
