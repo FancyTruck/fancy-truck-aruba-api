@@ -1,3 +1,4 @@
+import { standardLogisticsLines } from './standardLogistics.js';
 import { classifyRentalBookings, unavailableVehicleAction } from './rentalAvailability.js';
 import { accessControl } from './accessControl.js';
 import { VERIFIED_ODOO_MODELS } from './verifiedOdooModels.js';
@@ -959,6 +960,11 @@ app.post('/v1/odoo/sales/drafts', async (req, res) => {
     if (!Number.isInteger(partnerId) || !idempotencyKey) {
       return res.status(400).json({ ok: false, error: 'partner_id e idempotency_key obbligatori' });
     }
+    // Standard logistics must carry separate verified distances, never a guessed total.
+    if (lines.some(line => Number(line?.product_id) === 7 && !['line_note', 'line_section'].includes(line?.display_type))) {
+      throw new Error('Per Logistica usare standard_logistics con deliveryKm e collectionKm separati');
+    }
+    const logistics = req.body?.standard_logistics === undefined ? [] : standardLogisticsLines(req.body.standard_logistics);
     const marker = `AUTO:${idempotencyKey}`;
     const existing = await odooCall('sale.order', 'search_read', [[['client_order_ref', '=', marker]]], {
       fields: ['name', 'state', 'partner_id', 'opportunity_id', 'amount_total', 'is_rental_order'], limit: 1,
@@ -993,8 +999,15 @@ app.post('/v1/odoo/sales/drafts', async (req, res) => {
       is_rental_order: isRental,
       rental_start_date: isRental ? req.body.rental_start_date : false,
       rental_return_date: isRental ? req.body.rental_return_date : false,
-      order_line: orderLines,
+      order_line: [...orderLines, ...logistics],
     };
+    if (logistics.length) {
+      const pricingPartners = await odooCall('res.partner', 'search_read', [[['id', '=', partnerId]]], {
+        fields: ['company_type', 'vat', 'property_product_pricelist'], limit: 1,
+      });
+      if (pricingPartners.length !== 1) throw new Error('Listino cliente non verificabile');
+      values.pricelist_id = quotationPricelist(pricingPartners[0]);
+    }
     const id = await odooCall('sale.order', 'create', [[values]]);
     const orderId = Array.isArray(id) ? id[0] : id;
     const order = await odooCall('sale.order', 'search_read', [[['id', '=', orderId]]], {
