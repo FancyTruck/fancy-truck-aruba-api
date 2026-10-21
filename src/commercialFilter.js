@@ -11,7 +11,7 @@ export function currentMessage(text = '') {
   return result.join('\n');
 }
 
-export function classifyCommercialMessage(subject = '', text = '', headers = new Map()) {
+export function classifyCommercialMessage(subject = '', text = '', headers = new Map(), { isReply = false } = {}) {
   const title = String(subject).replace(/^(?:(?:re|r|fw|fwd|i)\s*:\s*)+/i, '');
   const body = currentMessage(text);
   const value = `${title}\n${body}`.toLowerCase().replace(/\bfancy\s*truck\b/g, '');
@@ -21,13 +21,26 @@ export function classifyCommercialMessage(subject = '', text = '', headers = new
       || (getHeader('auto-submitted') && getHeader('auto-submitted') !== 'no')) {
     return { kind: null, reason: 'automatic_or_mailing_list' };
   }
+  // Transactional account messages often lack List-* / Auto-Submitted headers.
+  // Match their purpose, never block an entire provider or sender domain.
+  // A customer's own request/reply accompanying a notification stays eligible.
+  const customerRequest = /\b(?:vorrei|vorremmo|avremmo bisogno|cerchiamo|ci serve|ci servono|necessitiamo|would like|looking for)\b/i;
+  const prefixedConversation = isReply || /^\s*(?:re|r|fw|fwd|i)\s*:/i.test(String(subject));
+  const serviceNotification = /\b(?:account login notification|(?:new|successful|suspicious) (?:account )?(?:login|sign[ -]?in)|(?:verify|confirm) (?:your )?e-?mail(?: address)?|(?:complete|finish) your .{0,60}account (?:setup|registration)|password (?:reset|changed)|reset (?:your )?password|(?:verification|security|one.time) code|notifica (?:di )?accesso|verifica (?:il tuo indirizzo )?e-?mail|conferma (?:il tuo indirizzo )?e-?mail|codice (?:di )?(?:verifica|sicurezza)|reimposta(?:zione)? password)\b/i;
+  if (!prefixedConversation && !customerRequest.test(body) && serviceNotification.test(title)) {
+    return { kind: null, reason: 'automatic_service_notification' };
+  }
+  const fundingPromotion = /\b(?:brevetti|marchi|design|bandi|agevolazioni|incentivi)\b/i.test(title)
+    && /\b(?:fondo perduto|fino al \d+\s*%|contributi a fondo)\b/i.test(title);
+  if (!prefixedConversation && !customerRequest.test(body) && fundingPromotion) {
+    return { kind: null, reason: 'administrative_or_marketing' };
+  }
   const excludedTitle = /\b(?:fattur[ae]|estratto conto|ordine.{0,30}(?:conferm|spedit)|conferma.{0,25}ordine|spedito|consegnato|in consegna|documento disponibile|risoluzione richiesta assistenza|nuovo (?:accesso|dispositivo)|new login|preventiv[oi] riparazione|membership rewards|newsletter)\b/i;
   const marketing = /\b(?:disiscriviti|unsubscribe|offerta riservata|codice sconto|fino al \d+% di sconto)\b/i;
   if (excludedTitle.test(title) || marketing.test(body)) {
     return { kind: null, reason: 'administrative_or_marketing' };
   }
   const supplierOffer = /\b(?:offriamo|vi proponiamo|siamo fornitori|siamo specializzati|we offer)\b/i;
-  const customerRequest = /\b(?:vorrei|vorremmo|avremmo bisogno|cerchiamo|ci serve|ci servono|necessitiamo|would like|looking for)\b/i;
   if (supplierOffer.test(body) && !customerRequest.test(body)) {
     return { kind: null, reason: 'supplier_offer' };
   }

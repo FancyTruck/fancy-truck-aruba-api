@@ -112,3 +112,47 @@ test('authorized test mailbox messages cannot enter production intake',async()=>
  const decision=await routeCommercialMessage({parsed:{subject:'Re: [FANCY-AI-COLLAUDO-20261021 / NOLEGGIO] Richiesta',text:'Noleggio Airstream',from:{value:[{address:'grafichefancytruck@gmail.com'}]}},store:{queueClassification:()=>{throw Error('Must not queue');}},findLead:()=>{throw Error('Must not read CRM');}});
  assert.equal(decision.action,'skip');assert.equal(decision.reason,'authorized_test_message');
 });
+
+for (const [subject,text,reason] of [
+ ['[Verify email] Complete your Backblaze account setup','One more step—verify your email address to start storing your data.','automatic_service_notification'],
+ ['Backblaze Account Login Notification','Someone just logged in to your Backblaze account.','automatic_service_notification'],
+ ['Backblaze Account Login Notification','','automatic_service_notification'],
+ ['💰 Brevetti, design e marchi: fino al 90% a fondo perduto','','administrative_or_marketing'],
+ ['Reset your password','', 'automatic_service_notification'],
+ ['Password reset requested','', 'automatic_service_notification'],
+ ['Codice di verifica','123456','automatic_service_notification'],
+]) test(`transactional/promotional mail without bulk headers: ${subject}`,async t=>{
+ const args=setup(t);args.parsed.subject=subject;args.parsed.text=text;
+ args.findLead=()=>{throw Error('Noncommercial message must not access CRM');};
+ assert.deepEqual(await routeCommercialMessage(args),{action:'skip',reason});
+ assert.equal(Object.keys(args.store.state.classification_reviews).length,0);
+ assert.deepEqual(args.store.state.actions,{});
+ assert.deepEqual(args.store.state.cases,{});
+});
+test('provider domain is not blacklisted for genuine catering requests',async t=>{
+ const args=setup(t);args.parsed.from.value[0].address='events@backblaze.com';
+ args.parsed.subject='Evento aziendale';args.parsed.text='Vorremmo un preventivo catering per 100 ospiti';
+ assert.deepEqual(await routeCommercialMessage(args),{action:'create',kind:'catering'});
+});
+test('customer reply on a notification subject can still link to an existing order',async t=>{
+ const args=setup(t);args.parsed.subject='Re: Backblaze Account Login Notification';
+ args.parsed.text='Confermo Milano per il ritiro';args.parsed.inReplyTo='<existing@example.com>';
+ const match={lead:{id:42},order_ids:[331]};args.findLead=async()=>match;
+ assert.deepEqual(await routeCommercialMessage(args),{action:'link',match});
+});
+test('customer request accompanying a funding headline is not discarded',async t=>{
+ const args=setup(t);args.parsed.subject='Brevetti, design e marchi: fino al 90% a fondo perduto';
+ args.parsed.text='Vorrei un preventivo per noleggiare un food truck per la presentazione.';
+ assert.deepEqual(await routeCommercialMessage(args),{action:'create',kind:'rental'});
+});
+test('a forward without a clear request remains reviewable',async t=>{
+ const args=setup(t);args.parsed.subject='Fwd: Backblaze Account Login Notification';args.parsed.text='Puoi verificare?';
+ assert.equal((await routeCommercialMessage(args)).action,'review');
+});
+
+test('reply headers preserve linking even without Re in a notification subject',async t=>{
+ const args=setup(t);args.parsed.subject='Backblaze Account Login Notification';
+ args.parsed.text='Confermo Milano per il ritiro';args.parsed.inReplyTo='<existing@example.com>';
+ const match={lead:{id:42},order_ids:[331]};args.findLead=async()=>match;
+ assert.deepEqual(await routeCommercialMessage(args),{action:'link',match});
+});

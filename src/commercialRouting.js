@@ -11,10 +11,10 @@ export async function routeCommercialMessage({ parsed, uid, account, uidValidity
   if (sender === 'grafichefancytruck@gmail.com' && /FANCY-AI-(?:COLLAUDO|ROUTED-INTAKE)/i.test(String(parsed.subject || ''))) {
     return { action: 'skip', reason: 'authorized_test_message' };
   }
-  const classification = classifyCommercialMessage(parsed.subject, parsed.text, parsed.headers);
+  const classification = classifyCommercialMessage(parsed.subject, parsed.text, parsed.headers, {isReply: Boolean(parsed.inReplyTo || parsed.references?.length)});
   const excluded = nonCommercialCrmReason(parsed.subject);
   if (excluded) return { action: 'skip', reason: excluded };
-  if (['automatic_or_mailing_list', 'administrative_or_marketing', 'supplier_offer'].includes(classification.reason)) {
+  if (['automatic_or_mailing_list', 'automatic_service_notification', 'administrative_or_marketing', 'supplier_offer'].includes(classification.reason)) {
     return { action: 'skip', reason: classification.reason };
   }
   const queue = (reason, candidates = []) => {
