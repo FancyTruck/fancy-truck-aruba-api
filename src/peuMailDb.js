@@ -9,6 +9,8 @@ export function openMailDb(file) {
   db.exec(`PRAGMA journal_mode=WAL;
     CREATE TABLE IF NOT EXISTS mail_cursors(account TEXT NOT NULL, folder TEXT NOT NULL, validity TEXT NOT NULL, last_uid INTEGER NOT NULL, PRIMARY KEY(account,folder));
     CREATE TABLE IF NOT EXISTS mail_messages(account TEXT NOT NULL, folder TEXT NOT NULL, validity TEXT NOT NULL, uid INTEGER NOT NULL, message_id TEXT, thread_key TEXT NOT NULL, payload TEXT NOT NULL, flags TEXT NOT NULL, deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(account,folder,validity,uid));
-    CREATE INDEX IF NOT EXISTS mail_threads ON mail_messages(account,thread_key);`);
+    CREATE INDEX IF NOT EXISTS mail_threads ON mail_messages(account,thread_key);
+    CREATE INDEX IF NOT EXISTS peu_mail_latest ON mail_messages(account,folder,deleted,uid DESC);
+    CREATE INDEX IF NOT EXISTS peu_mail_thread_order ON mail_messages(account,thread_key,deleted,uid);`);
   return db;
 }
