@@ -286,11 +286,17 @@ function missingFiscalDetails(partner) {
   return missing;
 }
 
-async function queueStreetfoodHandoff(leadId, recipient) {
+function customerReplyHeaders(parsed, fallback) {
+  const subject = String(parsed?.subject || fallback).replace(/[\r\n]/g, ' ');
+  return { subject: /^\s*(?:re|r)\s*:/i.test(subject) ? subject : `Re: ${subject}`,
+    inReplyTo: parsed?.messageId || undefined, references: parsed?.messageId || undefined };
+}
+
+async function queueStreetfoodHandoff(leadId, recipient, parsed) {
   const contact = REQUEST_CATEGORIES.event_food.contact;
   const action = approvals.queue({ type: 'SEND_EMAIL', target: recipient,
     case_id: `odoo-lead-${leadId}`, idempotency_key: `streetfood-handoff:${leadId}`,
-    payload: { account: 'hello', subject: 'La sua richiesta per un evento food',
+    payload: { account: 'hello', ...customerReplyHeaders(parsed, 'La sua richiesta per un evento food'),
       html: `<p>Buongiorno, per la partecipazione a eventi food il suo riferimento è Cristiano, commerciale della nostra divisione streetfood: <a href="mailto:${contact}">${contact}</a>.</p><p>Grazie,<br>Fancy AI · Fancy Truck</p>` },
   }).action;
   return { lead_id: leadId, kind: 'event_food', handoff_contact: contact, approval_id: action.id };
@@ -308,7 +314,7 @@ async function askCustomerForMissingDetails(leadId, partner, senderName, missing
     type: 'SEND_EMAIL', target: partner.email, case_id: `odoo-lead-${leadId}`,
     idempotency_key: `missing-details:${leadId}:${missing.slice().sort().join(',')}`,
     supersede_group: `missing-details:odoo-lead-${leadId}`,
-    payload: { account: 'hello', subject: 'Informazioni necessarie per preparare il preventivo Fancy Truck', html: body },
+    payload: { account: 'hello', ...customerReplyHeaders(newRequest, 'Informazioni necessarie per preparare il preventivo Fancy Truck'), html: body },
   }).action;
 }
 
@@ -556,11 +562,11 @@ async function processQuoteReply(parsed, uid, lead) {
   const kind = quoteRequestKind(lead.name, combinedText) || 'unknown';
   const missing = requiredRequestDetails(kind, lead.name, combinedText);
   const optional = missingRequestDetails(kind, lead.name, combinedText).filter(item => item.includes('(facoltativo)'));
-  if (kind === 'event_food') return queueStreetfoodHandoff(lead.id, sender?.address);
+  if (kind === 'event_food') return queueStreetfoodHandoff(lead.id, sender?.address, parsed);
   if (!partner) missing.unshift('ragione sociale o partita IVA per identificare il cliente');
   if (missing.length) {
     await setLeadProcedureStatus(lead.id, 'DA_INTEGRARE');
-    await askCustomerForMissingDetails(lead.id, partner || { email: sender?.address }, sender?.name, [...new Set([...missing, ...optional])]);
+    await askCustomerForMissingDetails(lead.id, partner || { email: sender?.address }, sender?.name, [...new Set([...missing, ...optional])], parsed);
     return { lead_id: lead.id, reply: true, missing };
   }
   store.cancelActionGroup(`missing-details:odoo-lead-${lead.id}`, 'REQUEST_COMPLETED');
@@ -606,7 +612,7 @@ async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
 
   const missingFiscal = partner ? missingFiscalDetails(partner) : ['ragione sociale o partita IVA'];
   const missingOperational = requiredRequestDetails(kind, parsed.subject, parsed.text);
-  if (kind === 'event_food') return queueStreetfoodHandoff(leadId, senderEmail);
+  if (kind === 'event_food') return queueStreetfoodHandoff(leadId, senderEmail, parsed);
   const operationalNote = `Categoria: ${REQUEST_CATEGORIES[kind]?.label || 'servizio da precisare'}. Raccogliere i dati specifici prima della preparazione del preventivo.`;
   await odooCall('crm.lead', 'message_post', [[leadId]], {
     body: `${operationalNote}${partner?._dataIssues?.length ? `<br>Controlli anagrafici: ${partner._dataIssues.map(escapeHtml).join(', ')}.` : ''}${missingFiscal.length ? `<br>Dati anagrafici da integrare: ${missingFiscal.join(', ')}.` : ''}${missingOperational.length ? `<br>Dati operativi da integrare: ${missingOperational.join(', ')}.` : ''}`,
@@ -1113,7 +1119,7 @@ app.post('/v1/actions/:id/execute', async (req, res) => {
     });
     const info = await transporter.sendMail({ from: `Fancy Truck <${account.email}>`, to: payload.to || action.target,
       cc: payload.cc || undefined, replyTo: account.email, subject: payload.subject, text: payload.text || undefined,
-      html: payload.html || undefined });
+      html: payload.html || undefined, inReplyTo: payload.inReplyTo || undefined, references: payload.references || undefined });
     res.json({ ok: true, action: approvals.executed(action.id, { message_id: info.messageId, accepted: info.accepted, rejected: info.rejected }) });
   } catch (error) {
     res.status(409).json({ ok: false, error: error instanceof Error ? error.message : 'Esecuzione bloccata' });
