@@ -6,7 +6,7 @@ export function selectExactProduct(products, requested, rental = false) {
   if (!name || genericVehicleFamily(requested)) return null;
   const model = VEHICLE_CATALOGUE.find(([label, aliases]) => [label, ...aliases].some(alias => normalize(alias) === name));
   const allowed = new Set((model ? [model[0], ...model[1]] : [requested]).map(normalize));
-  const matches = products.filter(product => product.sale_ok && (!rental || product.rent_ok)
+  const matches = products.filter(product => (rental ? product.rent_ok === true : product.sale_ok === true)
     && (allowed.has(normalize(product.name)) || VERIFIED_ODOO_MODELS.some(verified =>
       normalize(verified.model) === normalize(model?.[0] || requested) && verified.productId === product.id
       && normalize(verified.productName) === normalize(product.name))));

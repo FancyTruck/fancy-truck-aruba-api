@@ -12,7 +12,7 @@ test('four production intake paths use Odoo contract and approval queue without 
     ODOO_URL:'https://odoo-contract.test',ODOO_DB:'test',ODOO_API_KEY:'test-only',ODOO_PARTNER_AUTOCOMPLETE:'false'});
   const realFetch=globalThis.fetch;
   let lead=null, orders=[], writes=[], counter=100;
-  const partner={id:7,name:'Cliente Test',email:'cliente@example.test',vat:'IT12345678901',phone:'010000000',l10n_it_pec_email:'test@example.test',l10n_it_pa_index:'TEST123'};
+  const partner={id:7,name:'Cliente Test',company_type:'company',property_product_pricelist:[1,'Default'],email:'cliente@example.test',vat:'IT12345678901',phone:'010000000',l10n_it_pec_email:'test@example.test',l10n_it_pa_index:'TEST123'};
   globalThis.fetch=async (url,options) => {
     assert.ok(String(url).startsWith('https://odoo-contract.test/json/2/'));
     const [model,method]=String(url).split('/').slice(-2), body=JSON.parse(options.body);
@@ -20,7 +20,7 @@ test('four production intake paths use Odoo contract and approval queue without 
     if (method==='search_read') {
       if (model==='res.partner') result=[partner];
       else if (model==='crm.lead') result=lead ? [lead] : [];
-      else if (model==='crm.stage') result=[{id:5,name:'Da integrare'}];
+      else if (model==='crm.stage') result=[{id:1,name:'Nuove richieste'},{id:2,name:'Qualificate'}];
       else if (model==='sale.order') result=body.domain.some(term=>Array.isArray(term)&&term[0]==='id') ? orders : [];
       else if (model==='product.product') result=[{id:40,name:'Airstream Replica 4m XA855XY',sale_ok:true,rent_ok:true,list_price:50000}];
       else if (model==='res.users') result=[{id:1,name:'Pietro'}];
