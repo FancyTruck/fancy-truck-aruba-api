@@ -2,5 +2,13 @@
   "depotAddress": "Via Rollino 69R, 16154 Genova, Italia",
   "includeReturnJourney": true,
   "minimumKmPerService": 100,
-  "standardProductId": 7
+  "standardProductId": 7,
+  "verifiedDepot": {
+    "address": "Via Rollino 69R, 16154 Genova, Italia",
+    "coordinates": [
+      8.8393123,
+      44.4380289
+    ],
+    "source": "Pietro: Google Maps place pin !3d44.4380289!4d8.8393123, confirmed 2026-10-21"
+  }
 }
