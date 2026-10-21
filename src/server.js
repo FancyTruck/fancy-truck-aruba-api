@@ -1,3 +1,4 @@
+import { prepareRentalLogistics } from './aiLogistics.js';
 import { logisticsDistancesFromRoutes } from './logisticsRoutes.js';
 import { italianRentalDates } from './rentalDates.js';
 import { standardLogisticsLines } from './standardLogistics.js';
@@ -419,7 +420,7 @@ async function createEconomicProject(lead, order, partner) {
   return { id: projectId, name: projectName };
 }
 
-async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
+async function createDraftFromCrmLead(lead, partner, kind, combinedText, key, parsed) {
   if (kind !== 'rental') throw new Error('I veicoli Fancy Truck sono esclusivamente a noleggio');
   const existing = await odooCall('sale.order', 'search_read', [[['opportunity_id', '=', lead.id]]], {
     fields: ['name', 'state', 'opportunity_id', 'is_rental_order'], limit: 1,
@@ -452,6 +453,12 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
     return { awaiting_customer_choice: true, approval_id: action.id, availability: 'UNAVAILABLE' };
   }
 
+  const logistics = await prepareRentalLogistics(combinedText);
+  if (logistics.status === 'MISSING_ADDRESSES') {
+    await setLeadProcedureStatus(lead.id, 'DA_INTEGRARE');
+    await askCustomerForMissingDetails(lead.id, partner, null, logistics.missing, parsed);
+    return { awaiting_customer_details: true, missing: logistics.missing };
+  }
   const nativeRental = Boolean(product && dates && availability.checked);
   const line = nativeRental
     ? [0, 0, { product_id: product.id, product_uom_qty: 1, is_rental: true }]
@@ -463,8 +470,10 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
   const pricelistId = quotationPricelist(pricingPartners[0]);
   const values = {
     partner_id: partner.id, pricelist_id: pricelistId, opportunity_id: lead.id, client_order_ref: `AUTO:${key}`,
-    origin: lead.name, is_rental_order: isRental, order_line: [line,
-      [0, 0, { display_type: 'line_note', name: 'LOGISTICA DA COMPLETARE: distanze di consegna e ritiro da verificare; importi non inclusi. Non inviare come preventivo completo.' }]],
+    origin: lead.name, is_rental_order: isRental, order_line: [line, ...logistics.lines,
+      [0, 0, { display_type: 'line_note', name: logistics.lines.length
+        ? 'LOGISTICA DA VERIFICARE: percorso stradale auto, inclusi ritorni. Verificare accessibilità del mezzo, ZTL, traino e tipo di trasporto prima dell’invio.'
+        : 'LOGISTICA DA COMPLETARE: distanze di consegna e ritiro da verificare; importi non inclusi. Non inviare come preventivo completo.' }]],
   };
   if (template) {
     values.sale_order_template_id = template.id;
@@ -491,7 +500,18 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
     reviewItems.push(rentalPriceVerified ? `Tariffa calcolata da Odoo: ${pricedLines[0].price_unit}. Verificare condizioni e imposte.`
       : 'BLOCCO ECONOMICO: tariffa Odoo nulla o non verificabile. Non inviare.');
   }
-  reviewItems.push('LOGISTICA NON INCLUSA: occorrono distanze verificate di consegna e ritiro. Preventivo incompleto.');
+  let logisticsPriceVerified = false;
+  if (logistics.lines.length) {
+    const transportLines = await odooCall('sale.order.line', 'search_read', [[['order_id', '=', orderId], ['product_id', '=', 7]]], {
+      fields: ['name', 'price_unit', 'product_uom_qty', 'discount', 'is_rental'], limit: 3,
+    });
+    logisticsPriceVerified = transportLines.length === 2 && logistics.lines.every(([, , expected]) => transportLines.some(actual =>
+      actual.name === expected.name && Math.abs(actual.product_uom_qty - expected.product_uom_qty) < 0.0001
+      && actual.price_unit === 2 && actual.discount === 0 && actual.is_rental === false));
+    reviewItems.push(logisticsPriceVerified ? 'Logistica standard calcolata da Odoo a 2 EUR/km, minimo separato consegna/ritiro 200 EUR. Verificare tipo di trasporto e percorribilità del mezzo.'
+      : 'BLOCCO ECONOMICO: prezzo o quantità della logistica Odoo non corrispondono alla regola attesa. Non inviare.');
+    reviewItems.push(`Percorsi ORS (profilo auto, ${logistics.routes.calculatedAt}): ${JSON.stringify(logistics.routes)}. Distanze totali: ${JSON.stringify(logistics.distances)}.`);
+  } else reviewItems.push(`LOGISTICA NON INCLUSA: verifica manuale necessaria (${logistics.status}${logistics.reason ? ': ' + logistics.reason : ''}). Preventivo incompleto.`);
   reviewItems.push(template ? `Modello applicato: ${template.name}` : 'Modello di preventivo da verificare');
   reviewItems.push(product ? (isRental ? `Mezzo individuato: ${product.name}. ${nativeRental ? "Calcolo tariffa affidato a Odoo." : "Periodo, modello o disponibilità da verificare: tariffa non calcolata."}` : `Prodotto individuato: ${product.name}. Verificare il prezzo prima dell’invio.`) : 'Prodotto e prezzo da selezionare');
   if (isRental) {
@@ -514,7 +534,7 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key) {
     message_type: 'comment', subtype_xmlid: 'mail.mt_note',
   });
   store.audit('ODOO_DRAFT_BUNDLE_CREATED', { lead_id: lead.id, order_id: orderId, project_id: economicProject.id });
-  return { order: order[0] || { id: orderId }, project: economicProject, duplicate: false, rental_price_verified: rentalPriceVerified, logistics_status: 'DISTANCES_REQUIRED' };
+  return { order: order[0] || { id: orderId }, project: economicProject, duplicate: false, rental_price_verified: rentalPriceVerified, logistics_status: logistics.status, logistics_price_verified: logisticsPriceVerified };
 }
 
 async function findReplyLead(senderEmail, subject) {
@@ -582,8 +602,8 @@ async function processQuoteReply(parsed, uid, lead) {
     await setLeadProcedureStatus(lead.id, 'PRONTA_CONTROLLO_PIETRO');
     return { lead_id: lead.id, reply: true, kind, ready_for_review: true };
   }
-  const draft = await createDraftFromCrmLead(lead, partner, kind, combinedText, key);
-  if (draft.awaiting_customer_choice) return { lead_id: lead.id, reply: true, ...draft };
+  const draft = await createDraftFromCrmLead(lead, partner, kind, combinedText, key, parsed);
+  if (draft.awaiting_customer_choice || draft.awaiting_customer_details) return { lead_id: lead.id, reply: true, ...draft };
   await setLeadProcedureStatus(lead.id, 'PRONTA_CONTROLLO_PIETRO');
   return { lead_id: lead.id, reply: true, order_id: draft.order?.id, ready_for_review: true };
 }
@@ -641,8 +661,8 @@ async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
     await setLeadProcedureStatus(leadId, 'PRONTA_CONTROLLO_PIETRO');
     return { lead_id: leadId, kind, ready_for_review: true };
   }
-  const draft = await createDraftFromCrmLead(lead, partner, kind, cleanBody, key);
-  if (draft.awaiting_customer_choice) return { lead_id: leadId, ...draft };
+  const draft = await createDraftFromCrmLead(lead, partner, kind, cleanBody, key, parsed);
+  if (draft.awaiting_customer_choice || draft.awaiting_customer_details) return { lead_id: leadId, ...draft };
   await setLeadProcedureStatus(leadId, 'PRONTA_CONTROLLO_PIETRO');
   return { lead_id: leadId, partner_id: partner.id, partner_created: created, order_id: draft.order?.id, kind, ready_for_review: true };
 }

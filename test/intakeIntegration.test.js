@@ -11,9 +11,16 @@ test('four production intake paths use Odoo contract and approval queue without 
     STATE_FILE:path.join(directory,'state.json'),PORT:'0',API_TOKEN:'test-only',
     ODOO_URL:'https://odoo-contract.test',ODOO_DB:'test',ODOO_API_KEY:'test-only',ODOO_PARTNER_AUTOCOMPLETE:'false'});
   const realFetch=globalThis.fetch;
-  let lead=null, orders=[], writes=[], counter=100;
+  let lead=null, orders=[], writes=[], counter=100, aiAddresses=null, routeCount=0;
   const partner={id:7,name:'Cliente Test',company_type:'company',property_product_pricelist:[1,'Default'],email:'cliente@example.test',vat:'IT12345678901',phone:'010000000',l10n_it_pec_email:'test@example.test',l10n_it_pa_index:'TEST123'};
   globalThis.fetch=async (url,options) => {
+    if (String(url).includes('api.openai.com')) return {ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify(aiAddresses)}]}]})};
+    if (String(url).includes('/geocode/search')) {
+      const address=new URL(url).searchParams.get('text');
+      const depot=address.includes('Rollino');
+      return {ok:true,json:async()=>({features:[{properties:{layer:'address',country_a:'ITA',confidence:1,housenumber:depot?'69R':'10',street:depot?'Via Rollino':'Via Test',locality:'Genova',label:address},geometry:{coordinates:depot?[8.8,44.4]:[8.9,44.5]}}]})};
+    }
+    if (String(url).includes('/v2/directions/')) return {ok:true,json:async()=>({routes:[{summary:{distance:[40000,45000,80000,90000][routeCount++ % 4]}}]})};
     assert.ok(String(url).startsWith('https://odoo-contract.test/json/2/'));
     const [model,method]=String(url).split('/').slice(-2), body=JSON.parse(options.body);
     let result;
@@ -22,7 +29,9 @@ test('four production intake paths use Odoo contract and approval queue without 
       else if (model==='crm.lead') result=lead ? [lead] : [];
       else if (model==='crm.stage') result=[{id:1,name:'Nuove richieste'},{id:2,name:'Qualificate'}];
       else if (model==='sale.order') result=body.domain.some(term=>Array.isArray(term)&&term[0]==='id') ? orders : [];
-      else if (model==='sale.order.line') result=[{is_rental:true,price_unit:1200,product_uom_qty:1}];
+      else if (model==='sale.order.line') result=body.domain.some(term=>Array.isArray(term)&&term[0]==='product_id'&&term[2]===7)
+        ? orders[0].order_line.filter(line=>line[2].product_id===7).map(line=>({...line[2],price_unit:2,discount:0}))
+        : [{is_rental:true,price_unit:1200,product_uom_qty:1}];
       else if (model==='product.product') result=[{id:40,name:'Airstream Replica 4m XA855XY',sale_ok:false,rent_ok:true,list_price:50000}];
       else if (model==='res.users') result=[{id:1,name:'Pietro'}];
       else if (model==='ir.model') result=[{id:1,model:'crm.lead'}];
@@ -103,6 +112,23 @@ test('four production intake paths use Odoo contract and approval queue without 
     assert.equal(orders.length,priorOrders);
     assert.ok(Object.values(app.store.state.actions).filter(action=>action.case_id===`odoo-lead-${lead.id}`)
       .every(action=>['PENDING_APPROVAL','CANCELLED'].includes(action.status)));
+  });
+  await t.test('AI missing addresses asks customer, then routes into native Odoo lines without sending', async()=>{
+    Object.assign(process.env,{AI_LOGISTICS_ENABLED:'true',OPENAI_MODEL:'test',OPENAI_API_KEY:'test',ORS_API_KEY:'test'});
+    try {
+      lead=null;orders=[];writes=[];routeCount=0;
+      aiAddresses={delivery:null,collection:null,samePlaceEvidence:null,manualTransportEvidence:null};
+      const parsed={subject:'Richiesta noleggio Airstream',text:cases[3].reply,messageId:'<ai-rental-first>',from:{value:[{address:partner.email}]}};
+      const initial=await app.processQuoteRequest(parsed,7,'hello','123');
+      assert.equal(initial.awaiting_customer_details,true);assert.equal(orders.length,0);assert.equal(initial.missing.length,2);
+      aiAddresses={delivery:'Via Test 10, Genova',collection:null,samePlaceEvidence:'Ritiro allo stesso indirizzo',manualTransportEvidence:null};
+      const completed=await app.processQuoteReply({...parsed,text:'Consegna: Via Test 10, Genova. Ritiro allo stesso indirizzo.',messageId:'<ai-rental-address>'},8,lead);
+      assert.equal(completed.ready_for_review,true);assert.equal(orders.length,1);assert.equal(routeCount,4);
+      const lines=orders[0].order_line.filter(line=>line[2].product_id===7);
+      assert.deepEqual(lines.map(line=>line[2].product_uom_qty),[100,170]);
+      assert(lines.every(line=>line[2].price_unit===undefined));
+      assert(Object.values(app.store.state.actions).every(action=>action.status!=='EXECUTED'));
+    } finally { for(const key of ['AI_LOGISTICS_ENABLED','OPENAI_MODEL','OPENAI_API_KEY','ORS_API_KEY']) delete process.env[key]; }
   });
   await t.test('draft endpoint applies separate logistics minima and delegates price to Odoo', async()=>{
     orders=[];
