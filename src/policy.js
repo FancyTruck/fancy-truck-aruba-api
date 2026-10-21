@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import {hash} from './peuCommon.js';
 
 export const EXTERNAL_ACTIONS = new Set([
   'SEND_EMAIL', 'SEND_QUOTE', 'SEND_CONTRACT', 'ISSUE_INVOICE', 'SEND_INVOICE', 'TRANSMIT_SDI',
@@ -21,6 +22,7 @@ export class ApprovalService {
   approveCommand(id, actor, command) {
     const action = this.store.action(id);
     if (!action) throw new Error('Azione non trovata');
+    if(action.peu_payload_hash && hash(action.payload)!==action.peu_payload_hash)throw new Error('Contenuto operazione Peu modificato');
     if (action.status !== 'PENDING_APPROVAL') throw new Error(`Azione non approvabile nello stato ${action.status}`);
     if (String(actor).trim().toLowerCase() !== 'pietro') throw new Error('Solo Pietro può impartire il comando specifico');
     if (String(command).trim() !== `APPROVA ${id}`) throw new Error(`Comando specifico richiesto: APPROVA ${id}`);
@@ -37,6 +39,7 @@ export class ApprovalService {
   confirm(id, actor, token) {
     const action = this.store.action(id);
     if (!action) throw new Error('Azione non trovata');
+    if(action.peu_payload_hash && hash(action.payload)!==action.peu_payload_hash)throw new Error('Contenuto operazione Peu modificato');
     if (action.status !== 'AWAITING_FINAL_CONFIRMATION') throw new Error(`Conferma non ammessa nello stato ${action.status}`);
     if (String(actor).trim().toLowerCase() !== 'pietro') throw new Error('Solo Pietro può dare la conferma finale');
     const [nonce, supplied] = String(token || '').split('.');

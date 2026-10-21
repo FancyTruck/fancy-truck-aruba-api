@@ -1,0 +1,25 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import {mkdtempSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {makePeuContract} from '../src/peuContract.js';
+import {hash} from '../src/peuCommon.js';
+import {ApprovalService} from '../src/policy.js';
+import {JsonStateStore} from '../src/store.js';
+import {accessControl} from '../src/accessControl.js';
+function fixture(){const db=new DatabaseSync(':memory:');const approvals=new ApprovalService(new JsonStateStore(join(mkdtempSync(join(tmpdir(),'peu-test-')),'state.json')),'test-secret');let sent=0,writes=0,fail=false;
+const config={db,approvals,assertWritable(){},upstream:async()=>{writes++;return {ok:true,id:42};},verify:async()=>({ok:true,status:'verified',id:42}),smtp:async()=>{sent++;if(fail)throw new Error('uncertain');return {accepted:['test@example.invalid'],rejected:[],messageId:'mock'};}};
+const contract=makePeuContract(config);
+const command=(capability,parameters,key)=>{const c=contract.catalog().capabilities.find(c=>c.id===capability);return {operation_id:key,idempotency_key:key,capability,parameters,confirmation:{confirmed:true,payload_hash:hash({provider:'fancy',capability,domain:'work',payload:{parameters,catalog_hash:hash(c)},effect:c.effect,confirmation:c.confirmation})}};};
+const approve=id=>{const a=approvals.approveCommand(id,'Pietro',`APPROVA ${id}`);approvals.confirm(id,'Pietro',a.confirmation_token);};
+return {contract,config,command,approve,approvals,get sent(){return sent;},get writes(){return writes;},fail:()=>{fail=true;}};}
+const mail={account:'pietro',to:'test@example.invalid',subject:'Simulazione',text:'Test locale'};
+test('mail preparation never sends; Fancy approval mandatory',async()=>{const f=fixture(),p=await f.contract.execute(f.command('mail.prepare',mail,'prep'));assert.equal(f.sent,0);assert.equal(p.result.status,'awaiting_fancy_approval');await assert.rejects(f.contract.execute(f.command('mail.send',{action_id:p.result.action_id,payload_hash:p.result.payload_hash},'send')));assert.equal(f.sent,0);});
+test('approved exact operation sends once across different keys and restart',async()=>{const f=fixture(),p=(await f.contract.execute(f.command('mail.prepare',mail,'prep'))).result;f.approve(p.action_id);const params={action_id:p.action_id,payload_hash:p.payload_hash};const r=await f.contract.execute(f.command('mail.send',params,'send'));assert.equal(r.result.status,'accepted_by_smtp');await f.contract.execute(f.command('mail.send',params,'send'));await makePeuContract(f.config).execute(f.command('mail.send',params,'send2'));assert.equal(f.sent,1);});
+test('unknown SMTP outcome cannot be retried with a different key',async()=>{const f=fixture(),p=(await f.contract.execute(f.command('mail.prepare',mail,'prep'))).result;f.approve(p.action_id);f.fail();for(const key of ['a','b'])await assert.rejects(f.contract.execute(f.command('mail.send',{action_id:p.action_id,payload_hash:p.payload_hash},key)));assert.equal(f.sent,1);});
+test('payload tampering after approval and idempotency collision rejected',async()=>{const f=fixture(),p=(await f.contract.execute(f.command('mail.prepare',mail,'prep'))).result;await assert.rejects(f.contract.execute(f.command('mail.prepare',{...mail,text:'Changed'},'prep')));f.approve(p.action_id);f.approvals.store.action(p.action_id).payload.to='another@example.invalid';await assert.rejects(f.contract.execute(f.command('mail.send',{action_id:p.action_id,payload_hash:p.payload_hash},'send')));assert.equal(f.sent,0);});
+test('CRM only writes after Fancy approval and verifies result',async()=>{const f=fixture(),p=(await f.contract.execute(f.command('crm.create',{name:'Test',partner_id:1},'prepare'))).result;assert.equal(f.writes,0);f.approve(p.action_id);const r=await f.contract.execute(f.command('operation.execute',{action_id:p.action_id,payload_hash:p.payload_hash},'execute'));assert.equal(r.result.status,'verified');assert.equal(f.writes,1);});
+test('incorrect confirmation rejected',async()=>{const f=fixture(),c=f.command('mail.prepare',mail,'prep');c.confirmation.payload_hash='bad';await assert.rejects(f.contract.execute(c));assert.equal(f.sent,0);});
+test('Peu token denies admin, approvals, direct sending and hello',()=>{const middleware=accessControl({PEU_ACCESS_TOKEN:'scoped'});for(const [method,url,expected] of [['GET','/v1/peu/aruba/pietro/folders',200],['POST','/v1/peu/commands',200],['GET','/v1/peu/aruba/hello/folders',403],['GET','/v1/diagnostics',403],['POST','/v1/approvals/a/confirm',403],['POST','/v1/pietro/send',403],['POST','/v1/actions/a/execute',403]]){let status=200;middleware({method,originalUrl:url,headers:{authorization:'Bearer scoped'}},{status(s){status=s;return this;},json(){}},()=>{});assert.equal(status,expected);}});
