@@ -51,3 +51,24 @@ test('failed download never marks backup verified or deletes old copies',async()
  const client={async send(c){if(c.constructor.name==='ListObjectsV2Command')return {};if(c.constructor.name==='PutObjectCommand')return {};throw Error('download failed');}};
  await assert.rejects(runExternalBackup({client,store,env:{EXTERNAL_BACKUP_ENABLED:'true',BACKUP_S3_BUCKET:'test',BACKUP_ENCRYPTION_KEY:'a'.repeat(64)}}),/download failed/);
 });
+test('briefing serializes reads and retries only rate-limited reads with bounded delay',async()=>{
+ let active=0,maxActive=0,attempts=0;const sleeps=[];
+ const report=await buildBriefing({state:state(),sleep:async ms=>sleeps.push(ms),call:async(_model,method)=>{
+  active++;maxActive=Math.max(maxActive,active);
+  await Promise.resolve();active--;attempts++;
+  if(attempts===1)throw Object.assign(Error('HTML rate limit'),{status:429,retryAfterMs:1500});
+  return method==='search_count'?0:[];
+ }});
+ assert(report.complete);assert.equal(maxActive,1);assert.equal(attempts,7);assert(sleeps.includes(1500));
+});
+test('briefing stops after bounded 429 retries and never retries permission failures',async()=>{
+ for(const status of [429,403]){
+  let calls=0;
+  const report=await buildBriefing({state:state(),sleep:async()=>{},call:async()=>{calls++;throw Object.assign(Error('secret'),{status});}});
+  assert(!report.complete);assert.equal(calls,status===429?9:3);
+  assert(!JSON.stringify(report).includes('secret'));
+ }
+ let calls=0;
+ await buildBriefing({state:state(),sleep:async()=>{},call:async()=>{calls++;throw Object.assign(Error('wait'),{status:429,retryAfterMs:60000});}});
+ assert.equal(calls,3);
+});
