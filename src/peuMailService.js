@@ -13,7 +13,7 @@ export class ArubaService {
    for(let page=0;page<10000;page++){
      // A source may contain large MIME attachments: never retain 100 raw mails.
      const batch=await readFolder(client,folder,cursor,1),parsed=[];
-     for(const item of batch.items){const m=await this.parse(Buffer.from(item.source,'base64'));const id=m.messageId||null,refs=Array.isArray(m.references)?m.references:typeof m.references==='string'?m.references.split(/\s+/):[];parsed.push({...item,message_id:id,thread_key:refs[0]||m.inReplyTo||id||`${batch.cursor.validity}:${item.uid}`,payload:JSON.stringify({subject:m.subject||'',text:m.text||'',date:m.date?.toISOString()||null,from:m.from?.value||[],to:m.to?.value||[],inReplyTo:m.inReplyTo||null,references:refs,attachments:(m.attachments||[]).map((a,index)=>({index,filename:a.filename||null,contentType:a.contentType,size:a.size,content:a.content.toString('base64')}))})});}
+     for(const item of batch.items){const m=await this.parse(Buffer.from(item.source,'base64'));const id=m.messageId||null,refs=Array.isArray(m.references)?m.references:typeof m.references==='string'?m.references.split(/\s+/):[];parsed.push({...item,message_id:id,thread_key:refs[0]||m.inReplyTo||id||`${batch.cursor.validity}:${item.uid}`,payload:JSON.stringify({subject:m.subject||'',text:m.text||'',date:m.date?.toISOString()||null,from:m.from?.value||[],to:m.to?.value||[],inReplyTo:m.inReplyTo||null,references:refs,attachments:(m.attachments||[]).map((a,index)=>({index,filename:a.filename||null,contentType:a.contentType,size:a.size}))})});}
      transaction(this.db,()=>{if(batch.reset)this.db.prepare('UPDATE mail_messages SET deleted=1 WHERE account=? AND folder=?').run(account,folder);
        for(const m of parsed)this.db.prepare('INSERT INTO mail_messages VALUES(?,?,?,?,?,?,?,?,0) ON CONFLICT(account,folder,validity,uid) DO UPDATE SET payload=excluded.payload,flags=excluded.flags,deleted=0').run(account,folder,batch.cursor.validity,m.uid,m.message_id,m.thread_key,m.payload,JSON.stringify(m.flags));
        this.db.prepare('INSERT INTO mail_cursors VALUES(?,?,?,?) ON CONFLICT(account,folder) DO UPDATE SET validity=excluded.validity,last_uid=excluded.last_uid').run(account,folder,batch.cursor.validity,batch.cursor.uid);
@@ -28,6 +28,14 @@ export class ArubaService {
    return {status:'synced',new_messages:total,cursor};
  });}
  messages(account,folder){this.account(account);return Array.from(this.db.prepare('SELECT account,folder,validity,uid,message_id,thread_key,flags,deleted,payload FROM mail_messages WHERE account=? AND folder=? AND deleted=0 ORDER BY uid DESC LIMIT 100').iterate(account,folder),publicMessage);}
- attachment(account,folder,validity,uid,index){this.account(account);const r=this.db.prepare('SELECT payload FROM mail_messages WHERE account=? AND folder=? AND validity=? AND uid=? AND deleted=0').get(account,folder,validity,uid);if(!r)throw problem('message_not_found',404);const a=JSON.parse(r.payload).attachments[index];if(!a)throw problem('attachment_not_found',404);return a;}
+ async attachment(account,folder,validity,uid,index){this.account(account);const r=this.db.prepare('SELECT payload FROM mail_messages WHERE account=? AND folder=? AND validity=? AND uid=? AND deleted=0').get(account,folder,validity,uid);if(!r)throw problem('message_not_found',404);if(!JSON.parse(r.payload).attachments[index])throw problem('attachment_not_found',404);
+   return this.withImap(account,async client=>{const lock=await client.getMailboxLock(folder,{readOnly:true});try{
+     if(String(client.mailbox.uidValidity)!==validity)throw problem('uidvalidity_changed_retry',409);
+     const meta=await client.fetchOne(uid,{size:true},{uid:true});if(!meta)throw problem('message_not_found',404);if(meta.size>20*1024*1024)throw problem('attachment_requires_large_message_download',413);
+     const raw=await client.fetchOne(uid,{source:true},{uid:true});if(!raw?.source)throw problem('message_not_found',404);
+     const parsed=await this.parse(raw.source),a=parsed.attachments?.[index];if(!a)throw problem('attachment_not_found',404);
+     return {index,filename:a.filename||null,contentType:a.contentType,size:a.size,content:a.content.toString('base64')};
+   }finally{lock.release();}});
+ }
 
 }
