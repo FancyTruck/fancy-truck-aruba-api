@@ -157,3 +157,32 @@ test('restored server overrides writable settings and exposes recovery and missi
  assert.equal(diagnostic.recovery_required,true);assert.equal(diagnostic.read_only,true);assert.equal(diagnostic.automation_status,'DISABLED');assert.equal(diagnostic.backup.status,'DISABLED');
  for(const path of ['/automation/run','/odoo/crm/leads','/actions/no/execute','/approvals/no/confirm','/peu/commands'])assert.equal((await fetch(base+'/v1'+path,{method:'POST',headers,body:'{}'})).status,403);
 });
+
+test('configured quota counts uploaded bytes, hidden versions and rejects invalid policies',async t=>{
+ const {bundleBackupPolicy,bundleCapacity}=await import('../src/externalBundleBackup.js');
+ assert.deepEqual(bundleBackupPolicy({}),{quotaBytes:1073741824,retentionDays:30});
+ assert.equal(bundleCapacity(821923596,410865722,1073741824).capacity_status,'NEXT_BACKUP_BLOCKED');
+ assert.equal(bundleCapacity(900,100,1000).estimated_daily_copies_within_quota,1);
+ assert.equal(bundleCapacity(1001,100,1000).estimated_daily_copies_within_quota,0);
+ for(const value of ['0','NaN','8000000001'])assert.throws(()=>bundleBackupPolicy({BACKUP_MAX_STORAGE_BYTES:value}));
+ assert.throws(()=>bundleBackupPolicy({BACKUP_RETENTION_DAYS:'0'}));
+ const f=fixture(t),client=mockBucket({versions:[{Key:'hidden',Size:1073741824,IsLatest:false}]});
+ const result=await runExternalBackup({...f,env:{...env,BACKUP_MAX_STORAGE_BYTES:'8000000000'},client,canCapture:()=>true});
+ assert.equal(result.stored_bytes,1073741824+result.bytes);
+ assert.equal(result.estimated_daily_copies_within_quota,Math.floor((8000000000-result.stored_bytes)/result.bytes));
+});
+test('shorter retention is opt in and applies after verified resume without deleting recent or legacy copies',async t=>{
+ const f=fixture(t),now=new Date('2026-10-21T18:00:00Z'),versions=[],client=mockBucket({versions});
+ const first=await runExternalBackup({...f,env,client,now,canCapture:()=>true});
+ versions.push({Key:first.key,Size:first.bytes,LastModified:now,IsLatest:true,VersionId:'current'});
+ versions.push({Key:'fancy-ai-state-v1/2026-10-12T00-00-00-000Z-abc.bundle.enc',Size:100,LastModified:new Date('2026-10-12'),VersionId:'expired'});
+ const daily=await runExternalBackup({...f,env,client,now,canCapture:()=>false});
+ assert.equal(daily.verified_at,first.verified_at);
+ assert.equal(daily.stored_bytes,first.bytes+100);
+ assert(!client.calls.includes('DeleteObjectCommand'));
+ delete f.store.state.idempotency[`external-bundle-v2:${now.toISOString().slice(0,10)}`];
+ const resumed=await runExternalBackup({...f,env:{...env,BACKUP_RETENTION_DAYS:'7'},client,now,canCapture:()=>false});
+ assert.equal(client.calls.filter(c=>c==='DeleteObjectCommand').length,1);
+ assert.equal(resumed.stored_bytes,first.bytes);
+ assert.equal(client.calls.filter(c=>c==='PutObjectCommand').length,1);
+});

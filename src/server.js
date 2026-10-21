@@ -49,6 +49,9 @@ const initialRuntime = runtimeConfig();
 const startedAt = Date.now();
 const store = new JsonStateStore(initialRuntime.stateFile);
 const runtime = applyRecoveryGuard(initialRuntime,store.state);
+// Only the owning server reconciles its previous process, never backup readers
+// or quarantined restores. Checkpoints and effects are deliberately untouched.
+if (!runtime.readOnly) store.reconcileInterruptedCycles();
 const approvals = new ApprovalService(store);
 let activeApiRequests=0, backupInFlight=null;
 // Do not decrement on client disconnect: an aborted response can still have a
@@ -755,7 +758,7 @@ async function runOperationalCycle({ force = false } = {}) {
       try {
         const backup = await verifiedExternalBackup();
         if (backup.status === 'VERIFIED') {
-          store.integration('backup:external', {status:'OK',last_success_at:backup.verified_at,key:backup.key,bytes:backup.bytes});
+          store.integration('backup:external', {status:'OK',error:null,last_success_at:backup.verified_at,key:backup.key,bytes:backup.bytes});
           console.log('BACKUP ESTERNO: caricamento e ripristino di controllo verificati');
         }
       } catch(error) {
@@ -948,8 +951,8 @@ function verifiedExternalBackup(){
  if(backupInFlight)return backupInFlight;
  backupInFlight=runExternalBackup({store,env:process.env,db:peuDb,canCapture:()=>activeApiRequests===0})
  .then(result=>{
-   if(result.status==='VERIFIED'){
-     store.integration('backup:external',{...result,status:'OK',last_success_at:result.verified_at});
+   if(result.status==='VERIFIED'||(result.status==='ALREADY_VERIFIED_TODAY'&&result.verified_at)){
+     store.integration('backup:external',{...result,status:'OK',error:null,last_success_at:result.verified_at});
      console.log(JSON.stringify({event:'external_backup_verified',...result}));
    }
    return result;
