@@ -76,6 +76,7 @@ test('server reale: letture autorizzate, scritture bloccate e stato invariato', 
   const diagnostics = await (await fetch(`${base}/v1/diagnostics`, { headers })).json();
   assert.equal(diagnostics.read_only, true);
   assert.equal(diagnostics.automation_status, 'DISABLED');
+  assert.deepEqual(diagnostics.automation_reasons, []);
   for (const route of ['/automation/run', '/approvals/test/command', '/approvals/test/confirm',
     '/odoo/contacts', '/odoo/crm/leads', '/odoo/sales/drafts', '/odoo/chatter', '/hello/send', '/actions/test/execute']) {
     const response = await fetch(`${base}/v1${route}`, { method: 'POST', headers, body: '{"force":true}' });
@@ -84,3 +85,4 @@ test('server reale: letture autorizzate, scritture bloccate e stato invariato', 
   }
   await assert.rejects(access(stateFile), { code: 'ENOENT' });
 });
+

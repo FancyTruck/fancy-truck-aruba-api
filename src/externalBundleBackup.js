@@ -32,7 +32,10 @@ const send=(client,command)=>client.send(command,{abortSignal:AbortSignal.timeou
 export function backupFailureDetails(error){
  const message=String(error?.message||'');
  const rules=[['operazioni in corso','BUSY'],['registro in esecuzione','EXECUTING'],['SQLite oltre','SQLITE_SIZE_LIMIT'],['Spazio temporaneo','TEMP_SPACE'],['non coerenti','INCONSISTENT_STORES'],['no such table','MISSING_TABLE'],['10 GB','BUCKET_QUOTA'],['non corrispondente','HASH_MISMATCH']];
- const reason=rules.find(([text])=>message.includes(text))?.[1]||'BACKUP_FAILED';
+ // Only classify the provider's explicit download/transaction-cap response.
+ // An arbitrary AccessDenied remains unclassified, never assumed to be quota.
+ const downloadCap=error?.name==='AccessDenied'&&/download bandwidth or transaction \(Class B\) cap exceeded/i.test(message);
+ const reason=downloadCap?'DOWNLOAD_CAP_EXCEEDED':rules.find(([text])=>message.includes(text))?.[1]||'BACKUP_FAILED';
  const names=['Error','InvalidArgument','InvalidRequest','NotImplemented','AccessDenied','NoSuchBucket','TimeoutError','AbortError','TypeError','InternalError','ServiceUnavailable','RequestTimeout','BadRequest'];
  return {stage:error?.backupStage||'configuration',reason,type:names.includes(error?.name)?error.name:'OTHER',http_status:Number.isInteger(error?.$metadata?.httpStatusCode)?error.$metadata.httpStatusCode:undefined};
 }
@@ -143,3 +146,4 @@ export async function runBundleBackup({store,db,env,client,now=new Date(),canCap
  }catch(error){error.backupStage=stage;throw error;}
  finally{removePrivateDirectory(directory);}
 }
+

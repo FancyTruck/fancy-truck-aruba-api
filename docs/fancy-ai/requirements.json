@@ -1,0 +1,326 @@
+{
+  "notice": "Stable ID index only; consult the owner's full project register for detailed decisions. Empty evidence means not established, not missing implementation.",
+  "requirements": [
+    {
+      "id": "0.1",
+      "objective": "Inventario componenti",
+      "status": "da verificare"
+    },
+    {
+      "id": "0.2",
+      "objective": "Audit cicli e checkpoint",
+      "status": "da verificare"
+    },
+    {
+      "id": "0.3",
+      "objective": "Approvazione pendente",
+      "status": "da verificare"
+    },
+    {
+      "id": "0.4",
+      "objective": "Rinvii e blocchi",
+      "status": "da verificare"
+    },
+    {
+      "id": "1.1",
+      "objective": "Separazione privilegi e credenziali",
+      "status": "da verificare"
+    },
+    {
+      "id": "1.2",
+      "objective": "Resilienza OAuth",
+      "status": "da verificare"
+    },
+    {
+      "id": "1.3",
+      "objective": "Ripristino backup applicativo",
+      "status": "da verificare"
+    },
+    {
+      "id": "1.4",
+      "objective": "Persistenza e recupero",
+      "status": "da verificare"
+    },
+    {
+      "id": "1.5",
+      "objective": "Diagnostica e allarmi",
+      "status": "da verificare"
+    },
+    {
+      "id": "2.1",
+      "objective": "Mappa ingressi email",
+      "status": "da verificare"
+    },
+    {
+      "id": "2.2",
+      "objective": "Classificazione quattro percorsi",
+      "status": "da verificare"
+    },
+    {
+      "id": "2.3",
+      "objective": "Estrazione con provenienza",
+      "status": "da verificare"
+    },
+    {
+      "id": "2.4",
+      "objective": "Collegamento thread",
+      "status": "da verificare"
+    },
+    {
+      "id": "2.5",
+      "objective": "Recupero incrementale",
+      "status": "da verificare"
+    },
+    {
+      "id": "2.6",
+      "objective": "Campioni e regressioni",
+      "status": "da verificare"
+    },
+    {
+      "id": "3.1",
+      "objective": "Raccolta dati commerciale",
+      "status": "da verificare"
+    },
+    {
+      "id": "3.2",
+      "objective": "Instradamento commerciale",
+      "status": "da verificare"
+    },
+    {
+      "id": "3.3",
+      "objective": "Preventivi nativi",
+      "status": "da verificare"
+    },
+    {
+      "id": "3.4",
+      "objective": "Logistica",
+      "status": "da verificare"
+    },
+    {
+      "id": "3.5",
+      "objective": "Regole economiche",
+      "status": "da verificare"
+    },
+    {
+      "id": "3.6",
+      "objective": "Invio e follow-up autorizzati",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.1",
+      "objective": "Pipeline e commessa",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.2",
+      "objective": "Documenti e amministrazione",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.3",
+      "objective": "Pianificazione operazioni",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.4",
+      "objective": "Verbali e anomalie",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.5",
+      "objective": "Chiusura operativa",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.6",
+      "objective": "Flotta",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.7",
+      "objective": "Caso annuale e rendiconto mensile",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.8",
+      "objective": "Cauzioni",
+      "status": "da verificare"
+    },
+    {
+      "id": "5.1",
+      "objective": "Catalogo capacità",
+      "status": "da verificare"
+    },
+    {
+      "id": "5.2",
+      "objective": "Revisioni e approvazioni",
+      "status": "da verificare"
+    },
+    {
+      "id": "5.3",
+      "objective": "Notifiche pertinenti",
+      "status": "da verificare"
+    },
+    {
+      "id": "5.4",
+      "objective": "Collaudo condiviso",
+      "status": "da verificare"
+    },
+    {
+      "id": "5.5",
+      "objective": "Accesso quotidiano",
+      "status": "da verificare"
+    },
+    {
+      "id": "6.1",
+      "objective": "Identità Odoo",
+      "status": "differito per scelta"
+    },
+    {
+      "id": "6.2",
+      "objective": "Privilegi e revoca",
+      "status": "differito per scelta"
+    },
+    {
+      "id": "6.3",
+      "objective": "Passaggio casella a Peu",
+      "status": "differito per scelta"
+    },
+    {
+      "id": "6.4",
+      "objective": "Nessuna escalation tecnica",
+      "status": "differito per scelta"
+    },
+    {
+      "id": "7.1",
+      "objective": "Matrice requisito-prova",
+      "status": "da verificare"
+    },
+    {
+      "id": "7.2",
+      "objective": "Scenari di guasto",
+      "status": "da verificare"
+    },
+    {
+      "id": "7.3",
+      "objective": "Procedure operative",
+      "status": "da verificare"
+    },
+    {
+      "id": "7.4",
+      "objective": "Costi e limiti",
+      "status": "da verificare"
+    },
+    {
+      "id": "7.5",
+      "objective": "Rilascio e osservazione",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.1",
+      "objective": "Bozza fattura e fonte fiscale",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.2",
+      "objective": "Quadratura attive e passive",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.3",
+      "objective": "Solleciti",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.4",
+      "objective": "Imputazione passive",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.5",
+      "objective": "DKV",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.6",
+      "objective": "Telepass",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.7",
+      "objective": "Carte",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.8",
+      "objective": "QUADRA e fatture estere",
+      "status": "da verificare"
+    },
+    {
+      "id": "1.4.1",
+      "objective": "Esecuzione a chat chiusa",
+      "status": "da verificare"
+    },
+    {
+      "id": "2.1.1",
+      "objective": "Applicabilità pulizia Gmail storica",
+      "status": "da verificare"
+    },
+    {
+      "id": "3.3.1",
+      "objective": "Preventivi multipli legittimi",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.1.1",
+      "objective": "Pipeline completa",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.1.2",
+      "objective": "Progetto collegato",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.1.3",
+      "objective": "Costi e margini",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.2.1",
+      "objective": "Contratti mobile",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.2.2",
+      "objective": "Allegato grafica approvata",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.4.1",
+      "objective": "Verbali con foto HD",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.1.1",
+      "objective": "Descrizione fattura pertinente",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.2.1",
+      "objective": "Recupero cronologico storico",
+      "status": "da verificare"
+    }
+  ],
+  "common_fields": {
+    "implementation": "not established by this baseline",
+    "evidence": [],
+    "source": "owner project register; recovered automation requirements reconciled with later decisions",
+    "next_action": "verify implementation and runtime wiring before changing behavior",
+    "dependencies": [],
+    "responsible": "Fancy; Peu/Odoo/owner where required by the project register",
+    "completion_criterion": "dated requirement-specific evidence; isolated tests do not close production acceptance",
+    "gap": "live functional acceptance not established",
+    "updated_at": "2026-10-22"
+  }
+}

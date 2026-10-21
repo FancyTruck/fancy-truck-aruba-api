@@ -3,6 +3,7 @@ import { linkThreadMessage } from './threadLinking.js';
 import { pollSentMailbox } from './sentTracking.js';
 import { reconcileCrm } from './crmReconciliation.js';
 import { buildBriefing } from './briefing.js';
+import { automationHealth } from './automationHealth.js';
 import { runExternalBackup } from './externalBackup.js';
 import { applyRecoveryGuard } from './recoveryGuard.js';
 import { backupFailureDetails } from './externalBundleBackup.js';
@@ -893,11 +894,9 @@ app.get('/health', (_req, res) => {
 
 app.get('/v1/diagnostics', requireToken, (_req, res) => {
   const state = store.state;
-  const lastCycle = state.cycles.at(-1) || null;
   const operatingNow = withinOperatingWindow();
-  const stale = operatingNow && (lastCycle?.ended_at
-    ? Date.now() - new Date(lastCycle.ended_at).getTime() > 2 * 60 * 60 * 1000
-    : Date.now() - startedAt > 10 * 60 * 1000);
+  const health = automationHealth({ runtime, cycles: state.cycles, operatingNow, startedAt });
+  const { lastCycle, stale } = health;
 
   // Liveness stays HTTP 200 while the process is alive. A stale automation
   // cycle is reported as degraded data instead of disconnecting the web API.
@@ -906,7 +905,8 @@ app.get('/v1/diagnostics', requireToken, (_req, res) => {
     ready: true,
     service: 'fancy-truck-aruba-api',
     procedure_version: COMMERCIAL_PROCEDURE_VERSION,
-    automation_status: runtime.readOnly || !runtime.automationEnabled ? 'DISABLED' : stale ? 'DEGRADED' : 'OK',
+    automation_status: health.status,
+    automation_reasons: health.reasons,
     environment: runtime.environment,
     read_only: runtime.readOnly,
     recovery_required: Boolean(runtime.recoveryRequired),
@@ -1410,3 +1410,4 @@ const server = app.listen(port, runtime.host, (error) => {
 
 // Module exports permit isolated contract tests without exposing extra HTTP routes.
 export { processQuoteRequest, processQuoteReply, processSentMessage, findReplyLead, server, store, approvals };
+
