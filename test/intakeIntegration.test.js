@@ -22,7 +22,7 @@ test('four production intake paths use Odoo contract and approval queue without 
       else if (model==='crm.lead') result=lead ? [lead] : [];
       else if (model==='crm.stage') result=[{id:1,name:'Nuove richieste'},{id:2,name:'Qualificate'}];
       else if (model==='sale.order') result=body.domain.some(term=>Array.isArray(term)&&term[0]==='id') ? orders : [];
-      else if (model==='product.product') result=[{id:40,name:'Airstream Replica 4m XA855XY',sale_ok:true,rent_ok:true,list_price:50000}];
+      else if (model==='product.product') result=[{id:40,name:'Airstream Replica 4m XA855XY',sale_ok:false,rent_ok:true,list_price:50000}];
       else if (model==='res.users') result=[{id:1,name:'Pietro'}];
       else if (model==='ir.model') result=[{id:1,model:'crm.lead'}];
       else if (model==='mail.activity.type') result=[{id:1,name:'To do'}];
@@ -55,16 +55,45 @@ test('four production intake paths use Odoo contract and approval queue without 
     assert.equal(first.kind,item.kind);assert.equal(writes.filter(model=>model==='crm.lead').length,1);
     const actions=Object.values(app.store.state.actions).filter(action=>action.case_id===`odoo-lead-${lead.id}`);
     assert.equal(actions.length,1);assert.equal(actions[0].status,'PENDING_APPROVAL');
+    assert.equal(actions[0].payload.subject, `Re: ${parsed.subject}`);
+    assert.equal(actions[0].payload.inReplyTo, parsed.messageId);
+    assert.equal(actions[0].payload.references, parsed.messageId);
     assert.throws(()=>app.approvals.assertExecutable(actions[0].id));
     if(item.kind==='event_food') {
-      assert.match(actions[0].payload.html,/cristiano@fancytruck.it/);assert.equal(orders.length,0);return;
+      assert.match(actions[0].payload.html,/cristiano@fancytruck.it/);assert.equal(orders.length,0);
+      assert.equal(actions[0].target,partner.email);
+      assert.equal(writes.includes('project.project'),false);
+      return;
     }
     assert.equal(orders.length,0);
-    const second=await app.processQuoteReply({...parsed,text:item.reply,messageId:`<${item.kind}-reply>`},2,lead);
+    assert.equal(lead.stage_id,1);
+    const partial=await app.processQuoteReply({...parsed,text:'Grazie, confermo Milano.',messageId:`<${item.kind}-partial>`},2,lead);
+    assert.equal(partial.lead_id,first.lead_id);
+    assert.ok(partial.missing.length>0);
+    assert.equal(orders.length,0);
+    assert.equal(lead.stage_id,1);
+    const completedMessage={...parsed,text:item.reply,messageId:`<${item.kind}-reply>`};
+    const second=await app.processQuoteReply(completedMessage,3,lead);
     assert.equal(second.lead_id,first.lead_id);assert.equal(second.ready_for_review,true);
     assert.equal(app.store.action(actions[0].id).status,'CANCELLED');
     assert.equal(writes.filter(model=>model==='crm.lead').length,1);
-    if(item.kind==='rental') {assert.equal(orders.length,1);assert.equal(orders[0].order_line[0][2].display_type,'line_note');}
-    else assert.equal(orders.length,0);
+    assert.equal(lead.stage_id,2);
+    if(item.kind==='rental') {
+      assert.equal(orders.length,1);
+      assert.equal(orders[0].pricelist_id,1);
+      assert.equal(orders[0].order_line[0][2].display_type,'line_note');
+      assert.equal(orders[0].order_line[0][2].price_unit,undefined);
+      assert.match(orders[0].order_line[0][2].name,/Airstream Replica 4m/);
+    } else {
+      assert.equal(orders.length,0);
+      assert.equal(writes.includes('project.project'),false);
+    }
+    const priorWrites=writes.length, priorOrders=orders.length;
+    const replay=await app.processQuoteReply(completedMessage,3,lead);
+    assert.equal(replay.duplicate,true);
+    assert.equal(writes.length,priorWrites);
+    assert.equal(orders.length,priorOrders);
+    assert.ok(Object.values(app.store.state.actions).filter(action=>action.case_id===`odoo-lead-${lead.id}`)
+      .every(action=>['PENDING_APPROVAL','CANCELLED'].includes(action.status)));
   });
 });
