@@ -11,7 +11,8 @@
     "explicit-backup-cap-reason",
     "quotation-source-replay-versus-scope-review",
     "private-http-failure-telemetry",
-    "admin-only-readonly-case-audit"
+    "admin-only-readonly-case-audit",
+    "durable-report-dispatch-claim-and-readonly-odoo-reconciliation"
   ],
   "tests": {
     "command": "npm test",
@@ -19,7 +20,7 @@
     "failed": 0,
     "environment": "local isolated; no production credentials"
   },
-  "next_action": "Develop document upload/send replay and uncertain-delivery reconciliation; inventory native Odoo and external finance integrations",
+  "next_action": "Implement reviewed resolution for partial/uncertain dispatches and verified Sign relation; continue native Odoo/external source inventory",
   "blocked": [
     "live backup download and isolated restore",
     "browser administrative policy",
@@ -45,8 +46,8 @@
     {
       "component": "Sites contracts/reports and Odoo proxy",
       "development_branch": "work/fancy-finance-audit-20261022",
-      "development_commit": "8654a1d05d82f6be588863d64e465236a4edb334",
-      "isolated_tests": 11,
+      "development_commit": "410d517f2f703125a4e12b2aa6ba92f022f4c0ad",
+      "isolated_tests": 23,
       "typecheck": "passed",
       "build": "passed",
       "live_version_observed": 21

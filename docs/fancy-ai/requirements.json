@@ -57,7 +57,16 @@
     {
       "id": "1.4",
       "objective": "Persistenza e recupero",
-      "status": "da verificare"
+      "status": "da verificare",
+      "implementation": "Private report component: persistent dispatch claims and uncertain-state barrier; exact-case message reconciliation; registration distinct from delivery",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "isolated SQLite and mocked Odoo route tests; 23 component tests; TypeScript/build passed"
+        }
+      ],
+      "gap": "Hosted D1 migration/runtime, mobile QA, review-resolution UI and delivery acceptance remain open",
+      "updated_at": "2026-10-22"
     },
     {
       "id": "1.5",
@@ -295,7 +304,16 @@
     {
       "id": "1.4.1",
       "objective": "Esecuzione a chat chiusa",
-      "status": "da verificare"
+      "status": "da verificare",
+      "implementation": "Private report component: persistent dispatch claims and uncertain-state barrier; exact-case message reconciliation; registration distinct from delivery",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "isolated SQLite and mocked Odoo route tests; 23 component tests; TypeScript/build passed"
+        }
+      ],
+      "gap": "Hosted D1 migration/runtime, mobile QA, review-resolution UI and delivery acceptance remain open",
+      "updated_at": "2026-10-22"
     },
     {
       "id": "2.1.1",
@@ -345,12 +363,12 @@
       "id": "4.4.1",
       "objective": "Verbali con foto HD",
       "status": "da verificare",
-      "implementation": "Existing HD PDF photo pages inspected; phase-specific completeness checks added on development branch",
-      "gap": "Mobile real-document acceptance and delivery reconciliation open",
+      "implementation": "Private report component: persistent dispatch claims and uncertain-state barrier; exact-case message reconciliation; registration distinct from delivery",
+      "gap": "Hosted D1 migration/runtime, mobile QA, review-resolution UI and delivery acceptance remain open",
       "evidence": [
         {
           "date": "2026-10-22",
-          "kind": "source inspection and isolated local tests; not live acceptance"
+          "kind": "isolated SQLite and mocked Odoo route tests; 23 component tests; TypeScript/build passed"
         }
       ],
       "updated_at": "2026-10-22"
