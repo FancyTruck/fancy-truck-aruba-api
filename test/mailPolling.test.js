@@ -91,3 +91,12 @@ test('checkpoint write failure rolls back memory and disk and stops the batch', 
   assert.deepEqual(args.processed, [1]);
   args.store.save = save;
 });
+
+test('queued review preserves source UID even when handler omits or supplies stale identity', async t => {
+ const args=setup(t);
+ args.processMessage=async()=>({suspended:true,reason:'new_thread_existing_customer',uid:999,account:'wrong'});
+ const rows=await pollMailbox(args);
+ assert.deepEqual(rows.map(row=>row.uid),[1,2,3]);
+ assert.ok(rows.every(row=>row.account==='hello' && row.reason==='new_thread_existing_customer'));
+ assert.equal(args.store.cursor(key).lastUid,3);
+});
