@@ -19,7 +19,7 @@
     "failed": 0,
     "environment": "local isolated; no production credentials"
   },
-  "next_action": "Review strict document linkage and delivery/replay gaps; inventory native Odoo and external finance integrations without production mutations",
+  "next_action": "Develop document upload/send replay and uncertain-delivery reconciliation; inventory native Odoo and external finance integrations",
   "blocked": [
     "live backup download and isolated restore",
     "browser administrative policy",
@@ -45,8 +45,8 @@
     {
       "component": "Sites contracts/reports and Odoo proxy",
       "development_branch": "work/fancy-finance-audit-20261022",
-      "development_commit": "5a72b5f63dff554c741cf34902622bc513f4846c",
-      "isolated_tests": 7,
+      "development_commit": "8654a1d05d82f6be588863d64e465236a4edb334",
+      "isolated_tests": 11,
       "typecheck": "passed",
       "build": "passed",
       "live_version_observed": 21
