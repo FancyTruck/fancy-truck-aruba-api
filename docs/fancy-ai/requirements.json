@@ -4,12 +4,30 @@
     {
       "id": "0.1",
       "objective": "Inventario componenti",
-      "status": "da verificare"
+      "status": "da verificare",
+      "implementation": "Three source components identified: Render service, Sites MCP and Sites contracts/reports proxy",
+      "gap": "Source inspected; live internal schedulers and native Odoo automation not established",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "source inspection and isolated local tests; not live acceptance"
+        }
+      ],
+      "updated_at": "2026-10-22"
     },
     {
       "id": "0.2",
       "objective": "Audit cicli e checkpoint",
-      "status": "da verificare"
+      "status": "da verificare",
+      "implementation": "Admin-only read-only exact-case notes/activities/quotes audit endpoint added in PR26",
+      "gap": "Production cycles/checkpoints and commercial handoff not verified",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "source inspection and isolated local tests; not live acceptance"
+        }
+      ],
+      "updated_at": "2026-10-22"
     },
     {
       "id": "0.3",
@@ -84,7 +102,16 @@
     {
       "id": "3.2",
       "objective": "Instradamento commerciale",
-      "status": "da verificare"
+      "status": "da verificare",
+      "implementation": "Exact-case audit exposes bounded activity/note evidence with completeness flags",
+      "gap": "Presence does not demonstrate assignment or completed handoff",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "source inspection and isolated local tests; not live acceptance"
+        }
+      ],
+      "updated_at": "2026-10-22"
     },
     {
       "id": "3.3",
@@ -224,7 +251,16 @@
     {
       "id": "8.2",
       "objective": "Quadratura attive e passive",
-      "status": "da verificare"
+      "status": "da verificare",
+      "implementation": "MCP and actual proxy validate explicit amounts/residuals on development branches",
+      "gap": "Proxy posts CRM note only; bank reconciliation and accounting not demonstrated",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "source inspection and isolated local tests; not live acceptance"
+        }
+      ],
+      "updated_at": "2026-10-22"
     },
     {
       "id": "8.3",
@@ -289,7 +325,16 @@
     {
       "id": "4.2.1",
       "objective": "Contratti mobile",
-      "status": "da verificare"
+      "status": "da verificare",
+      "implementation": "Existing mobile report app inspected; source matches for contracts remain broad",
+      "gap": "Exact commessa linkage and phone signing acceptance open",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "source inspection and isolated local tests; not live acceptance"
+        }
+      ],
+      "updated_at": "2026-10-22"
     },
     {
       "id": "4.2.2",
@@ -299,7 +344,16 @@
     {
       "id": "4.4.1",
       "objective": "Verbali con foto HD",
-      "status": "da verificare"
+      "status": "da verificare",
+      "implementation": "Existing HD PDF photo pages inspected; phase-specific completeness checks added on development branch",
+      "gap": "Mobile real-document acceptance and delivery reconciliation open",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "source inspection and isolated local tests; not live acceptance"
+        }
+      ],
+      "updated_at": "2026-10-22"
     },
     {
       "id": "8.1.1",

@@ -8,7 +8,7 @@ import { once } from 'node:events';
 test('four production intake paths use Odoo contract and approval queue without sending', async t => {
   const directory=fs.mkdtempSync(path.join(os.tmpdir(),'fancy-intake-'));
   Object.assign(process.env,{APP_ENV:'test',READ_ONLY:'false',AUTOMATION_ENABLED:'false',STARTUP_CHECKS:'false',
-    STATE_FILE:path.join(directory,'state.json'),PORT:'0',API_TOKEN:'test-only',
+    STATE_FILE:path.join(directory,'state.json'),PORT:'0',API_TOKEN:'test-only',REVIEW_READ_TOKEN:'test-reader',
     ODOO_URL:'https://odoo-contract.test',ODOO_DB:'test',ODOO_API_KEY:'test-only',ODOO_PARTNER_AUTOCOMPLETE:'false'});
   const realFetch=globalThis.fetch;
   let lead=null, orders=[], writes=[], counter=100, aiAddresses=null, routeCount=0, opportunityOrders=null;
@@ -158,6 +158,20 @@ test('four production intake paths use Odoo contract and approval queue without 
       assert(lines.every(line=>line[2].price_unit===undefined));
       assert(Object.values(app.store.state.actions).every(action=>action.status!=='EXECUTED'));
     } finally { for(const key of ['AI_LOGISTICS_ENABLED','OPENAI_MODEL','OPENAI_API_KEY','ORS_API_KEY']) delete process.env[key]; }
+  });
+  await t.test('case audit route is admin-only and leaves state and Odoo unchanged', async()=>{
+    const endpoint=`http://127.0.0.1:${app.server.address().port}/v1/odoo/crm/leads/${lead.id}/audit`;
+    const priorWrites=writes.length, priorState=JSON.stringify(app.store.snapshot());
+    assert.equal((await realFetch(endpoint)).status,401);
+    assert.equal((await realFetch(endpoint,{headers:{authorization:'Bearer test-reader'}})).status,403);
+    const response=await realFetch(endpoint,{headers:{authorization:'Bearer test-only'}});
+    assert.equal(response.status,200);
+    assert.equal(response.headers.get('cache-control'),'no-store');
+    const audit=await response.json();
+    assert.equal(audit.read_only,true);assert.equal(audit.lead.id,lead.id);
+    assert.equal(audit.handoff_verified,false);
+    assert.equal(writes.length,priorWrites);
+    assert.equal(JSON.stringify(app.store.snapshot()),priorState);
   });
   await t.test('draft endpoint applies separate logistics minima and delegates price to Odoo', async()=>{
     orders=[];

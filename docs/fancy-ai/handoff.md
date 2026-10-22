@@ -7,7 +7,7 @@ This is a development checkpoint, not operational acceptance.
 - Diagnostic health does not report OK for failed, interrupted, suspended, stalled or not-yet-observed cycles. Process liveness remains HTTP 200.
 - Backup logging distinguishes the explicit provider download/Class B cap response from generic AccessDenied without exposing raw provider messages.
 - Updated the legacy PR24 test to PR25 metadata-only semantics; no policy of skipping business-request content was introduced.
-- Full local suite: 226 tests passed, 0 failed. npm run check passed. Original baseline: 208 passed, 1 failed (outdated large-message test).
+- Full local suite: 230 tests passed, 0 failed. npm run check passed. Original baseline: 208 passed, 1 failed (outdated large-message test).
 - These are local isolated tests, including existing actual-server tests with read-only startup. No production tests or writes performed.
 
 - Quote creation no longer treats any existing opportunity quote as a duplicate: exact customer/opportunity/source replay is reused; other scopes become persistent review without creating or overwriting a quote. Includes a real intake-path test with a mocked Odoo transport. Explicit draft API retains support for multiple source keys. Scope acceptance remains open.
@@ -35,5 +35,18 @@ No merge, main push, deploy, provider reconfiguration, production data mutation,
 Use synthetic fixtures only. Any later run must inspect open PRs, branch state and currently running work before mutation.
 
 
-## Other automation component
-The owner-identified Sites automation project was confirmed active at version 16, with no linked Sites schedules returned. This does not establish the status of internal Odoo automation or other schedulers. Source opening helper could not be loaded in this runtime. No source push, publication or production change was performed. Reacquire short-lived access in a supported runtime; never store credentials here.
+## Source inventory and independent development checkpoints
+Source access is now working. The previous source-helper blocker is resolved.
+- Sites Odoo MCP connector (observed live version 16): validates tool arguments and explicit finance residuals before proxy access, bounds request/response bytes, applies a proxy timeout and avoids automatic retries after uncertain writes. Development branch `work/fancy-mcp-validation-20261022`, commit `6407e68b8a5f6f2506dc115ab3baa758a5c3c87a`; 12 isolated tests, TypeScript and build passed.
+- Sites contracts/reports app is also the actual Odoo proxy (observed live version 21). Development branch `work/fancy-finance-audit-20261022`, commit `5a72b5f63dff554c741cf34902622bc513f4846c`; 7 isolated tests, TypeScript and build passed. Explicit finite cent-precision amounts and consistent residuals are required before financial internal-note operations. Phase-specific required report data, photo and both signatures are checked before browser PDF export/send. Signature presence is not legal or cryptographic validation. Live mobile acceptance is still open.
+- The proxy finance action posts an internal CRM note only. It does not reconcile a ledger, register payments or advance the pipeline. No DKV/Telepass/cards/QUADRA/Carla implementation was found in the two inspected Sites sources; native Odoo and other components remain to inspect.
+- No Sites main branch, publication or live version was changed. Never copy private Sites source, credentials, customer documents or logs into this public repository.
+
+## Read-only case audit
+PR26 adds admin-only `GET /v1/odoo/crm/leads/:id/audit`: exact-case notes, activities and quotations with counts, bounded samples and explicit unavailable/truncation markers. Reader tokens cannot use it. It makes no writes and never infers completed commercial handoff from the presence of a note or activity. All returned content remains untrusted. This technical admin role does not implement future per-user Odoo permissions.
+
+## Next gaps requiring source work and evidence
+1. Contracts currently use filename/reference matching; demonstrate exact commessa attachment linkage and route ambiguous associations to review.
+2. Document upload/send replay and uncertain delivery need reconciliation. A successful Odoo message_post alone is not verified mail delivery.
+3. Verify live cycles/checkpoints, restart recovery and backup restore within authorized access. Do not bypass administrative policy.
+4. Reconcile invoice source, deposit conditions, pipeline and external integrations before activating business operations. Keep F0-F2 and all operational acceptance open.

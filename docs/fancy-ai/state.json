@@ -3,28 +3,53 @@
   "updated_at": "2026-10-22",
   "baseline_commit": "12c701351ce01144e93bb43b4f353b9fdbb0b6fd",
   "branch": "work/fancy-foundations-20261022",
-  "stage": "draft PR26; three development lots tested, not deployed",
+  "stage": "draft PR26 plus two independent Sites development branches; not deployed",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
     "honest-cycle-diagnostics",
     "explicit-backup-cap-reason",
     "quotation-source-replay-versus-scope-review",
-    "private-http-failure-telemetry"
+    "private-http-failure-telemetry",
+    "admin-only-readonly-case-audit"
   ],
   "tests": {
     "command": "npm test",
-    "passed": 226,
+    "passed": 230,
     "failed": 0,
     "environment": "local isolated; no production credentials"
   },
-  "next_action": "Inventory authorized Sites automation source; reconcile PR26 and continue independent functional gaps",
+  "next_action": "Review strict document linkage and delivery/replay gaps; inventory native Odoo and external finance integrations without production mutations",
   "blocked": [
     "live backup download and isolated restore",
     "browser administrative policy",
-    "production acceptance requires separate authorized rollout",
-    "Sites source helper unavailable in this runtime; source credential minted without publish-on-push but not used"
+    "production acceptance requires separate authorized rollout"
   ],
   "lease": null,
-  "draft_pr": "https://github.com/FancyTruck/fancy-truck-aruba-api/pull/26"
+  "draft_pr": "https://github.com/FancyTruck/fancy-truck-aruba-api/pull/26",
+  "components": [
+    {
+      "component": "Render mail/CRM service",
+      "development": "PR26",
+      "isolated_tests": 230
+    },
+    {
+      "component": "Sites Odoo MCP connector",
+      "development_branch": "work/fancy-mcp-validation-20261022",
+      "development_commit": "6407e68b8a5f6f2506dc115ab3baa758a5c3c87a",
+      "isolated_tests": 12,
+      "typecheck": "passed",
+      "build": "passed",
+      "live_version_observed": 16
+    },
+    {
+      "component": "Sites contracts/reports and Odoo proxy",
+      "development_branch": "work/fancy-finance-audit-20261022",
+      "development_commit": "5a72b5f63dff554c741cf34902622bc513f4846c",
+      "isolated_tests": 7,
+      "typecheck": "passed",
+      "build": "passed",
+      "live_version_observed": 21
+    }
+  ]
 }

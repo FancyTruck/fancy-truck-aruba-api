@@ -6,6 +6,7 @@ import { buildBriefing } from './briefing.js';
 import { automationHealth } from './automationHealth.js';
 import { quotationDisposition } from './quotationIdentity.js';
 import { httpFailureDiagnostics } from './httpDiagnostics.js';
+import { auditCrmCase } from './crmAudit.js';
 import { runExternalBackup } from './externalBackup.js';
 import { applyRecoveryGuard } from './recoveryGuard.js';
 import { backupFailureDetails } from './externalBundleBackup.js';
@@ -627,54 +628,7 @@ async function processQuoteReply(parsed, uid, lead) {
     if (!partners.length) throw new Error(`Contatto Odoo non trovato per opportunità ${lead.id}`);
     partner = await updatePartnerFromText(partners[0], parsed.text);
   } else {
-    const resolved = await findOrCreatePartnerFromEmail(parsed);
-    if (resolved.partner) partner = await updatePartnerFromText(resolved.partner, parsed.text);
-  }
-  const replyText = String(parsed.text || '').trim().slice(0, 12000);
-  const combinedText = `${lead.description || ''}\n\nRisposta cliente:\n${replyText}\n\n${marker}`;
-  await odooCall('crm.lead', 'write', [[lead.id], {
-    description: combinedText, ...(partner?.id ? { partner_id: partner.id } : {}),
-  }]);
-  await odooCall('crm.lead', 'message_post', [[lead.id]], {
-    body: `<p><strong>Risposta cliente acquisita automaticamente</strong></p><p>${escapeHtml(replyText).replace(/\n/g, '<br>')}</p>`,
-    message_type: 'comment', subtype_xmlid: 'mail.mt_note',
-  });
-
-  const kind = quoteRequestKind(lead.name, combinedText) || 'unknown';
-  const missing = requiredRequestDetails(kind, lead.name, combinedText);
-  const optional = missingRequestDetails(kind, lead.name, combinedText).filter(item => item.includes('(facoltativo)'));
-  if (kind === 'event_food') return queueStreetfoodHandoff(lead.id, sender?.address, parsed);
-  if (!partner) missing.unshift('ragione sociale o partita IVA per identificare il cliente');
-  if (missing.length) {
-    await setLeadProcedureStatus(lead.id, 'DA_INTEGRARE');
-    await askCustomerForMissingDetails(lead.id, partner || { email: sender?.address }, sender?.name, [...new Set([...missing, ...optional])], parsed);
-    return { lead_id: lead.id, reply: true, missing };
-  }
-  store.cancelActionGroup(`missing-details:odoo-lead-${lead.id}`, 'REQUEST_COMPLETED');
-  if (['catering', 'brand_activation'].includes(kind)) {
-    await setLeadProcedureStatus(lead.id, 'PRONTA_CONTROLLO_PIETRO');
-    return { lead_id: lead.id, reply: true, kind, ready_for_review: true };
-  }
-  const draft = await createDraftFromCrmLead(lead, partner, kind, combinedText, key, parsed);
-  if (draft.awaiting_customer_choice || draft.awaiting_customer_details || draft.awaiting_scope_review) return { lead_id: lead.id, reply: true, ...draft };
-  await setLeadProcedureStatus(lead.id, 'PRONTA_CONTROLLO_PIETRO');
-  return { lead_id: lead.id, reply: true, order_id: draft.order?.id, ready_for_review: true };
-}
-
-async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
-  parsed = { ...parsed, text: currentMessage(parsed.text) };
-  const sender = parsed.from?.value?.[0];
-  const senderEmail = String(sender?.address || '').trim().toLowerCase();
-  const decision = await routeCommercialMessage({
-    parsed, uid, account: accountName, uidValidity, store, findLead: findReplyLead,
-  });
-  if (decision.action === 'skip') return { skipped: true, reason: decision.reason };
-  if (decision.action === 'review') return { suspended: true, ...decision };
-  if (decision.action === 'link') return linkThreadMessage({parsed,match:decision.match,direction:'incoming',call:odooCall,store});
-  if (decision.action === 'reply') return processQuoteReply(parsed, uid, decision.lead);
-  const kind = decision.kind;
-
-  const key = emailMarker(parsed, uid);
+    const …769 tokens truncated…d, uid);
   const marker = `[AUTO:${key}]`;
   const existingLead = await odooCall('crm.lead', 'search_read', [[['description', 'ilike', marker]]], {
     fields: ['name', 'partner_id', 'stage_id'], limit: 1,
@@ -1059,6 +1013,22 @@ app.get('/v1/odoo/health', async (_req, res) => {
     res.json({ ok: true, service: 'odoo', crm_stages: stages });
   } catch (error) {
     res.status(502).json({ ok: false, error: error instanceof Error ? error.message : 'Errore Odoo' });
+  }
+});
+
+app.get('/v1/odoo/crm/leads/:id/audit', async (req, res) => {
+  const leadId = Number(req.params.id);
+  const limit = req.query.limit === undefined ? 10 : Number(req.query.limit);
+  if (!/^\d+$/.test(req.params.id) || !Number.isSafeInteger(leadId) || leadId < 1
+    || !Number.isInteger(limit) || limit < 1 || limit > 20) {
+    return res.status(400).json({ ok: false, error: 'ID pratica o limite audit non valido' });
+  }
+  res.set('Cache-Control', 'no-store');
+  try {
+    const result = await auditCrmCase({ call: odooCall, leadId, limit });
+    res.status(result.found ? 200 : 404).json({ ok: true, ...result });
+  } catch {
+    res.status(502).json({ ok: false, error: 'Audit pratica non completato' });
   }
 });
 
