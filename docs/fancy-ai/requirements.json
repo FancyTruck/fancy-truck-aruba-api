@@ -431,10 +431,15 @@
         {
           "date": "2026-10-22",
           "kind": "owner readonly audit: test project15, sale_order_id=false, partner464, one task; creation command not invoked"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "owner UI reload/API verification: existing project15 linked to draft331 through reinvoiced_sale_order_id; one project, one task; proxyv23 distinguishes project relations"
         }
       ],
-      "gap": "Name similarity does not establish exact native order/project linkage",
-      "next_action": "Inspect existing relation and propose duplicate-safe repair; do not invoke create_project_for_order to repair by name"
+      "gap": "Generic project creation/deduplication and lifecycle not accepted; UI association caused confirmation before recovery, history remains",
+      "next_action": "Do not repair/recreate this case; reconcile distinct relation fields and test deduplication/side effects in sandbox",
+      "verified_scope": "S00331 existing-case link via reinvoiced_sale_order_id verified; sale_order_id=false was not proof of no relationship"
     },
     {
       "id": "4.1.3",

@@ -166,5 +166,50 @@
       "deploy": "dep-dbcvo5on74is73fnhc6g"
     },
     "interpretation": "PR26 remains an unmerged draft; current live deployment is PR27. Do not claim private branch features are live."
+  },
+  "project_link_owner_update": {
+    "date": "2026-10-22",
+    "source": "owner supplied UI reload and API verification; not re-executed by this registry update",
+    "reported_report": "outputs/S00331-link-verification.json; not read in this checkout",
+    "project_id": 15,
+    "verified_relation": {
+      "field": "reinvoiced_sale_order_id",
+      "value": [
+        331,
+        "S00331"
+      ]
+    },
+    "distinct_relations": [
+      "sale_order_id",
+      "reinvoiced_sale_order_id",
+      "sale_line_id",
+      "allow_billable"
+    ],
+    "project_count": 1,
+    "task_count": 1,
+    "order": {
+      "id": 331,
+      "state": "draft",
+      "total": 2152.18,
+      "amounts": "unchanged",
+      "historical_order_date": "2026-10-22 retained"
+    },
+    "observed_ui_side_effect": {
+      "action": "selecting UI Sales Order automatically confirmed the draft",
+      "recovery": "cancelled then restored to draft",
+      "transfers": {
+        "WH/OUT/00066": "cancelled",
+        "WH/IN/00064": "cancelled"
+      },
+      "history": "retained; not an untouched-draft test"
+    },
+    "proxy_v23": {
+      "published": "owner reported",
+      "build": "passed",
+      "real_read": "passed",
+      "relations": "read separately, never treated as equivalent"
+    },
+    "creation_method": "create_project_for_order deduplication unchanged; do not use to repair this case",
+    "acceptance": "existing-case linkage verified only; broader phases remain open"
   }
 }

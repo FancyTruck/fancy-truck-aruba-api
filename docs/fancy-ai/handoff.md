@@ -80,3 +80,9 @@ Catering and activation test CRM records have acquired-customer-reply and PRONTA
 Backup restore and memory evidence are inherited from the earlier verification, not newly retested by this update. No Odoo write or send was invoked. Continue authorized continuity/recovery checks and release-state reconciliation without repeating closed tests.
 
 A new direct release-state read during this registry update confirms PR26 is draft/unmerged and Render latest deploy remains dep-dbcvo5on74is73fnhc6g on PR27 commit5f8b02503e8366f1baf0b6bd6886a6dfd656a9ae. This release check is new; backup/memory observations above are not.
+
+## S00331 existing-case linkage verified — owner update 2026-10-22
+The owner verified project15 through UI reload and API: reinvoiced_sale_order_id=[331,S00331], one project and one task. Earlier sale_order_id=false observations remain historical but do not establish absence of another valid relation. Keep sale_order_id, reinvoiced_sale_order_id, sale_line_id and allow_billable distinct; do not substitute one for another in generic matching.
+The UI Sales Order selection automatically confirmed the draft. The owner cancelled/restored order331 to draft and verified WH/OUT/00066 and WH/IN/00064 cancelled. Total2152.18 is unchanged. History and order date22October remain; do not describe this as an untouched-draft or side-effect-free test. Do not repeat the UI operation.
+Proxyv23 publication, successful build and real relation read are owner-reported; this update did not re-execute them. Local report outputs/S00331-link-verification.json was not read in this checkout. Reconcile latest source before continuing development.
+Do not invoke create_project_for_order to repair this case: its deduplication is unchanged. Existing-case linkage is verified; generic creation/replay, commercial handoff, continuity/recovery and parent phases remain open. No new production write, send or deploy was executed by this registry update.

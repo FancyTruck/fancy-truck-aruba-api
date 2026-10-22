@@ -21,7 +21,7 @@
     "failed": 0,
     "environment": "local isolated; no production credentials"
   },
-  "next_action": "Inspect exact project/order relation and duplicate-safe repair design without invoking create_project_for_order; verify commercial handoff and continuity/recovery evidence",
+  "next_action": "Reconcile proxy v23 and distinct project relations; inspect creation deduplication only in development/sandbox, then continue remaining handoff and recovery checks",
   "blocked": [
     "browser administrative policy",
     "production acceptance requires separate authorized rollout",
@@ -53,7 +53,8 @@
       "typecheck": "passed",
       "build": "passed",
       "live_version_observed": 22,
-      "reconciliation_required": "New published source differs from private development branch baseline; inspect/reconcile before any release"
+      "reconciliation_required": "Published proxy v23 is owner-reported; last direct metadata read was v22. Reconcile latest sources before release.",
+      "live_version_reported_by_owner": 23
     }
   ],
   "live_readonly_evidence": [
@@ -74,5 +75,12 @@
       "evidence": "owner completion report plus independent readonly final-state and pagination verification",
       "does_not_close": "parent phase, commercial handoff, multiuser authorization or end-to-end acceptance"
     }
+  },
+  "verified_project_case": {
+    "source": "owner UI/API verification 2026-10-22",
+    "order": 331,
+    "project": 15,
+    "field": "reinvoiced_sale_order_id",
+    "state": "case link verified; creation deduplication and parent requirement remain open"
   }
 }
