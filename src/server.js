@@ -969,6 +969,8 @@ async function scheduledBackup(){
 }
 app.use('/v1', readOnlyMiddleware(runtime));
 if (peuDb) {
+  const {PeuWhatsAppGateway,mountPeuWhatsApp}=await import('./peuWhatsApp.js');
+  mountPeuWhatsApp(app,new PeuWhatsAppGateway({db:peuDb,call:odooCall,parse:simpleParser,assertWritable:()=>assertWritable(runtime)}));
   const {makePeuContract,mountPeuContract}=await import('./peuContract.js');
   const {jsonRequest}=await import('./peuCommon.js');
   const upstream=(path,options={})=>jsonRequest(fetch,`http://127.0.0.1:${port||server.address().port}${path}`,{...options,headers:{'Content-Type':'application/json',Authorization:`Bearer ${peuInternalToken}`}});
@@ -1410,3 +1412,4 @@ const server = app.listen(port, runtime.host, (error) => {
 
 // Module exports permit isolated contract tests without exposing extra HTTP routes.
 export { processQuoteRequest, processQuoteReply, processSentMessage, findReplyLead, server, store, approvals };
+
