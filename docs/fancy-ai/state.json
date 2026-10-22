@@ -21,7 +21,7 @@
     "failed": 0,
     "environment": "local isolated; no production credentials"
   },
-  "next_action": "Reconcile current published source; investigate project query INVALID_ARGUMENT and exact order/project linkage; obtain authorized cycle/checkpoint diagnostics",
+  "next_action": "Inspect exact project/order relation and duplicate-safe repair design without invoking create_project_for_order; verify commercial handoff and continuity/recovery evidence",
   "blocked": [
     "browser administrative policy",
     "production acceptance requires separate authorized rollout",

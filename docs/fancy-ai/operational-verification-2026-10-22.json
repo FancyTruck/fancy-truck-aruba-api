@@ -118,5 +118,53 @@
   "observed_connector_errors": {
     "activity_read": "one INVALID_ARGUMENT with explicit limit; exact repeated request subsequently succeeded; transient/not reproduced",
     "project_read": "query-filtered requests returned INVALID_ARGUMENT; unfiltered limit=1 read succeeded; root cause unresolved"
+  },
+  "commercial_traceability_owner_update": {
+    "date": "2026-10-22",
+    "source": "owner-supplied readonly audit; no new Odoo read by this registry update",
+    "reported_report": "outputs/commercial-traceability-audit-20261022.json; not read in this checkout",
+    "project": {
+      "test_project_id": 15,
+      "test_order": "S00331",
+      "sale_order_id": false,
+      "partner_id": 464,
+      "task_count": 1,
+      "creation_command": "not invoked; existing name+order matching could create a duplicate rather than repair the record"
+    },
+    "catering_activation": {
+      "records": [
+        502,
+        504
+      ],
+      "customer_reply_notes": true,
+      "ready_for_owner_review_note": true,
+      "open_activities": 0,
+      "interpretation": "does not establish missed work, lack of other queues or complete handoff"
+    },
+    "food": {
+      "record": 501,
+      "open_activities": 0,
+      "notes_observed": "only internal OdooBot note",
+      "interpretation": "referral/handoff not demonstrated by these reads"
+    },
+    "notes_activity_api": "4.5.1 remains accepted",
+    "four_path_end_to_end": "open",
+    "effects": "no Odoo writes or sends in supplied audit",
+    "historical_evidence": "backup restore and memory observations belong to the earlier verification, not a new check here"
+  },
+  "release_check_registry_update": {
+    "date": "2026-10-22",
+    "source": "direct GitHub PR metadata and Render latest deploy read during this update",
+    "pr26": {
+      "draft": true,
+      "merged": false,
+      "head_observed": "46d1602fe468cdd13ed4724a9cc3154939edc87f"
+    },
+    "render": {
+      "status": "live",
+      "commit": "5f8b02503e8366f1baf0b6bd6886a6dfd656a9ae",
+      "deploy": "dep-dbcvo5on74is73fnhc6g"
+    },
+    "interpretation": "PR26 remains an unmerged draft; current live deployment is PR27. Do not claim private branch features are live."
   }
 }

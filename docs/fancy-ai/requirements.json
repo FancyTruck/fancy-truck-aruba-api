@@ -130,7 +130,7 @@
       "objective": "Instradamento commerciale",
       "status": "da verificare",
       "implementation": "Exact-case audit exposes bounded activity/note evidence with completeness flags",
-      "gap": "Presence does not demonstrate assignment or completed handoff",
+      "gap": "Complete responsible-person handoff is not demonstrated by these reads; zero open activities does not prove no work or no other queues",
       "evidence": [
         {
           "date": "2026-10-22",
@@ -143,9 +143,14 @@
         {
           "date": "2026-10-22",
           "kind": "Bounded live notes/activity acceptance 4.5.1 completed; does not establish full parent requirement or commercial handoff"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "owner readonly audit: catering/activation have acquired-reply and ready-for-owner-review notes but zero open activities; food has zero open activities and only OdooBot internal note"
         }
       ],
-      "updated_at": "2026-10-22"
+      "updated_at": "2026-10-22",
+      "next_action": "Verify actual assignment, handoff acceptance and other operational queues without inferring from activity counts"
     },
     {
       "id": "3.3",
@@ -308,7 +313,13 @@
     {
       "id": "7.1",
       "objective": "Matrice requisito-prova",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "four commercial paths remain open for end-to-end acceptance; note/activity API acceptance remains separately closed"
+        }
+      ]
     },
     {
       "id": "7.2",
@@ -416,10 +427,14 @@
         {
           "date": "2026-10-22",
           "kind": "live readonly: matching test project exists by name but native sale_order_id=false"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "owner readonly audit: test project15, sale_order_id=false, partner464, one task; creation command not invoked"
         }
       ],
       "gap": "Name similarity does not establish exact native order/project linkage",
-      "next_action": "Inspect existing relation strategy before changing or creating projects"
+      "next_action": "Inspect existing relation and propose duplicate-safe repair; do not invoke create_project_for_order to repair by name"
     },
     {
       "id": "4.1.3",
