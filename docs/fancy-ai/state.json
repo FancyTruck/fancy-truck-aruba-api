@@ -21,11 +21,11 @@
     "failed": 0,
     "environment": "local isolated; no production credentials"
   },
-  "next_action": "Verify Sign order linkage and inventory remaining native/external integrations; design unresolved partial-dispatch handling without automatic resend",
+  "next_action": "Load supported new note/activity read tools and verify the existing COLLAUDO records without creating duplicates; reconcile v22/v17 and main PR27 sources before further implementation",
   "blocked": [
-    "live backup download and isolated restore",
     "browser administrative policy",
-    "production acceptance requires separate authorized rollout"
+    "production acceptance requires separate authorized rollout",
+    "new note/activity read/update tools unavailable in this session; authenticated cycle/checkpoint diagnostics and pending approval not accessed"
   ],
   "lease": null,
   "draft_pr": "https://github.com/FancyTruck/fancy-truck-aruba-api/pull/26",
@@ -42,7 +42,8 @@
       "isolated_tests": 12,
       "typecheck": "passed",
       "build": "passed",
-      "live_version_observed": 16
+      "live_version_observed": 17,
+      "reconciliation_required": "New published source differs from private development branch baseline; inspect/reconcile before any release"
     },
     {
       "component": "Sites contracts/reports and Odoo proxy",
@@ -51,7 +52,8 @@
       "isolated_tests": 29,
       "typecheck": "passed",
       "build": "passed",
-      "live_version_observed": 21
+      "live_version_observed": 22,
+      "reconciliation_required": "New published source differs from private development branch baseline; inspect/reconcile before any release"
     }
   ],
   "live_readonly_evidence": [
@@ -61,5 +63,7 @@
       "result": "health succeeded; one native fleet record returned",
       "does_not_prove": "maintenance, expiry, availability, full fleet completeness or delivery"
     }
-  ]
+  ],
+  "operational_evidence": "docs/fancy-ai/operational-verification-2026-10-22.json",
+  "live_render_commit": "5f8b02503e8366f1baf0b6bd6886a6dfd656a9ae"
 }

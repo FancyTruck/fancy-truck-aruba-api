@@ -1,0 +1,94 @@
+{
+  "date": "2026-10-22",
+  "mode": "readonly live observation; no production mutation",
+  "render": {
+    "commit": "5f8b02503e8366f1baf0b6bd6886a6dfd656a9ae",
+    "deploy": "dep-dbcvo5on74is73fnhc6g",
+    "live_at": "2026-10-22T12:06:19.308096Z",
+    "memory": {
+      "unit": "MiB",
+      "min": 142.80858993530273,
+      "max": 149.70312118530273,
+      "samples": 13,
+      "from": "2026-10-22T14:44:53.345Z",
+      "to": "2026-10-22T15:44:53.345Z",
+      "limit": 512
+    },
+    "http": [
+      {
+        "status": "200",
+        "reportedCount": 284
+      }
+    ],
+    "failure_events": {
+      "from": "2026-10-21T23:21:32Z",
+      "end": "provider current time at query",
+      "server_failed": 0,
+      "server_restarted": 0,
+      "pagination_cursor": "empty"
+    },
+    "sync": {
+      "event": "peu_aruba_sync",
+      "sampleCount": 71,
+      "first": "2026-10-22T10:02:50.836730069Z",
+      "last": "2026-10-22T15:41:54.490748152Z",
+      "statuses": [
+        "synced"
+      ],
+      "checkpoint_correctness": "not established"
+    },
+    "commercial_cycle_logs": {
+      "matched": 0,
+      "query": "cycle/checkpoint/approval/startup since 2026-10-22T00:00Z",
+      "interpretation": "no matching evidence; not proof cycles are absent"
+    }
+  },
+  "backup": {
+    "source": "original runtime progress and verification logs; source path inspected, no new restore run by this session",
+    "format": 2,
+    "scope": "operational-only-v1",
+    "bytes": 76318,
+    "verified_at": "2026-10-22T00:29:59.927Z",
+    "stages": [
+      "captured",
+      "encrypted",
+      "uploaded",
+      "downloaded",
+      "decrypted",
+      "extracted",
+      "integrity_checked",
+      "VERIFIED"
+    ],
+    "isolated_process": true,
+    "restore_writes_blocked": true,
+    "distinct_from_previous_76184_byte_object": true,
+    "remaining": "retention/alarm acceptance and independent artifact reinspection not performed"
+  },
+  "sites": {
+    "proxy_version": 22,
+    "connector_version": 17,
+    "metadata": "independently read",
+    "user_report": {
+      "local_tests": 11,
+      "builds": "both passed",
+      "connector_typecheck": "passed",
+      "proxy_typecheck": "19 pre-existing errors, same as supplied baseline",
+      "note_and_activity_create_replay": "user reports real creation and duplicate:true on retries",
+      "read_update_acceptance": "not verified; new tools unavailable in this session",
+      "test_activity": "remains open and labelled COLLAUDO",
+      "multiuser": "not added; technical-user ACLs remain"
+    },
+    "source_reconciliation": "private development branches based on prior versions; reconcile newly published sources before release"
+  },
+  "odoo": {
+    "quotation": "existing test quote remains draft; totals 1764.08+388.10=2152.18",
+    "quote_lines": "600 rental plus 582.04 delivery and 582.04 collection; logistics review note remains",
+    "project": "matching project visible by name; native sale_order_id is false, exact linkage not demonstrated"
+  },
+  "overall": "partial operational verification; no full phase or end-to-end acceptance",
+  "unavailable": [
+    "new notes/activity read/update tools",
+    "authenticated application diagnostics/checkpoints/queues",
+    "pending approval content under administrative policy"
+  ]
+}

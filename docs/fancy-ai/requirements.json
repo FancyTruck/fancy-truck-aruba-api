@@ -11,6 +11,10 @@
         {
           "date": "2026-10-22",
           "kind": "source inspection and isolated local tests; not live acceptance"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "direct Render live PR27, Sites v22/v17, memory/HTTP/events; detailed sanitized operational verification file"
         }
       ],
       "updated_at": "2026-10-22"
@@ -25,6 +29,10 @@
         {
           "date": "2026-10-22",
           "kind": "source inspection and isolated local tests; not live acceptance"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "direct Render live PR27, Sites v22/v17, memory/HTTP/events; detailed sanitized operational verification file"
         }
       ],
       "updated_at": "2026-10-22"
@@ -52,7 +60,16 @@
     {
       "id": "1.3",
       "objective": "Ripristino backup applicativo",
-      "status": "da verificare"
+      "status": "da verificare",
+      "implementation": "Operational bundle format 2: runtime source and original download/decryption/integrity/isolated-restore progress observed",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "direct runtime logs at 00:29:56–00:29:59 UTC, 76318-byte bundle, VERIFIED, isolated_process=true, restore_writes_blocked=true; source path inspected"
+        }
+      ],
+      "gap": "No new restore run or independent object inspection in this session; retention/alarm acceptance remains open",
+      "next_action": "Verify remaining backup retention/alarm criteria without duplicating or deleting backups"
     },
     {
       "id": "1.4",
@@ -118,6 +135,10 @@
         {
           "date": "2026-10-22",
           "kind": "source inspection and isolated local tests; not live acceptance"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "owner reports published note/activity creation and idempotent replay; 11 local tests and successful builds; live read/update not independently verified here"
         }
       ],
       "updated_at": "2026-10-22"
@@ -165,7 +186,13 @@
     {
       "id": "4.5",
       "objective": "Chiusura operativa",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "owner reports published note/activity creation and idempotent replay; 11 local tests and successful builds; live read/update not independently verified here"
+        }
+      ]
     },
     {
       "id": "4.6",
@@ -200,7 +227,13 @@
     {
       "id": "5.2",
       "objective": "Revisioni e approvazioni",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "owner reports published note/activity creation and idempotent replay; 11 local tests and successful builds; live read/update not independently verified here"
+        }
+      ]
     },
     {
       "id": "5.3",
@@ -343,7 +376,15 @@
     {
       "id": "4.1.2",
       "objective": "Progetto collegato",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "live readonly: matching test project exists by name but native sale_order_id=false"
+        }
+      ],
+      "gap": "Name similarity does not establish exact native order/project linkage",
+      "next_action": "Inspect existing relation strategy before changing or creating projects"
     },
     {
       "id": "4.1.3",
