@@ -1,3 +1,4 @@
+import { describeSuspension } from './suspensionDescription.js';
 import { matchQuotationThread } from './threadReferences.js';
 import { linkThreadMessage } from './threadLinking.js';
 import { pollSentMailbox } from './sentTracking.js';
@@ -787,7 +788,7 @@ async function runOperationalCycle({ force = false } = {}) {
         summary.read += result.rows.length;
         summary.created += result.created.length;
         summary.suspended += result.suspended.length;
-        summary.errors.push(...result.suspended.map((row) => `${source} UID ${row.uid}: ${row.error}`));
+        summary.errors.push(...result.suspended.map((row) => describeSuspension(source, row)));
         store.integration(`aruba:${source}`, {
           status: result.suspended.length ? 'OK_WITH_SUSPENSIONS' : 'OK',
           last_success_at: new Date().toISOString(),
@@ -805,7 +806,7 @@ async function runOperationalCycle({ force = false } = {}) {
       summary.updated += replies.filter((row) => row.reply && !row.duplicate).length;
       const suspended = replies.filter(row => row.suspended);
       summary.suspended += suspended.length;
-      summary.errors.push(...suspended.map(row => `odoo: ${row.error || row.reason}`));
+      summary.errors.push(...suspended.map(row => describeSuspension('odoo', row)));
       store.integration('odoo:crm', { status: suspended.length ? 'OK_WITH_SUSPENSIONS' : 'OK',
         last_success_at: new Date().toISOString(), error: suspended.length ? `${suspended.length} elementi sospesi` : null });
     } catch (error) {
@@ -820,6 +821,7 @@ async function runOperationalCycle({ force = false } = {}) {
             execute:()=>processSentMessage(parsed,uid,account,validity,mailbox)})}));
         const suspended=result.rows.filter(r=>r.suspended).length;
         summary.suspended+=suspended;
+        summary.errors.push(...result.rows.filter(row=>row.suspended).map(row=>describeSuspension(`sent:${account}`,row)));
         store.integration(`sent:${account}`,{status:suspended?'OK_WITH_SUSPENSIONS':'OK',mailbox:result.mailbox,initialized:result.initialized,last_success_at:new Date().toISOString()});
         console.log(`POSTA INVIATA ${account}: ${result.initialized?'punto di partenza salvato':result.rows.length+' messaggi'}, ${suspended} da verificare`);
       }catch(error){summary.failed++;summary.errors.push(`sent:${account}: ${error.message}`);store.integration(`sent:${account}`,{status:'CONTROLLO NON COMPLETATO',error:error.message});}
