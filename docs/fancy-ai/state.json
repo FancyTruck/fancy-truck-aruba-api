@@ -21,7 +21,7 @@
     "failed": 0,
     "environment": "local isolated; no production credentials"
   },
-  "next_action": "Reconcile proxy v23 and distinct project relations; inspect creation deduplication only in development/sandbox, then continue remaining handoff and recovery checks",
+  "next_action": "Reconcile remaining prior development patches with v23 and current Render main; inspect cross-service creation races and verify continuity/recovery through authorized diagnostics",
   "blocked": [
     "browser administrative policy",
     "production acceptance requires separate authorized rollout",
@@ -52,9 +52,25 @@
       "isolated_tests": 29,
       "typecheck": "passed",
       "build": "passed",
-      "live_version_observed": 22,
+      "live_version_observed": 23,
       "reconciliation_required": "Published proxy v23 is owner-reported; last direct metadata read was v22. Reconcile latest sources before release.",
-      "live_version_reported_by_owner": 23
+      "live_version_reported_by_owner": 23,
+      "development_tracks": [
+        {
+          "branch": "work/fancy-finance-audit-20261022",
+          "commit": "51d43c7f227a5d2ca1981dafcd5a0712493e4901",
+          "baseline": "older pre-v22 source; preserve and reconcile",
+          "isolated_tests": 29
+        },
+        {
+          "branch": "work/fancy-project-dedup-20261022",
+          "commit": "e40affde4841d3667b93971a3c9ebcdb21e8a970",
+          "baseline": "v23 source c784d9520e054357df8e28206f7e3ec8c36d1059",
+          "isolated_tests": 21,
+          "build": "passed",
+          "typecheck": "19 baseline diagnostics unchanged; not passed"
+        }
+      ]
     }
   ],
   "live_readonly_evidence": [
@@ -82,5 +98,17 @@
     "project": 15,
     "field": "reinvoiced_sale_order_id",
     "state": "case link verified; creation deduplication and parent requirement remain open"
+  },
+  "required_server_correction": {
+    "commit": "f7be6305ffb6ba9f2504b40a2d19fad539e6e3be",
+    "server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
+    "rule": "Never restore pre-fix server snapshots; fetch current branch and verify remote source before changing code"
+  },
+  "continuity_evidence": {
+    "source": "owner isolated main+correctedPR26 integration",
+    "tests_passed": 246,
+    "failed": 0,
+    "syntax_checks": 5,
+    "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   }
 }

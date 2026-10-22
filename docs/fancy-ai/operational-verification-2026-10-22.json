@@ -211,5 +211,36 @@
     },
     "creation_method": "create_project_for_order deduplication unchanged; do not use to repair this case",
     "acceptance": "existing-case linkage verified only; broader phases remain open"
+  },
+  "continuity_owner_update": {
+    "date": "2026-10-22",
+    "source": "owner report plus direct corrected server blob verification",
+    "main_isolated_tests": {
+      "commit": "5f8b025",
+      "passed": 23
+    },
+    "pr26_source_error": "literal tool truncation marker replaced intake handlers in ad56eb2 server.js; main unaffected",
+    "repair_commit": "f7be6305ffb6ba9f2504b40a2d19fad539e6e3be",
+    "repair_scope": "server.js only; main handlers restored, awaiting_scope_review preserved",
+    "owner_integration": {
+      "tests_passed": 246,
+      "failed": 0,
+      "syntax_checks_passed": 5,
+      "full_history_merge_tree": "no conflicts; API mergeable:false alone not proof"
+    },
+    "direct_this_session": {
+      "server_blob_sha": "a128e39a7685f5474967b4c6528f70e93583b902",
+      "blob_verified": true,
+      "syntax_checks_passed": 5,
+      "render_explicit_workspace_read": "succeeded"
+    },
+    "reported_files": [
+      "outputs/continuity-audit-20261022.json",
+      "logcontinuity-pr26-tests.log"
+    ],
+    "files_read": false,
+    "live_checkpoint_acceptance": "open",
+    "effects": "no merge/deploy/restart/Odoo writes/sends",
+    "phase_closure": "F0/F1/F2 remain open"
   }
 }

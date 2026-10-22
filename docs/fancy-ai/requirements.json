@@ -33,6 +33,10 @@
         {
           "date": "2026-10-22",
           "kind": "direct Render live PR27, Sites v22/v17, memory/HTTP/events; detailed sanitized operational verification file"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "owner isolated main+correctedPR26:246/246 tests and5syntax checks; this session verified corrected server blob and5syntax checks; live checkpoint proof remains open"
         }
       ],
       "updated_at": "2026-10-22"
@@ -80,6 +84,10 @@
         {
           "date": "2026-10-22",
           "kind": "29 isolated component tests with SQLite and mocked Odoo; TypeScript/build passed"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "owner isolated main+correctedPR26:246/246 tests and5syntax checks; this session verified corrected server blob and5syntax checks; live checkpoint proof remains open"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
@@ -113,7 +121,13 @@
     {
       "id": "2.5",
       "objective": "Recupero incrementale",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "owner isolated main+correctedPR26:246/246 tests and5syntax checks; this session verified corrected server blob and5syntax checks; live checkpoint proof remains open"
+        }
+      ]
     },
     {
       "id": "2.6",
@@ -324,7 +338,13 @@
     {
       "id": "7.2",
       "objective": "Scenari di guasto",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "owner isolated main+correctedPR26:246/246 tests and5syntax checks; this session verified corrected server blob and5syntax checks; live checkpoint proof remains open"
+        }
+      ]
     },
     {
       "id": "7.3",
@@ -435,11 +455,16 @@
         {
           "date": "2026-10-22",
           "kind": "owner UI reload/API verification: existing project15 linked to draft331 through reinvoiced_sale_order_id; one project, one task; proxyv23 distinguishes project relations"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "v23-based private development branch: 21 isolated tests, build passed, 19 baseline typecheck errors unchanged; exact relation preflight and order-scoped persistent creation guard"
         }
       ],
-      "gap": "Generic project creation/deduplication and lifecycle not accepted; UI association caused confirmation before recovery, history remains",
-      "next_action": "Do not repair/recreate this case; reconcile distinct relation fields and test deduplication/side effects in sandbox",
-      "verified_scope": "S00331 existing-case link via reinvoiced_sale_order_id verified; sale_order_id=false was not proof of no relationship"
+      "gap": "Not published or live tested; independent Render creator and cross-service race/recovery still require reconciliation",
+      "next_action": "Reconcile development tracks and test cross-service coordination; do not recreate or repair the existing S00331 case",
+      "verified_scope": "S00331 existing-case link via reinvoiced_sale_order_id verified; sale_order_id=false was not proof of no relationship",
+      "implementation": "Development-only route preflight separates direct/billing/sales-line relationships, reuses only one exact match, reviews ambiguity, blocks draft confirmation and uses existing ledger before allowed new creation"
     },
     {
       "id": "4.1.3",
