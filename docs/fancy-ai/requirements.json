@@ -58,14 +58,14 @@
       "id": "1.4",
       "objective": "Persistenza e recupero",
       "status": "da verificare",
-      "implementation": "Private report component: persistent dispatch claims and uncertain-state barrier; exact-case message reconciliation; registration distinct from delivery",
+      "implementation": "Private report component: persistent dispatch claims, read-only status, snapshot-bound review confirmation of proven registration; exact message and attachment metadata verification; no Odoo writes during review",
       "evidence": [
         {
           "date": "2026-10-22",
-          "kind": "isolated SQLite and mocked Odoo route tests; 23 component tests; TypeScript/build passed"
+          "kind": "29 isolated component tests with SQLite and mocked Odoo; TypeScript/build passed"
         }
       ],
-      "gap": "Hosted D1 migration/runtime, mobile QA, review-resolution UI and delivery acceptance remain open",
+      "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
       "updated_at": "2026-10-22"
     },
     {
@@ -170,7 +170,17 @@
     {
       "id": "4.6",
       "objective": "Flotta",
-      "status": "da verificare"
+      "status": "da verificare",
+      "implementation": "Native fleet list in inspected Odoo proxy; authorized live bounded listing succeeded",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "live readonly connector health and fleet listing limit 1; one record returned; private data omitted"
+        }
+      ],
+      "gap": "Maintenance, registration documents, insurance/expiry, ownership/third-party rules and availability not verified",
+      "next_action": "Inventory native fleet capabilities and exact source linkage before developing gaps",
+      "updated_at": "2026-10-22"
     },
     {
       "id": "4.7",
@@ -305,14 +315,14 @@
       "id": "1.4.1",
       "objective": "Esecuzione a chat chiusa",
       "status": "da verificare",
-      "implementation": "Private report component: persistent dispatch claims and uncertain-state barrier; exact-case message reconciliation; registration distinct from delivery",
+      "implementation": "Private report component: persistent dispatch claims, read-only status, snapshot-bound review confirmation of proven registration; exact message and attachment metadata verification; no Odoo writes during review",
       "evidence": [
         {
           "date": "2026-10-22",
-          "kind": "isolated SQLite and mocked Odoo route tests; 23 component tests; TypeScript/build passed"
+          "kind": "29 isolated component tests with SQLite and mocked Odoo; TypeScript/build passed"
         }
       ],
-      "gap": "Hosted D1 migration/runtime, mobile QA, review-resolution UI and delivery acceptance remain open",
+      "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
       "updated_at": "2026-10-22"
     },
     {
@@ -363,12 +373,12 @@
       "id": "4.4.1",
       "objective": "Verbali con foto HD",
       "status": "da verificare",
-      "implementation": "Private report component: persistent dispatch claims and uncertain-state barrier; exact-case message reconciliation; registration distinct from delivery",
-      "gap": "Hosted D1 migration/runtime, mobile QA, review-resolution UI and delivery acceptance remain open",
+      "implementation": "Private report component: persistent dispatch claims, read-only status, snapshot-bound review confirmation of proven registration; exact message and attachment metadata verification; no Odoo writes during review",
+      "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
       "evidence": [
         {
           "date": "2026-10-22",
-          "kind": "isolated SQLite and mocked Odoo route tests; 23 component tests; TypeScript/build passed"
+          "kind": "29 isolated component tests with SQLite and mocked Odoo; TypeScript/build passed"
         }
       ],
       "updated_at": "2026-10-22"
