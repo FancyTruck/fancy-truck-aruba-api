@@ -74,7 +74,7 @@
       "connector_typecheck": "passed",
       "proxy_typecheck": "19 pre-existing errors, same as supplied baseline",
       "note_and_activity_create_replay": "user reports real creation and duplicate:true on retries",
-      "read_update_acceptance": "not verified; new tools unavailable in this session",
+      "read_update_acceptance": "COMPLETED per owner report; final state and pagination independently read by this session",
       "test_activity": "remains open and labelled COLLAUDO",
       "multiuser": "not added; technical-user ACLs remain"
     },
@@ -87,8 +87,36 @@
   },
   "overall": "partial operational verification; no full phase or end-to-end acceptance",
   "unavailable": [
-    "new notes/activity read/update tools",
     "authenticated application diagnostics/checkpoints/queues",
     "pending approval content under administrative policy"
-  ]
+  ],
+  "notes_activity_acceptance": {
+    "id": "4.5.1",
+    "status": "collaudato",
+    "date": "2026-10-22",
+    "owner_report": [
+      "real title/note/deadline updates reread in Odoo",
+      "retry duplicate:true",
+      "stale revision rejected",
+      "original deadline restored",
+      "unrelated activity revision unchanged",
+      "no email or commercial action invoked"
+    ],
+    "direct_read_checks": {
+      "note_found": true,
+      "note_pagination": "two descending disjoint pages plus target reread",
+      "activity_pagination": "before target returns older activity only",
+      "test_activity_open": true,
+      "test_activity_label": "COLLAUDO",
+      "deadline": "2026-10-23",
+      "unrelated_activity_revision": "unchanged"
+    },
+    "reported_local_report": "outputs/odoo-notes-activities-live-completed.json; not available/read in this checkout",
+    "this_session_write": "extra reversible-title test was rejected by automatic approval review; no write executed, no bypass or retry; no longer needed after owner completion report",
+    "parent_phases": "remain open"
+  },
+  "observed_connector_errors": {
+    "activity_read": "one INVALID_ARGUMENT with explicit limit; exact repeated request subsequently succeeded; transient/not reproduced",
+    "project_read": "query-filtered requests returned INVALID_ARGUMENT; unfiltered limit=1 read succeeded; root cause unresolved"
+  }
 }

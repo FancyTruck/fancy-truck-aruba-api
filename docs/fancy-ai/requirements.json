@@ -139,6 +139,10 @@
         {
           "date": "2026-10-22",
           "kind": "owner reports published note/activity creation and idempotent replay; 11 local tests and successful builds; live read/update not independently verified here"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "Bounded live notes/activity acceptance 4.5.1 completed; does not establish full parent requirement or commercial handoff"
         }
       ],
       "updated_at": "2026-10-22"
@@ -191,8 +195,35 @@
         {
           "date": "2026-10-22",
           "kind": "owner reports published note/activity creation and idempotent replay; 11 local tests and successful builds; live read/update not independently verified here"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "Bounded live notes/activity acceptance 4.5.1 completed; does not establish full parent requirement or commercial handoff"
         }
       ]
+    },
+    {
+      "id": "4.5.1",
+      "objective": "Collaudo reale lettura/aggiornamento note e attività Odoo",
+      "status": "collaudato",
+      "source": "owner update 2026-10-22 and published Sites v22/OAuth v17",
+      "decision_successiva": "Close this bounded acceptance item only; leave test activity open, preserve other activity and all other phase states",
+      "implementation": "Native paginated internal notes/open activities and expected-revision activity updates; persistent replay/uncertainty handling",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "Owner reports title/note/deadline update plus Odoo reread, duplicate:true replay and rejection of stale revision; original deadline restored"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "Direct connector reads verify target note, disjoint note pages, activity pagination, open COLLAUDO activity with restored deadline and unchanged other activity revision"
+        }
+      ],
+      "gap": "No gap within this bounded acceptance scope; no broader end-to-end/multiuser acceptance inferred",
+      "next_action": "No repeated test writes; proceed to remaining requirements",
+      "responsible": "Fancy/Odoo; owner supplied completed live write-test report",
+      "completion_criterion": "Exact test note/activity read, permitted fields updated/reread, replay harmless, stale revision refused, original deadline restored and unrelated activity unchanged",
+      "updated_at": "2026-10-22"
     },
     {
       "id": "4.6",
@@ -232,6 +263,10 @@
         {
           "date": "2026-10-22",
           "kind": "owner reports published note/activity creation and idempotent replay; 11 local tests and successful builds; live read/update not independently verified here"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "Bounded live notes/activity acceptance 4.5.1 completed; does not establish full parent requirement or commercial handoff"
         }
       ]
     },

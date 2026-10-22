@@ -21,11 +21,11 @@
     "failed": 0,
     "environment": "local isolated; no production credentials"
   },
-  "next_action": "Load supported new note/activity read tools and verify the existing COLLAUDO records without creating duplicates; reconcile v22/v17 and main PR27 sources before further implementation",
+  "next_action": "Reconcile current published source; investigate project query INVALID_ARGUMENT and exact order/project linkage; obtain authorized cycle/checkpoint diagnostics",
   "blocked": [
     "browser administrative policy",
     "production acceptance requires separate authorized rollout",
-    "new note/activity read/update tools unavailable in this session; authenticated cycle/checkpoint diagnostics and pending approval not accessed"
+    "authenticated cycle/checkpoint diagnostics and pending approval not accessed"
   ],
   "lease": null,
   "draft_pr": "https://github.com/FancyTruck/fancy-truck-aruba-api/pull/26",
@@ -65,5 +65,14 @@
     }
   ],
   "operational_evidence": "docs/fancy-ai/operational-verification-2026-10-22.json",
-  "live_render_commit": "5f8b02503e8366f1baf0b6bd6886a6dfd656a9ae"
+  "live_render_commit": "5f8b02503e8366f1baf0b6bd6886a6dfd656a9ae",
+  "acceptance_items": {
+    "4.5.1": {
+      "status": "collaudato",
+      "date": "2026-10-22",
+      "scope": "real notes/activity reading, update, replay and stale-revision rejection on existing COLLAUDO record; activity stays open",
+      "evidence": "owner completion report plus independent readonly final-state and pagination verification",
+      "does_not_close": "parent phase, commercial handoff, multiuser authorization or end-to-end acceptance"
+    }
+  }
 }
