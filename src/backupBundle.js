@@ -29,6 +29,7 @@ function checkSqlite(file,state){
   if(db.prepare('PRAGMA integrity_check').get().integrity_check!=='ok')throw Error('Integrità SQLite non valida');
   const counts={};
   for(const table of ['mail_messages','mail_cursors','peu_operations','peu_effects'])counts[table]=db.prepare(`SELECT count(*) AS n FROM ${table}`).get().n;
+  if(db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='peu_whatsapp_replies'").get())counts.peu_whatsapp_replies=db.prepare('SELECT count(*) AS n FROM peu_whatsapp_replies').get().n;
   for(const row of db.prepare('SELECT action_id,digest FROM peu_effects').iterate()){
    if(state.actions[row.action_id]?.peu_payload_hash!==row.digest)throw Error('Registro e approvazioni non coerenti');
   }
@@ -60,9 +61,9 @@ export function captureBundle({store,db,directory,canCapture=()=>false}){
  const target=openMailDb(sqliteFile);
  try {
   target.exec('PRAGMA journal_mode=DELETE; BEGIN');
-  for(const table of ['peu_operations','peu_effects','peu_recovery']){
+  for(const table of ['peu_operations','peu_effects','peu_recovery','peu_whatsapp_replies']){
    const schema=db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name=?").get(table);
-   if(!schema){if(table==='peu_recovery')continue;throw Error('Registro Peu incompleto');}
+   if(!schema){if(['peu_recovery','peu_whatsapp_replies'].includes(table))continue;throw Error('Registro Peu incompleto');}
    target.exec(schema.sql);
    const columns=db.prepare(`PRAGMA table_info(${table})`).all().map(c=>c.name);
    const insert=target.prepare(`INSERT INTO ${table} VALUES(${columns.map(()=>'?').join(',')})`);
@@ -146,3 +147,4 @@ export async function restoreBundle(file,destination,key,progress=()=>{}){
   return {manifest,counts,recovery_required:true};
  }finally{removePrivateDirectory(staging);}
 }
+

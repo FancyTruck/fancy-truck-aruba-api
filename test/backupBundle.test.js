@@ -203,3 +203,15 @@ test('operational snapshot excludes received mail and cursors, keeps source and 
  assert.deepEqual(c.capture.state.actions,f.store.state.actions);
  assert(!fs.readFileSync(c.capture.sqliteFile).includes(Buffer.from('CACHE_ONLY_SENTINEL')));
 });
+
+
+test('WhatsApp delivery ledger survives isolated restore and blocks new replies',async t=>{
+ const {PeuWhatsAppGateway}=await import('../src/peuWhatsApp.js');
+ const f=fixture(t),env={PEU_WHATSAPP_ODOO_ENABLED:'true',PEU_WHATSAPP_OWNER:'+393330000000',PEU_WHATSAPP_ACCOUNT_ID:'2',PEU_WHATSAPP_OPERATOR_ID:'2',PEU_WHATSAPP_SINCE:'2026-10-22T00:00:00Z',PEU_WHATSAPP_REPLY_VERIFIED:'true'};
+ new PeuWhatsAppGateway({db:f.db,env,call:async()=>[],parse:async()=>({text:''}),assertWritable(){}});
+ f.db.prepare('INSERT INTO peu_whatsapp_replies VALUES(?,?,?,?,?,?)').run('odoo:2:completed','digest','delivered',123,'provider-test','2026-10-22T10:00:00Z');
+ const c=capture(f),sealed=await sealBundle(c.capture,c.directory,key),destination=join(f.directory,'wa-restore');
+ const r=await restoreBundle(sealed.file,destination,key);assert.equal(r.counts.peu_whatsapp_replies,1);
+ const db=openMailDb(join(destination,'peu-aruba.sqlite'));
+ try{assert.equal(db.prepare('SELECT status FROM peu_whatsapp_replies').get().status,'delivered');const g=new PeuWhatsAppGateway({db,env,call:async()=>assert.fail('No provider call allowed after restore'),parse:async()=>({text:''}),assertWritable(){}});await assert.rejects(g.reply({id:5,event_id:'odoo:2:new',text:'Test'}),/recovery_required/);}finally{db.close();}
+});
