@@ -32,7 +32,7 @@ export async function pollMailbox({ client, account, store, parse, processMessag
       const next = { ...checkpoint, lastUid: uid };
       store.setCursor(key, next);
       checkpoint = next;
-      rows.push(result);
+      rows.push({ ...result, uid, account });
     } catch (error) {
       rows.push({ suspended: true, retry_pending: true, uid,
         error: error instanceof Error ? error.message : 'errore sconosciuto' });
