@@ -15,6 +15,10 @@
         {
           "date": "2026-10-22",
           "kind": "direct Render live PR27, Sites v22/v17, memory/HTTP/events; detailed sanitized operational verification file"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
         }
       ],
       "updated_at": "2026-10-22"
@@ -216,7 +220,13 @@
     {
       "id": "4.4",
       "objective": "Verbali e anomalie",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-23",
+          "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
+        }
+      ]
     },
     {
       "id": "4.5",
@@ -314,7 +324,13 @@
     {
       "id": "5.5",
       "objective": "Accesso quotidiano",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-23",
+          "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
+        }
+      ]
     },
     {
       "id": "6.1",
@@ -386,7 +402,13 @@
     {
       "id": "8.1",
       "objective": "Bozza fattura e fonte fiscale",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-23",
+          "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
+        }
+      ]
     },
     {
       "id": "8.2",
@@ -398,6 +420,10 @@
         {
           "date": "2026-10-22",
           "kind": "source inspection and isolated local tests; not live acceptance"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
         }
       ],
       "updated_at": "2026-10-22"
@@ -485,6 +511,10 @@
         {
           "date": "2026-10-23",
           "kind": "corrected PR26 development: readonly exact-order project association; real intake with mocked Odoo; 242 branch tests and 261 upstream-combination tests passed"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
         }
       ],
       "gap": "Development guard not deployed; single creator across services, native automation/cardinality, task creation and operational lifecycle acceptance remain open",
@@ -507,6 +537,10 @@
         {
           "date": "2026-10-22",
           "kind": "source inspection and isolated local tests; not live acceptance"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
         }
       ],
       "updated_at": "2026-10-22"
@@ -526,6 +560,10 @@
         {
           "date": "2026-10-22",
           "kind": "29 isolated component tests with SQLite and mocked Odoo; TypeScript/build passed"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
         }
       ],
       "updated_at": "2026-10-22"

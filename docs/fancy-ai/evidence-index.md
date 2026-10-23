@@ -5,3 +5,6 @@
 - Project association tests: `node --test test/projectAssociation.test.js test/intakeIntegration.test.js`; synthetic Odoo transport through the actual intake.
 - Whole branch: `npm test`242/242. Local combined snapshot with upstream bb17921:261/261. `npm run check` plus `node --check src/projectAssociation.js` passed. These do not certify live acceptance.
 - Owner-reported files listed in the prior handoff were not read in this checkout. Private Sites development tracks retain their own source/evidence; they are not copied to this public repository.
+
+- Private proxy continuation: branch `work/fancy-proxy-reconcile-20261023`, commit2b25b2c;65 isolated combined tests, TypeScript/build passed. Public evidence contains only hashes and summaries; all private source stays in its private repository.
+- Current MCP source4ea602f (metadata v21):26 tests, TypeScript/build passed; old validation helpers already present and byte-identical. No duplicate source patch.
