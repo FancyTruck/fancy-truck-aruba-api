@@ -11,7 +11,7 @@ test('four production intake paths use Odoo contract and approval queue without 
     STATE_FILE:path.join(directory,'state.json'),PORT:'0',API_TOKEN:'test-only',REVIEW_READ_TOKEN:'test-reader',
     ODOO_URL:'https://odoo-contract.test',ODOO_DB:'test',ODOO_API_KEY:'test-only',ODOO_PARTNER_AUTOCOMPLETE:'false'});
   const realFetch=globalThis.fetch;
-  let lead=null, orders=[], writes=[], counter=100, aiAddresses=null, routeCount=0, opportunityOrders=null;
+  let lead=null, orders=[], writes=[], counter=100, aiAddresses=null, routeCount=0, opportunityOrders=null, projectMode='none';
   const partner={id:7,name:'Cliente Test',company_type:'company',property_product_pricelist:[1,'Default'],email:'cliente@example.test',vat:'IT12345678901',phone:'010000000',l10n_it_pec_email:'test@example.test',l10n_it_pa_index:'TEST123'};
   globalThis.fetch=async (url,options) => {
     if (String(url).includes('api.openai.com')) return {ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify(aiAddresses)}]}]})};
@@ -28,6 +28,14 @@ test('four production intake paths use Odoo contract and approval queue without 
       if (model==='res.partner') result=[partner];
       else if (model==='crm.lead') result=lead ? [lead] : [];
       else if (model==='ir.model.fields' && body.domain.some(term=>Array.isArray(term)&&term[0]==='model'&&term[2]==='sale.order.template')) result=[{name:'note'}];
+      else if (model==='ir.model.fields' && body.domain.some(term=>Array.isArray(term)&&term[0]==='model'&&term[2]==='project.project')) result=[
+        {name:'partner_id',ttype:'many2one',relation:'res.partner'},
+        {name:'sale_order_id',ttype:'many2one',relation:'sale.order'},
+        {name:'reinvoiced_sale_order_id',ttype:'many2one',relation:'sale.order'},
+        {name:'sale_line_id',ttype:'many2one',relation:'sale.order.line'},
+      ];
+      else if (model==='project.project') result=projectMode==='billing' ? [{id:900,name:'Synthetic linked project',active:true,
+        partner_id:[7,'Customer'],sale_order_id:false,reinvoiced_sale_order_id:[orders[0].id,'Order'],sale_line_id:false}] : [];
       else if (model==='sale.order.template') {
         assert.deepEqual(body.fields,['name','note']);
         result=[{id:42,name:'Noleggio Fancy Truck',note:'Condizioni noleggio test'}];
@@ -112,6 +120,13 @@ test('four production intake paths use Odoo contract and approval queue without 
       assert.equal(orders[0].rental_start_date,'2026-12-20 09:00:00');
       assert.equal(orders[0].order_line[0][2].price_unit,undefined);
       assert.match(orders[0].order_line[1][2].name,/LOGISTICA DA COMPLETARE/);
+      assert.equal(writes.includes('project.project'),false);
+      assert.equal(writes.includes('project.task'),false);
+      const event=app.store.state.events.find(e=>e.type==='ODOO_DRAFT_BUNDLE_CREATED'&&e.order_id===orders[0].id);
+      assert.equal(event.project_status,'DEFERRED');assert.equal(event.project_id,null);
+      const saved=JSON.parse(fs.readFileSync(process.env.STATE_FILE,'utf8'));
+      assert(Object.values(saved.classification_reviews).some(r=>r.reason==='project_order_not_confirmed'
+        &&r.order_candidate_ids.includes(orders[0].id)));
     } else {
       assert.equal(orders.length,0);
       assert.equal(writes.includes('project.project'),false);
@@ -123,6 +138,18 @@ test('four production intake paths use Odoo contract and approval queue without 
     assert.equal(orders.length,priorOrders);
     assert.ok(Object.values(app.store.state.actions).filter(action=>action.case_id===`odoo-lead-${lead.id}`)
       .every(action=>['PENDING_APPROVAL','CANCELLED'].includes(action.status)));
+  });
+  await t.test('actual rental intake reuses an exact billing-linked project without project/task writes',async()=>{
+    lead=null;orders=[];writes=[];projectMode='billing';
+    try {
+      const result=await app.processQuoteRequest({subject:'Richiesta noleggio Airstream',text:cases[3].reply,
+        messageId:'<rental-project-billing>',from:{value:[{address:partner.email}]}},21,'hello','123');
+      assert.equal(result.ready_for_review,true);
+      assert.equal(writes.includes('project.project'),false);assert.equal(writes.includes('project.task'),false);
+      const event=app.store.state.events.find(e=>e.type==='ODOO_DRAFT_BUNDLE_CREATED'&&e.order_id===orders[0].id);
+      assert.equal(event.project_status,'REUSED');assert.equal(event.project_id,900);
+      assert.equal(orders[0].state,'draft');
+    } finally {projectMode='none';}
   });
   await t.test('a different request under the same opportunity is reviewed instead of silently reusing its quote', async()=>{
     lead={id:901,name:'Richiesta noleggio Airstream',description:'',partner_id:[7,'Synthetic customer'],stage_id:2};

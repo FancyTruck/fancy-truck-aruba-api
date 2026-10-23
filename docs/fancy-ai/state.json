@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "updated_at": "2026-10-22",
-  "baseline_commit": "12c701351ce01144e93bb43b4f353b9fdbb0b6fd",
+  "updated_at": "2026-10-23T00:47:13.712873+00:00",
+  "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
   "stage": "draft PR26 plus two independent Sites development branches; not deployed",
   "functional_acceptance": "open",
@@ -13,15 +13,16 @@
     "private-http-failure-telemetry",
     "admin-only-readonly-case-audit",
     "durable-report-dispatch-claim-and-readonly-odoo-reconciliation",
-    "snapshot-bound-reviewed-registration-confirmation-without-odoo-writes"
+    "snapshot-bound-reviewed-registration-confirmation-without-odoo-writes",
+    "readonly-render-project-association-without-competing-creator"
   ],
   "tests": {
-    "command": "npm test",
-    "passed": 230,
+    "command": "npm test; npm run check; node --check src/projectAssociation.js",
+    "passed": 242,
     "failed": 0,
-    "environment": "local isolated; no production credentials"
+    "environment": "isolated corrected PR26 branch, mocked external transport"
   },
-  "next_action": "Reconcile remaining prior development patches with v23 and current Render main; inspect cross-service creation races and verify continuity/recovery through authorized diagnostics",
+  "next_action": "Reconcile newly observed Sites proxy v25 source with preserved private development tracks; keep generic creation and live checkpoint acceptance open",
   "blocked": [
     "browser administrative policy",
     "production acceptance requires separate authorized rollout",
@@ -39,7 +40,7 @@
     {
       "component": "Render mail/CRM service",
       "development": "PR26",
-      "isolated_tests": 230
+      "isolated_tests": 242
     },
     {
       "component": "Sites Odoo MCP connector",
@@ -88,7 +89,7 @@
     }
   ],
   "operational_evidence": "docs/fancy-ai/operational-verification-2026-10-22.json",
-  "live_render_commit": "5f8b02503e8366f1baf0b6bd6886a6dfd656a9ae",
+  "live_render_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "acceptance_items": {
     "4.5.1": {
       "status": "collaudato",
@@ -116,5 +117,22 @@
     "failed": 0,
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
+  },
+  "updated_at_rome": "2026-10-23T02:47:13.712873+02:00",
+  "run_id": "fancy-night-20261023-project-guard",
+  "current_lot": "P08 Render project-association guard; upstream PR28 reconciliation",
+  "live_render_deploy": "dep-dbd6pteq1p3s73dn9tkg",
+  "upstream_integration_tests": {
+    "main": "bb1792151b5fa66c16180c52335ea26ff5629957",
+    "passed": 261,
+    "failed": 0,
+    "syntax_checks": 6,
+    "environment": "local merge-tree snapshot only; no remote merge or deployment",
+    "tree": "7382ca384a91c03e65c4fdf0e0357e01bd8fa9c2"
+  },
+  "source_integrity": {
+    "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
+    "intentional_new_server_blob": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc",
+    "scope": "exact project association and intake reporting; repaired intake handlers and awaiting_scope_review preserved"
   }
 }

@@ -7,6 +7,7 @@ import { automationHealth } from './automationHealth.js';
 import { quotationDisposition } from './quotationIdentity.js';
 import { httpFailureDiagnostics } from './httpDiagnostics.js';
 import { auditCrmCase } from './crmAudit.js';
+import { resolveProjectAssociation } from './projectAssociation.js';
 import { runExternalBackup } from './externalBackup.js';
 import { applyRecoveryGuard } from './recoveryGuard.js';
 import { backupFailureDetails } from './externalBundleBackup.js';
@@ -424,33 +425,17 @@ async function createReviewActivity(lead, order, reviewItems) {
   }
 }
 
-async function createEconomicProject(lead, order, partner) {
+async function associateEconomicProject(lead, order, partner) {
   const projectName = `${order.name || order.id} — ${lead.name}`.slice(0, 240);
-  const existing = await odooCall('project.project', 'search_read', [[['name', '=', projectName]]], {
-    fields: ['name'], limit: 1,
-  });
-  let projectId = existing[0]?.id;
-  if (!projectId) {
-    const fields = await odooCall('ir.model.fields', 'search_read', [[
-      ['model', '=', 'project.project'], ['name', 'in', ['partner_id', 'sale_order_id']],
-    ]], { fields: ['name'], limit: 10 });
-    const available = new Set(fields.map((field) => field.name));
-    const values = { name: projectName };
-    if (available.has('partner_id')) values.partner_id = partner.id;
-    if (available.has('sale_order_id')) values.sale_order_id = order.id;
-    const ids = await odooCall('project.project', 'create', [[values]]);
-    projectId = Array.isArray(ids) ? ids[0] : ids;
+  const result = await resolveProjectAssociation({ call: odooCall, leadId: lead.id,
+    orderId: order.id, partnerId: partner.id, projectName });
+  if (result.status !== 'REUSED') {
+    const { item } = store.queueClassification({ source_key: `project-association:${lead.id}:${order.id}`,
+      account: 'odoo', subject: lead.name || '', reason: result.reason,
+      candidate_ids: [lead.id], order_candidate_ids: [order.id] });
+    return { ...result, review_id: item.id };
   }
-  const tasks = await odooCall('project.task', 'search_read', [[
-    ['project_id', '=', projectId], ['name', '=', '00 – RIEPILOGO ECONOMICO'],
-  ]], { fields: ['name'], limit: 1 });
-  if (!tasks.length) {
-    await odooCall('project.task', 'create', [[{
-      project_id: projectId, name: '00 – RIEPILOGO ECONOMICO', partner_id: partner.id,
-      description: `<p>Riepilogo economico collegato alla bozza ${escapeHtml(order.name || String(order.id))}. Sostituire le stime con i costi effettivi senza sommarli due volte.</p>`,
-    }]]);
-  }
-  return { id: projectId, name: projectName };
+  return result;
 }
 
 async function createDraftFromCrmLead(lead, partner, kind, combinedText, key, parsed) {
@@ -570,17 +555,17 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key, pa
   } else {
     reviewItems.push('Programma, servizi, logistica, personalizzazione e condizioni economiche da confermare');
   }
+  const economicProject = await associateEconomicProject(lead, order[0] || { id: orderId, name: String(orderId) }, partner);
+  reviewItems.push(economicProject.status === 'REUSED'
+    ? `Progetto esistente collegato: ${economicProject.name}. Attività e ciclo operativo da verificare.`
+    : `Associazione progetto da verificare (${economicProject.reason}); revisione ${economicProject.review_id}. Nessun progetto o lavoro creato.`);
   await odooCall('crm.lead', 'message_post', [[lead.id]], {
     body: `<p>Bozza ${isRental ? 'Noleggi' : 'Vendite'} <strong>${escapeHtml(order[0]?.name || orderId)}</strong> generata dalla presente opportunità CRM.</p><ul>${reviewItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul><p>La bozza non è stata inviata al cliente.</p>`,
     message_type: 'comment', subtype_xmlid: 'mail.mt_note',
   });
   await createReviewActivity(lead, order[0] || { id: orderId }, reviewItems);
-  const economicProject = await createEconomicProject(lead, order[0] || { id: orderId, name: String(orderId) }, partner);
-  await odooCall('crm.lead', 'message_post', [[lead.id]], {
-    body: `<p>Creato progetto economico <strong>${escapeHtml(economicProject.name)}</strong> con un solo lavoro <strong>00 – RIEPILOGO ECONOMICO</strong>.</p>`,
-    message_type: 'comment', subtype_xmlid: 'mail.mt_note',
-  });
-  store.audit('ODOO_DRAFT_BUNDLE_CREATED', { lead_id: lead.id, order_id: orderId, project_id: economicProject.id });
+  store.audit('ODOO_DRAFT_BUNDLE_CREATED', { lead_id: lead.id, order_id: orderId,
+    project_id: economicProject.id, project_status: economicProject.status });
   return { order: order[0] || { id: orderId }, project: economicProject, duplicate: false, rental_price_verified: rentalPriceVerified, logistics_status: logistics.status, logistics_price_verified: logisticsPriceVerified };
 }
 

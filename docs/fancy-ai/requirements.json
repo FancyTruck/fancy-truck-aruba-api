@@ -37,6 +37,10 @@
         {
           "date": "2026-10-22",
           "kind": "owner isolated main+correctedPR26:246/246 tests and5syntax checks; this session verified corrected server blob and5syntax checks; live checkpoint proof remains open"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "direct bounded Render metadata, metrics and original backup progress logs; see night-verification-2026-10-23.json"
         }
       ],
       "updated_at": "2026-10-22"
@@ -70,9 +74,13 @@
         {
           "date": "2026-10-22",
           "kind": "direct runtime logs at 00:29:56–00:29:59 UTC, 76318-byte bundle, VERIFIED, isolated_process=true, restore_writes_blocked=true; source path inspected"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "direct bounded Render metadata, metrics and original backup progress logs; see night-verification-2026-10-23.json"
         }
       ],
-      "gap": "No new restore run or independent object inspection in this session; retention/alarm acceptance remains open",
+      "gap": "New original runtime logs show a different verified isolated restore; no independent object download/restore in this session; retention/alarm acceptance remains open",
       "next_action": "Verify remaining backup retention/alarm criteria without duplicating or deleting backups"
     },
     {
@@ -88,6 +96,10 @@
         {
           "date": "2026-10-22",
           "kind": "owner isolated main+correctedPR26:246/246 tests and5syntax checks; this session verified corrected server blob and5syntax checks; live checkpoint proof remains open"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "direct bounded Render metadata, metrics and original backup progress logs; see night-verification-2026-10-23.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
@@ -343,13 +355,23 @@
         {
           "date": "2026-10-22",
           "kind": "owner isolated main+correctedPR26:246/246 tests and5syntax checks; this session verified corrected server blob and5syntax checks; live checkpoint proof remains open"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "direct bounded Render metadata, metrics and original backup progress logs; see night-verification-2026-10-23.json"
         }
       ]
     },
     {
       "id": "7.3",
       "objective": "Procedure operative",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-23",
+          "kind": "direct bounded Render metadata, metrics and original backup progress logs; see night-verification-2026-10-23.json"
+        }
+      ]
     },
     {
       "id": "7.4",
@@ -459,12 +481,16 @@
         {
           "date": "2026-10-22",
           "kind": "v23-based private development branch: 21 isolated tests, build passed, 19 baseline typecheck errors unchanged; exact relation preflight and order-scoped persistent creation guard"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "corrected PR26 development: readonly exact-order project association; real intake with mocked Odoo; 242 branch tests and 261 upstream-combination tests passed"
         }
       ],
-      "gap": "Not published or live tested; independent Render creator and cross-service race/recovery still require reconciliation",
-      "next_action": "Reconcile development tracks and test cross-service coordination; do not recreate or repair the existing S00331 case",
+      "gap": "Development guard not deployed; single creator across services, native automation/cardinality, task creation and operational lifecycle acceptance remain open",
+      "next_action": "Reconcile current proxy source and define an authoritative single creator before enabling generic project creation",
       "verified_scope": "S00331 existing-case link via reinvoiced_sale_order_id verified; sale_order_id=false was not proof of no relationship",
-      "implementation": "Development-only route preflight separates direct/billing/sales-line relationships, reuses only one exact match, reviews ambiguity, blocks draft confirmation and uses existing ledger before allowed new creation"
+      "implementation": "Render intake consumes only a uniquely evidenced project relation; no project/task writes. Direct/billing/line fields stay distinct. Missing/conflicting evidence persists review; draft is never confirmed. Separate Sites project-creation track remains private and unreleased."
     },
     {
       "id": "4.1.3",
