@@ -27,7 +27,13 @@
     "production acceptance requires separate authorized rollout",
     "authenticated cycle/checkpoint diagnostics and pending approval not accessed"
   ],
-  "lease": null,
+  "lease": {
+    "run_id": "fancy-night-20261023-project-guard",
+    "component": "Render project creator and development registry",
+    "acquired_at": "2026-10-23T00:41:15.158Z",
+    "expires_at": "2026-10-23T02:11:15.158Z",
+    "branch": "work/fancy-foundations-20261022"
+  },
   "draft_pr": "https://github.com/FancyTruck/fancy-truck-aruba-api/pull/26",
   "components": [
     {
