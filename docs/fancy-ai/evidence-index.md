@@ -8,3 +8,5 @@
 
 - Private proxy continuation: branch `work/fancy-proxy-reconcile-20261023`, commit2b25b2c;65 isolated combined tests, TypeScript/build passed. Public evidence contains only hashes and summaries; all private source stays in its private repository.
 - Current MCP source4ea602f (metadata v21):26 tests, TypeScript/build passed; old validation helpers already present and byte-identical. No duplicate source patch.
+
+- `night-verification-2026-10-24.json`:10 baseline failures reproduced;253 corrected branch and272 local upstream-combination tests passed, plus5syntax checks. Actual HTTP and filesystem failure injection; no live mutation. Readonly Render metrics/events are scoped separately.

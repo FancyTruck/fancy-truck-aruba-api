@@ -45,6 +45,10 @@
         {
           "date": "2026-10-23",
           "kind": "direct bounded Render metadata, metrics and original backup progress logs; see night-verification-2026-10-23.json"
+        },
+        {
+          "date": "2026-10-24",
+          "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
         }
       ],
       "updated_at": "2026-10-22"
@@ -104,6 +108,10 @@
         {
           "date": "2026-10-23",
           "kind": "direct bounded Render metadata, metrics and original backup progress logs; see night-verification-2026-10-23.json"
+        },
+        {
+          "date": "2026-10-24",
+          "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
@@ -112,7 +120,13 @@
     {
       "id": "1.5",
       "objective": "Diagnostica e allarmi",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-24",
+          "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
+        }
+      ]
     },
     {
       "id": "2.1",
@@ -375,6 +389,10 @@
         {
           "date": "2026-10-23",
           "kind": "direct bounded Render metadata, metrics and original backup progress logs; see night-verification-2026-10-23.json"
+        },
+        {
+          "date": "2026-10-24",
+          "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
         }
       ]
     },
@@ -386,6 +404,10 @@
         {
           "date": "2026-10-23",
           "kind": "direct bounded Render metadata, metrics and original backup progress logs; see night-verification-2026-10-23.json"
+        },
+        {
+          "date": "2026-10-24",
+          "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
         }
       ]
     },
@@ -467,6 +489,10 @@
         {
           "date": "2026-10-22",
           "kind": "29 isolated component tests with SQLite and mocked Odoo; TypeScript/build passed"
+        },
+        {
+          "date": "2026-10-24",
+          "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",

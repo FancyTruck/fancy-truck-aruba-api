@@ -37,27 +37,35 @@ export class JsonStateStore {
 
   compact() {
     if (this.state.events.length > 2000) {
-      this.state.events.splice(0, this.state.events.length - 2000);
+      this.state.events = this.state.events.slice(-2000);
     }
     if (this.state.cycles.length > 200) {
-      this.state.cycles.splice(0, this.state.cycles.length - 200);
+      this.state.cycles = this.state.cycles.slice(-200);
     }
     const idempotencyEntries = Object.entries(this.state.idempotency);
     if (idempotencyEntries.length > 10000) {
-      idempotencyEntries
+      this.state.idempotency = Object.fromEntries(idempotencyEntries
         .sort(([, left], [, right]) => String(left?.at || '').localeCompare(String(right?.at || '')))
-        .slice(0, idempotencyEntries.length - 10000)
-        .forEach(([key]) => delete this.state.idempotency[key]);
+        .slice(-10000));
     }
   }
 
   save() {
-    this.compact();
+    // Compaction uses replacement collections so an unsuccessful save cannot
+    // silently discard previously durable replay keys or cycle history.
+    const before = { events: this.state.events, cycles: this.state.cycles, idempotency: this.state.idempotency };
     const directory = path.dirname(this.filePath);
-    fs.mkdirSync(directory, { recursive: true });
     const temporary = `${this.filePath}.${process.pid}.tmp`;
-    fs.writeFileSync(temporary, JSON.stringify(this.state, null, 2), { mode: 0o600 });
-    fs.renameSync(temporary, this.filePath);
+    try {
+      this.compact();
+      fs.mkdirSync(directory, { recursive: true });
+      fs.writeFileSync(temporary, JSON.stringify(this.state, null, 2), { mode: 0o600 });
+      fs.renameSync(temporary, this.filePath);
+    } catch (error) {
+      Object.assign(this.state, before);
+      try { fs.unlinkSync(temporary); } catch {}
+      throw error;
+    }
   }
 
   has(key) {
@@ -67,7 +75,8 @@ export class JsonStateStore {
   remember(key, result = null) {
     if (this.has(key)) return this.state.idempotency[key];
     this.state.idempotency[key] = { at: new Date().toISOString(), result };
-    this.save();
+    try { this.save(); }
+    catch (error) { delete this.state.idempotency[key]; throw error; }
     return this.state.idempotency[key];
   }
 
@@ -106,23 +115,31 @@ export class JsonStateStore {
   }
 
   integration(name, patch) {
+    const previous = this.state.integrations[name];
     this.state.integrations[name] = {
       ...(this.state.integrations[name] || {}),
       ...patch,
       updated_at: new Date().toISOString(),
     };
-    this.save();
+    try { this.save(); }
+    catch (error) {
+      if (previous === undefined) delete this.state.integrations[name];
+      else this.state.integrations[name] = previous;
+      throw error;
+    }
     return this.state.integrations[name];
   }
 
   beginCycle(sources) {
+    const previous = this.state.cycles.slice();
     const cycle = {
       id: crypto.randomUUID(), started_at: new Date().toISOString(), ended_at: null,
       sources, read: 0, created: 0, updated: 0, duplicates: 0, suspended: 0, failed: 0,
       status: 'RUNNING', errors: [],
     };
     this.state.cycles.push(cycle);
-    this.save();
+    try { this.save(); }
+    catch (error) { this.state.cycles = previous; throw error; }
     return cycle;
   }
 
@@ -145,10 +162,18 @@ export class JsonStateStore {
   finishCycle(id, patch = {}) {
     const cycle = this.state.cycles.find((item) => item.id === id);
     if (!cycle) throw new Error(`Ciclo ${id} non trovato`);
+    const previous = clone(cycle);
+    const previousCycles = this.state.cycles.slice();
     Object.assign(cycle, patch, { ended_at: new Date().toISOString() });
     if (!patch.status) cycle.status = cycle.failed ? 'CONTROLLO NON COMPLETATO' : 'COMPLETED';
-    if (this.state.cycles.length > 1000) this.state.cycles.splice(0, this.state.cycles.length - 1000);
-    this.save();
+    try { this.save(); }
+    catch (error) {
+      // Preserve references held by the owning server as well as the store.
+      for (const key of Object.keys(cycle)) delete cycle[key];
+      Object.assign(cycle, previous);
+      this.state.cycles = previousCycles;
+      throw error;
+    }
     return cycle;
   }
 
