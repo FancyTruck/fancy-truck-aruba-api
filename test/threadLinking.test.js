@@ -21,9 +21,10 @@ test('native Odoo message already on the target is not copied there',async()=>{
 test('sent baseline is distinct from inbox and later mail is processed after restart',async()=>{
  const cursors={'imap:hello:checkpoint':{lastUid:900}};const store={cursor:k=>cursors[k],setCursor:(k,v)=>{cursors[k]=v;}};
  let released=0,processed=0;
- const client={list:async()=>[{path:'INBOX.Sent',specialUse:'\\Sent'}],mailbox:{uidValidity:12,uidNext:51},getMailboxLock:async(path,options)=>{assert(options.readOnly);return {release(){released++;}};},search:async()=>[50,51],fetchOne:async()=>({source:'message'})};
+ const client={list:async()=>[{path:'INBOX.Sent',specialUse:'\\Sent'}],mailbox:{uidValidity:12,uidNext:51},getMailboxLock:async(path,options)=>{assert(options.readOnly);return {release(){released++;}};},search:async()=>[50,51],fetchOne:async(_uid,query)=>query.size?{size:7}:({source:'message'})};
  const args={client,account:'hello',store,parse:async()=>({}),processMessage:async()=>{processed++;return {linked:true};}};
  assert((await pollSentMailbox(args)).initialized);assert.equal(processed,0);
  assert.equal((await pollSentMailbox(args)).rows.length,1);assert.equal(processed,1);
  assert.equal(cursors['imap:hello:checkpoint'].lastUid,900);assert.equal(cursors['imap:hello:sent:INBOX.Sent:checkpoint'].lastUid,51);assert.equal(released,2);
 });
+
