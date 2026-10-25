@@ -1,7 +1,9 @@
+import {readRentalSchedule} from './peuRentalSchedule.js';
 import {problem} from './peuCommon.js';
 const id={type:'integer',minimum:1};
 const list={type:'object',properties:{query:{type:'string',minLength:1,maxLength:200},partner_id:id,limit:{type:'integer',minimum:1,maximum:20}},required:[],additionalProperties:false};
 export const odooReadDefinitions={
+ 'rentals.schedule':{effect:'read',parameters:{type:'object',properties:{period:{type:'string',enum:['next_week','this_week']},limit:{type:'integer',minimum:1,maximum:20},offset:{type:'integer',minimum:0,maximum:10000}},required:[],additionalProperties:false}},
  'rentals.list':{effect:'read',parameters:{...list,properties:{...list.properties,scope:{type:'string',enum:['ongoing','current','upcoming','all_confirmed']},offset:{type:'integer',minimum:0,maximum:10000}}}},
  'crm.list':{effect:'read',parameters:list},
  'sales.list':{effect:'read',parameters:list},
@@ -10,6 +12,7 @@ export const odooReadDefinitions={
 // Fixed models, fields and method: neither the model nor retrieved records can issue writes.
 export async function readOdoo(read,capability,p,now=new Date()){
  if(!read)throw problem('odoo_read_unconfigured',503);
+ if(capability==='rentals.schedule')return readRentalSchedule(read,p,now);
  const rental=capability==='rentals.list';
  const sales=rental||capability.startsWith('sales.'),model=sales?'sale.order':'crm.lead';
  const fields=sales?['id','name','partner_id','state','date_order','amount_total','currency_id','user_id','is_rental_order','rental_start_date','rental_return_date','signed_on']:['id','name','partner_id','stage_id','expected_revenue','probability','date_deadline','user_id'];
