@@ -6,7 +6,7 @@ const coordinatesValid=c=>Array.isArray(c)&&c.length===2&&c.every(Number.isFinit
 const normalized=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 export function travelDestination(data,query){
  try{return {...verifiedGeocode(data,query),precision:'address'};}catch{}
- const candidates=(data.features||[]).filter(f=>f.properties?.country_a==='ITA'&&f.properties?.layer==='locality'&&f.properties?.confidence>=0.8&&normalized(f.properties.name||f.properties.locality)===normalized(query)&&coordinatesValid(f.geometry?.coordinates));
+ const candidates=(data.features||[]).filter(f=>f.properties?.country_a==='ITA'&&f.properties?.layer==='locality'&&f.properties?.confidence>=0.6&&normalized(f.properties.name||f.properties.locality)===normalized(query)&&coordinatesValid(f.geometry?.coordinates));
  const unique=[...new Map(candidates.map(f=>[f.geometry.coordinates.join(','),f])).values()];
  if(unique.length!==1)throw Object.assign(problem('destination_ambiguous_need_address',409),{candidates:(data.features||[]).map(f=>({name:f.properties?.name,layer:f.properties?.layer,confidence:f.properties?.confidence,country:f.properties?.country_a}))});
  return {coordinates:unique[0].geometry.coordinates,label:unique[0].properties.label,precision:'city_reference'};
