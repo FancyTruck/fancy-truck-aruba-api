@@ -18,3 +18,14 @@ test('current and upcoming rentals apply date boundaries in UTC and support boun
  const {readOdoo}=await import('../src/peuOdooRead.js');
  for(const scope of ['current','upcoming']){let query;await readOdoo(async(...a)=>{query=a;return [];},'rentals.list',{scope,offset:20,limit:10},new Date('2026-10-25T12:00:00Z'));assert.equal(query[2].offset,20);assert.ok(query[1].some(x=>x[0]==='rental_start_date'&&x[1]===(scope==='current'?'<=':'>')));}
 });
+test('Rome calendar week handles both DST changes and Sunday correctly',async()=>{
+ const {rentalWeek}=await import('../src/peuRentalSchedule.js');
+ assert.deepEqual(rentalWeek(new Date('2026-10-25T18:00:00Z')),{start_date:'2026-10-26',end_date_exclusive:'2026-11-02',starts_at:'2026-10-25 23:00:00',ends_at:'2026-11-01 23:00:00',timezone:'Europe/Rome'});
+ const spring=rentalWeek(new Date('2026-03-25T12:00:00Z'),'this_week');assert.equal(spring.starts_at,'2026-03-22 23:00:00');assert.equal(spring.ends_at,'2026-03-29 22:00:00');
+ const autumn=rentalWeek(new Date('2026-10-23T12:00:00Z'),'this_week');assert.equal(autumn.starts_at,'2026-10-18 22:00:00');assert.equal(autumn.ends_at,'2026-10-25 23:00:00');
+});
+test('schedule includes only boundaries in range and never calls shipping address confirmed',async()=>{
+ const {readRentalSchedule}=await import('../src/peuRentalSchedule.js');
+ const result=await readRentalSchedule(async model=>model==='sale.order'?[{id:4,name:'S4',partner_id:[1,'Client'],partner_shipping_id:[1,'Client'],rental_start_date:'2026-10-26 08:00:00',rental_return_date:'2026-11-10 08:00:00'}]:model==='sale.order.line'?[{id:1,order_id:[4,'S4'],name:'Consegna presso Fiera Bologna',is_rental:false}]:[{id:1,street:'Sede amministrativa'}],{},new Date('2026-10-25T18:00:00Z'));
+ assert.equal(result.events.length,1);assert.equal(result.events[0].kind,'rental_start');assert.match(result.events[0].location_evidence[0].text,/Bologna/);assert.equal(result.events[0].shipping_address_candidate.street,'Sede amministrativa');assert.match(result.meaning,/non è un luogo confermato/);
+});
