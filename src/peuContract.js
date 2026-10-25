@@ -74,7 +74,7 @@ export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritabl
      save('peu_effects',key,'succeeded',result);return result;
    }catch(e){save('peu_effects',key,'unknown',{error:'outcome_unknown_reconcile_first'});throw problem('outcome_unknown_reconcile_first',502);}
  }
- return {catalog:()=>({version:5,capabilities}),status(key){const r=get('peu_operations',key);if(!r)throw problem('operation_not_found',404);return {status:r.status,result:r.result?JSON.parse(r.result):null};},async execute(command){
+ return {catalog:()=>({version:6,capabilities}),status(key){const r=get('peu_operations',key);if(!r)throw problem('operation_not_found',404);return {status:r.status,result:r.result?JSON.parse(r.result):null};},async execute(command){
    const c=capabilities.find(c=>c.id===command.capability);
    if(!c)throw problem('capability_not_available',404);
    validateSchema(c.parameters,command.parameters);
