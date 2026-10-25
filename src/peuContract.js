@@ -1,3 +1,4 @@
+import {readOdoo,odooReadDefinitions} from './peuOdooRead.js';
 import {hash,problem} from './peuCommon.js';
 import {validateSchema} from './peuSchema.js';
 import {makePeuReviews} from './peuReviews.js';
@@ -6,6 +7,7 @@ const obj=(properties,required=Object.keys(properties))=>({type:'object',propert
 const approved=obj({action_id:str,payload_hash:{type:'string',pattern:'^[a-f0-9]{64}$'}});
 const reviewId={type:'string',pattern:'^[a-f0-9]{64}$'};
 const defs={
+ ...odooReadDefinitions,
  'reviews.list':{effect:'read',parameters:obj({limit:{type:'integer',minimum:1,maximum:100},after_id:reviewId},[])},
  'reviews.get':{effect:'read',parameters:obj({review_id:reviewId})},
  'reviews.resolve':{effect:'write',parameters:obj({review_id:reviewId,snapshot_hash:reviewId,resolution:{type:'string',enum:['NOT_COMMERCIAL','HANDLED_MANUALLY']},note:{type:'string',minLength:10,maxLength:2000}})},
@@ -18,7 +20,7 @@ const defs={
  'mail.send':{effect:'send',parameters:approved},
  'operation.execute':{effect:'write',parameters:approved},
 };
-export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritable}){
+export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritable,odooRead}){
  const applicationAssertWritable=assertWritable;
  assertWritable=()=>{
    if(approvals.store.state.recovery?.required||
@@ -72,7 +74,7 @@ export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritabl
      save('peu_effects',key,'succeeded',result);return result;
    }catch(e){save('peu_effects',key,'unknown',{error:'outcome_unknown_reconcile_first'});throw problem('outcome_unknown_reconcile_first',502);}
  }
- return {catalog:()=>({version:4,capabilities}),status(key){const r=get('peu_operations',key);if(!r)throw problem('operation_not_found',404);return {status:r.status,result:r.result?JSON.parse(r.result):null};},async execute(command){
+ return {catalog:()=>({version:5,capabilities}),status(key){const r=get('peu_operations',key);if(!r)throw problem('operation_not_found',404);return {status:r.status,result:r.result?JSON.parse(r.result):null};},async execute(command){
    const c=capabilities.find(c=>c.id===command.capability);
    if(!c)throw problem('capability_not_available',404);
    validateSchema(c.parameters,command.parameters);
@@ -85,6 +87,7 @@ export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritabl
    try {
      let result; const p=command.parameters;
      if(c.id.startsWith('reviews.')){result=reviews[c.id.slice('reviews.'.length)](p);}
+     else if(odooReadDefinitions[c.id]){result=await readOdoo(odooRead,c.id,p);}
      else if(c.effect==='read'){result=await upstream(defs[c.id].path+(p.query?'?'+new URLSearchParams({q:p.query}):''));if(result.ok!==true)throw problem('read_failed',502);}
      else if(c.id==='crm.create')result=await ordinaryCrm(p);
      else if(c.id==='mail.send'||c.id==='operation.execute')result=await effect(c.id,p);
