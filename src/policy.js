@@ -28,11 +28,10 @@ export class ApprovalService {
     if (String(command).trim() !== `APPROVA ${id}`) throw new Error(`Comando specifico richiesto: APPROVA ${id}`);
     const nonce = crypto.randomBytes(24).toString('hex');
     const digest = crypto.createHmac('sha256', this.secret).update(`${id}:${nonce}`).digest('hex');
-    this.store.updateAction(id, {
+    this.store.commitApproval(id, {
       status: 'AWAITING_FINAL_CONFIRMATION', actor: 'Pietro', command_approved_at: new Date().toISOString(),
       confirmation_digest: digest,
-    });
-    this.store.audit('ACTION_COMMAND_APPROVED', { action_id: id, actor: 'Pietro' });
+    }, 'ACTION_COMMAND_APPROVED');
     return { action: this.store.action(id), confirmation_token: `${nonce}.${digest}` };
   }
 
@@ -48,10 +47,9 @@ export class ApprovalService {
       throw new Error('Token di conferma finale non valido');
     }
     if (action.confirmation_digest !== expected) throw new Error('La conferma non appartiene al comando specifico corrente');
-    this.store.updateAction(id, {
+    this.store.commitApproval(id, {
       status: 'APPROVED_FOR_EXECUTION', final_confirmation_at: new Date().toISOString(), confirmation_digest: null,
-    });
-    this.store.audit('ACTION_FINAL_CONFIRMED', { action_id: id, actor: 'Pietro' });
+    }, 'ACTION_FINAL_CONFIRMED');
     return this.store.action(id);
   }
 

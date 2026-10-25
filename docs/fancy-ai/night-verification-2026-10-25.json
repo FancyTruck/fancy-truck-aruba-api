@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-25",
+  "scope": "P03/P04 pre-execution approval persistence, not execution or multiuser acceptance",
+  "base_pr26": "4146c5a7b687b47348f990ceb6f2832de1322963",
+  "defect": "separate action/audit saves could grant in-memory execution eligibility after failed save or persist approval despite an audit failure response",
+  "fix": "commitApproval restricts the two existing authorization transitions and saves their action state plus audit together; failure restores held action references and events",
+  "tests": {
+    "baseline_new_unit_tests": {
+      "passed": 1,
+      "failed": 5,
+      "total": 6
+    },
+    "branch_passed": 260,
+    "branch_failed": 0,
+    "upstream_combination_passed": 279,
+    "upstream_combination_failed": 0,
+    "syntax_checks_passed": 5,
+    "faults": [
+      "writeFileSync failure",
+      "renameSync failure"
+    ],
+    "actual_routes": [
+      "POST /v1/approvals/:id/command",
+      "POST /v1/approvals/:id/confirm"
+    ],
+    "effects": "synthetic queue/approval only; no execution endpoint, provider calls or external actions",
+    "reopen": "failed final confirmation remains awaiting confirmation after reopening; same token retries safely once storage works; audit exactly once"
+  },
+  "source_integrity": {
+    "server_blob_unchanged": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc",
+    "policy_diff": "approveCommand and confirm only; executed path unchanged"
+  },
+  "live_readonly": {
+    "render_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
+    "deploy": "dep-dbd6pteq1p3s73dn9tkg",
+    "status": "live",
+    "meaning": "release-state check only; no new memory, OOM, checkpoint or backup verification"
+  },
+  "limits": [
+    "single-process JSON store; no fsync/power-loss guarantee",
+    "does not make all mutators transactional",
+    "commit-before-response crash recovery still requires review",
+    "no change to uncertain external-effect handling or generic updateAction",
+    "current technical mono-user guard is not future Odoo multiuser authorization"
+  ],
+  "acceptance": "F0/F1/F2, four end-to-end paths and live recovery remain open;4.5.1 remains accepted",
+  "production_effects": "no main push, merge, deploy, restart, hosted migration, Odoo mutation, send, payment or purchase"
+}

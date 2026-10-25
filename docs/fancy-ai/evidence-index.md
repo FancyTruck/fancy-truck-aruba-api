@@ -10,3 +10,5 @@
 - Current MCP source4ea602f (metadata v21):26 tests, TypeScript/build passed; old validation helpers already present and byte-identical. No duplicate source patch.
 
 - `night-verification-2026-10-24.json`:10 baseline failures reproduced;253 corrected branch and272 local upstream-combination tests passed, plus5syntax checks. Actual HTTP and filesystem failure injection; no live mutation. Readonly Render metrics/events are scoped separately.
+
+- `night-verification-2026-10-25.json`: approval/audit single-save regression,5 baseline failures and1 existing pass;260 branch and279 local upstream-combination tests pass,5syntax checks. Actual HTTP and filesystem failure injection on synthetic action; zero external execution.

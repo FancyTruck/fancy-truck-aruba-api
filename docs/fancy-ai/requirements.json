@@ -49,6 +49,10 @@
         {
           "date": "2026-10-24",
           "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
+        },
+        {
+          "date": "2026-10-25",
+          "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
         }
       ],
       "updated_at": "2026-10-22"
@@ -66,7 +70,13 @@
     {
       "id": "1.1",
       "objective": "Separazione privilegi e credenziali",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-25",
+          "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
+        }
+      ]
     },
     {
       "id": "1.2",
@@ -112,6 +122,10 @@
         {
           "date": "2026-10-24",
           "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
+        },
+        {
+          "date": "2026-10-25",
+          "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
@@ -343,6 +357,10 @@
         {
           "date": "2026-10-23",
           "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
+        },
+        {
+          "date": "2026-10-25",
+          "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
         }
       ]
     },
@@ -393,6 +411,10 @@
         {
           "date": "2026-10-24",
           "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
+        },
+        {
+          "date": "2026-10-25",
+          "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
         }
       ]
     },
@@ -408,6 +430,10 @@
         {
           "date": "2026-10-24",
           "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
+        },
+        {
+          "date": "2026-10-25",
+          "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
         }
       ]
     },
@@ -493,6 +519,10 @@
         {
           "date": "2026-10-24",
           "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
+        },
+        {
+          "date": "2026-10-25",
+          "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",

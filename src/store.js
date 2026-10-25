@@ -222,6 +222,33 @@ export class JsonStateStore {
     return action;
   }
 
+  // Pre-execution authorization only. Persist the transition and its audit
+  // together; never use this rollback to retry an uncertain external effect.
+  commitApproval(id, patch, eventType) {
+    const transitions = {
+      ACTION_COMMAND_APPROVED: ['PENDING_APPROVAL', 'AWAITING_FINAL_CONFIRMATION'],
+      ACTION_FINAL_CONFIRMED: ['AWAITING_FINAL_CONFIRMATION', 'APPROVED_FOR_EXECUTION'],
+    };
+    const action = this.action(id);
+    const transition = transitions[eventType];
+    if (!action || !transition || action.status !== transition[0] || patch.status !== transition[1]) {
+      throw new Error('Transizione approvazione non valida');
+    }
+    const previous = clone(action);
+    const events = this.state.events;
+    Object.assign(action, patch);
+    this.state.events = [...events, { id: crypto.randomUUID(), at: new Date().toISOString(),
+      type: eventType, action_id: id, actor: 'Pietro' }];
+    try { this.save(); }
+    catch (error) {
+      for (const key of Object.keys(action)) delete action[key];
+      Object.assign(action, previous);
+      this.state.events = events;
+      throw error;
+    }
+    return action;
+  }
+
   case(id) {
     return this.state.cases[id] || null;
   }
