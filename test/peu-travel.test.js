@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {travelDestination,travelFromDepot} from '../src/peuTravel.js';
-const city={features:[{geometry:{coordinates:[9.67,45.69]},properties:{country_a:'ITA',layer:'locality',confidence:1,name:'Bergamo',label:'Bergamo, Italia'}}]};
+const city={features:[{geometry:{coordinates:[9.67,45.69]},properties:{country_a:'ITA',layer:'locality',confidence:0.6,name:'Bergamo',label:'Bergamo, Italia'}}]};
 const config={depotAddress:'Depot verified',verifiedDepot:{address:'Depot verified',coordinates:[8.83,44.43],source:'operator pin'}};
 test('verified city reference is distinct from a street address, ambiguity denied',()=>{
  assert.equal(travelDestination(city,'Bergamo').precision,'city_reference');
