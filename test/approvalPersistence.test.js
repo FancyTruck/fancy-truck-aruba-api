@@ -46,7 +46,9 @@ for(const phase of ['writeFileSync','renameSync']) {
     restarted.confirm(action.id,'Pietro',token);
     assert.equal(restarted.assertExecutable(action.id).status,'APPROVED_FOR_EXECUTION');
     assert.equal(reopened.state.events.filter(e=>e.type==='ACTION_FINAL_CONFIRMED').length,1);
-    assert.throws(()=>restarted.confirm(action.id,'Pietro',token));
+    const approved=reopened.snapshot();
+    assert.equal(restarted.confirm(action.id,'Pietro',token).status,'APPROVED_FOR_EXECUTION');
+    assert.deepEqual(reopened.snapshot(),approved);
   });
 }
 test('command and confirmation each persist state and audit in exactly one commit',t=>{

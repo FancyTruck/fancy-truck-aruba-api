@@ -227,6 +227,7 @@ export class JsonStateStore {
   commitApproval(id, patch, eventType) {
     const transitions = {
       ACTION_COMMAND_APPROVED: ['PENDING_APPROVAL', 'AWAITING_FINAL_CONFIRMATION'],
+      ACTION_COMMAND_REISSUED: ['AWAITING_FINAL_CONFIRMATION', 'AWAITING_FINAL_CONFIRMATION'],
       ACTION_FINAL_CONFIRMED: ['AWAITING_FINAL_CONFIRMATION', 'APPROVED_FOR_EXECUTION'],
     };
     const action = this.action(id);

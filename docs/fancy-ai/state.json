@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-10-25T00:20:31.931021+00:00",
+  "updated_at": "2026-10-26T01:49:19.500902+00:00",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
   "stage": "draft PR26 plus v25-based private proxy reconciliation; no release performed",
@@ -18,26 +18,22 @@
     "v25-private-project-report-finance-reconciliation-preserving-personal-auth",
     "v21-validation-patch-already-present-source-audit",
     "rollback-failed-cycle-integration-replay-and-bounded-compaction",
-    "single-commit-pre-execution-approval-and-audit-rollback"
+    "single-commit-pre-execution-approval-and-audit-rollback",
+    "lost-approval-command-response-reissue-and-readonly-confirmation-replay"
   ],
   "tests": {
     "command": "npm test; npm run check",
-    "passed": 260,
+    "passed": 268,
     "failed": 0,
-    "environment": "isolated local PR26, synthetic action only, zero provider calls"
+    "environment": "local isolated PR26, synthetic approvals, zero external execution"
   },
-  "next_action": "Audit remaining case/action mutators and crash-before-response approval recovery; retain uncertain external-effect barriers; continue personal-authorized report design in sandbox",
+  "next_action": "Audit remaining action/case mutators and execution claim/uncertain-state recovery; continue personal report sandbox integration without changing live permissions",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
     "business-specific fiscal/deposit rules remain to verify before activation"
   ],
-  "lease": {
-    "run_id": "fancy-night-20261026-approval-recovery",
-    "component": "Render approval recovery",
-    "acquired_at": "2026-10-26T01:45:27.590559+00:00",
-    "expires_at": "2026-10-26T02:45:27.590559+00:00"
-  },
+  "lease": null,
   "draft_pr": "https://github.com/FancyTruck/fancy-truck-aruba-api/pull/26",
   "components": [
     {
@@ -105,7 +101,7 @@
     }
   ],
   "operational_evidence": "docs/fancy-ai/operational-verification-2026-10-22.json",
-  "live_render_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
+  "live_render_commit": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
   "acceptance_items": {
     "4.5.1": {
       "status": "collaudato",
@@ -134,16 +130,17 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-10-25T02:20:31.931021+02:00",
-  "run_id": "fancy-night-20261025-approval-commit",
-  "current_lot": "P03/P04 atomic pre-execution approval transition plus audit",
-  "live_render_deploy": "dep-dbd6pteq1p3s73dn9tkg",
+  "updated_at_rome": "2026-10-26T02:49:19.500902+01:00",
+  "run_id": "fancy-night-20261026-approval-recovery",
+  "current_lot": "P03/P04 recover pre-execution approval responses after durable commit",
+  "live_render_deploy": "dep-dbf4p1ss728c73d5nub0",
   "upstream_integration_tests": {
-    "main": "bb1792151b5fa66c16180c52335ea26ff5629957",
-    "passed": 279,
+    "main": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+    "passed": 297,
     "failed": 0,
     "syntax_checks": 5,
-    "environment": "local merge-tree snapshot only; no remote merge"
+    "environment": "local merge-tree snapshot only; no remote merge",
+    "tree": "61d36f8825d47651dc20558b66522ccff29f30dc"
   },
   "source_integrity": {
     "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
@@ -151,11 +148,11 @@
     "scope": "exact project association and intake reporting; repaired intake handlers and awaiting_scope_review preserved"
   },
   "last_lease": {
-    "run_id": "fancy-night-20261025-approval-commit",
-    "component": "Render approval transitions",
-    "acquired_at": "2026-10-25T00:18:10.078451+00:00",
-    "expires_at": "2026-10-25T01:18:10.078451+00:00",
-    "released_at": "2026-10-25T00:20:31.931021+00:00",
+    "run_id": "fancy-night-20261026-approval-recovery",
+    "component": "Render approval recovery",
+    "acquired_at": "2026-10-26T01:45:27.590559+00:00",
+    "expires_at": "2026-10-26T02:45:27.590559+00:00",
+    "released_at": "2026-10-26T01:49:19.500902+00:00",
     "status": "released"
   }
 }

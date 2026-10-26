@@ -23,15 +23,16 @@ export class ApprovalService {
     const action = this.store.action(id);
     if (!action) throw new Error('Azione non trovata');
     if(action.peu_payload_hash && hash(action.payload)!==action.peu_payload_hash)throw new Error('Contenuto operazione Peu modificato');
-    if (action.status !== 'PENDING_APPROVAL') throw new Error(`Azione non approvabile nello stato ${action.status}`);
+    if (!['PENDING_APPROVAL', 'AWAITING_FINAL_CONFIRMATION'].includes(action.status)) throw new Error(`Azione non approvabile nello stato ${action.status}`);
     if (String(actor).trim().toLowerCase() !== 'pietro') throw new Error('Solo Pietro può impartire il comando specifico');
     if (String(command).trim() !== `APPROVA ${id}`) throw new Error(`Comando specifico richiesto: APPROVA ${id}`);
+    const reissued = action.status === 'AWAITING_FINAL_CONFIRMATION';
     const nonce = crypto.randomBytes(24).toString('hex');
     const digest = crypto.createHmac('sha256', this.secret).update(`${id}:${nonce}`).digest('hex');
     this.store.commitApproval(id, {
       status: 'AWAITING_FINAL_CONFIRMATION', actor: 'Pietro', command_approved_at: new Date().toISOString(),
       confirmation_digest: digest,
-    }, 'ACTION_COMMAND_APPROVED');
+    }, reissued ? 'ACTION_COMMAND_REISSUED' : 'ACTION_COMMAND_APPROVED');
     return { action: this.store.action(id), confirmation_token: `${nonce}.${digest}` };
   }
 
@@ -39,16 +40,25 @@ export class ApprovalService {
     const action = this.store.action(id);
     if (!action) throw new Error('Azione non trovata');
     if(action.peu_payload_hash && hash(action.payload)!==action.peu_payload_hash)throw new Error('Contenuto operazione Peu modificato');
-    if (action.status !== 'AWAITING_FINAL_CONFIRMATION') throw new Error(`Conferma non ammessa nello stato ${action.status}`);
+    if (!['AWAITING_FINAL_CONFIRMATION', 'APPROVED_FOR_EXECUTION'].includes(action.status)) throw new Error(`Conferma non ammessa nello stato ${action.status}`);
     if (String(actor).trim().toLowerCase() !== 'pietro') throw new Error('Solo Pietro può dare la conferma finale');
-    const [nonce, supplied] = String(token || '').split('.');
+    const parts = String(token || '').split('.');
+    if (parts.length !== 2) throw new Error('Token di conferma finale non valido');
+    const [nonce, supplied] = parts;
     const expected = crypto.createHmac('sha256', this.secret).update(`${id}:${nonce}`).digest('hex');
     if (!supplied || supplied.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))) {
       throw new Error('Token di conferma finale non valido');
     }
+    // A response may be lost after the durable commit. Only the exact consumed
+    // token can retrieve the already-approved result, without a new mutation.
+    if (action.status === 'APPROVED_FOR_EXECUTION') {
+      if (action.confirmed_command_digest !== expected) throw new Error('Conferma già registrata non verificabile con questo token');
+      return action;
+    }
     if (action.confirmation_digest !== expected) throw new Error('La conferma non appartiene al comando specifico corrente');
     this.store.commitApproval(id, {
       status: 'APPROVED_FOR_EXECUTION', final_confirmation_at: new Date().toISOString(), confirmation_digest: null,
+      confirmed_command_digest: expected,
     }, 'ACTION_FINAL_CONFIRMED');
     return this.store.action(id);
   }

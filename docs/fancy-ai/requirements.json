@@ -53,6 +53,10 @@
         {
           "date": "2026-10-25",
           "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
+        },
+        {
+          "date": "2026-10-26",
+          "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
         }
       ],
       "updated_at": "2026-10-22"
@@ -75,6 +79,10 @@
         {
           "date": "2026-10-25",
           "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
+        },
+        {
+          "date": "2026-10-26",
+          "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
         }
       ]
     },
@@ -126,6 +134,10 @@
         {
           "date": "2026-10-25",
           "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
+        },
+        {
+          "date": "2026-10-26",
+          "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
@@ -361,6 +373,10 @@
         {
           "date": "2026-10-25",
           "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
+        },
+        {
+          "date": "2026-10-26",
+          "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
         }
       ]
     },
@@ -415,6 +431,10 @@
         {
           "date": "2026-10-25",
           "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
+        },
+        {
+          "date": "2026-10-26",
+          "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
         }
       ]
     },
@@ -434,6 +454,10 @@
         {
           "date": "2026-10-25",
           "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
+        },
+        {
+          "date": "2026-10-26",
+          "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
         }
       ]
     },
@@ -523,6 +547,10 @@
         {
           "date": "2026-10-25",
           "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
+        },
+        {
+          "date": "2026-10-26",
+          "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
