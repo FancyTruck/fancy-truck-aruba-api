@@ -57,6 +57,10 @@
         {
           "date": "2026-10-26",
           "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
+        },
+        {
+          "date": "2026-10-27",
+          "kind": "P03 actual generic SMTP HTTP route now persists a claim before stub transport; six baseline scenarios fail, six pass after correction; interrupted claim quarantined on actual owner-server startup, readonly/restore guards preserved;285 branch and314 local upstream tests pass; no real sends or live acceptance"
         }
       ],
       "updated_at": "2026-10-22"
@@ -138,6 +142,10 @@
         {
           "date": "2026-10-26",
           "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
+        },
+        {
+          "date": "2026-10-27",
+          "kind": "P03 actual generic SMTP HTTP route now persists a claim before stub transport; six baseline scenarios fail, six pass after correction; interrupted claim quarantined on actual owner-server startup, readonly/restore guards preserved;285 branch and314 local upstream tests pass; no real sends or live acceptance"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
@@ -151,6 +159,10 @@
         {
           "date": "2026-10-24",
           "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
+        },
+        {
+          "date": "2026-10-27",
+          "kind": "P03 actual generic SMTP HTTP route now persists a claim before stub transport; six baseline scenarios fail, six pass after correction; interrupted claim quarantined on actual owner-server startup, readonly/restore guards preserved;285 branch and314 local upstream tests pass; no real sends or live acceptance"
         }
       ]
     },
@@ -182,6 +194,10 @@
         {
           "date": "2026-10-22",
           "kind": "owner isolated main+correctedPR26:246/246 tests and5syntax checks; this session verified corrected server blob and5syntax checks; live checkpoint proof remains open"
+        },
+        {
+          "date": "2026-10-27",
+          "kind": "P03 actual generic SMTP HTTP route now persists a claim before stub transport; six baseline scenarios fail, six pass after correction; interrupted claim quarantined on actual owner-server startup, readonly/restore guards preserved;285 branch and314 local upstream tests pass; no real sends or live acceptance"
         }
       ]
     },
@@ -435,6 +451,10 @@
         {
           "date": "2026-10-26",
           "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
+        },
+        {
+          "date": "2026-10-27",
+          "kind": "P03 actual generic SMTP HTTP route now persists a claim before stub transport; six baseline scenarios fail, six pass after correction; interrupted claim quarantined on actual owner-server startup, readonly/restore guards preserved;285 branch and314 local upstream tests pass; no real sends or live acceptance"
         }
       ]
     },
@@ -458,6 +478,10 @@
         {
           "date": "2026-10-26",
           "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
+        },
+        {
+          "date": "2026-10-27",
+          "kind": "P03 actual generic SMTP HTTP route now persists a claim before stub transport; six baseline scenarios fail, six pass after correction; interrupted claim quarantined on actual owner-server startup, readonly/restore guards preserved;285 branch and314 local upstream tests pass; no real sends or live acceptance"
         }
       ]
     },
@@ -551,6 +575,10 @@
         {
           "date": "2026-10-26",
           "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
+        },
+        {
+          "date": "2026-10-27",
+          "kind": "P03 actual generic SMTP HTTP route now persists a claim before stub transport; six baseline scenarios fail, six pass after correction; interrupted claim quarantined on actual owner-server startup, readonly/restore guards preserved;285 branch and314 local upstream tests pass; no real sends or live acceptance"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",

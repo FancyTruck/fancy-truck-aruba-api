@@ -199,6 +199,8 @@ export class JsonStateStore {
   cancelActionGroup(group, reason = 'CANCELLED') {
     let changed = false;
     for (const action of Object.values(this.state.actions)) {
+      // Superseding a draft cannot erase an in-flight or uncertain SMTP outcome.
+      if (action.execution?.kind === 'smtp') continue;
       if (action.supersede_group !== group || ['EXECUTED', 'CANCELLED'].includes(action.status)) continue;
       action.status = 'CANCELLED';
       action.cancelled_at = new Date().toISOString();
@@ -220,6 +222,77 @@ export class JsonStateStore {
     Object.assign(action, patch);
     this.save();
     return action;
+  }
+
+  // Only the generic SMTP route uses this claim. Peu keeps its own effect ledger.
+  beginSmtpExecution(id) {
+    const action = this.action(id);
+    if (!action || action.status !== 'APPROVED_FOR_EXECUTION' || action.execution || action.peu_payload_hash) {
+      throw new Error('Invio bloccato: azione non approvata o tentativo già registrato');
+    }
+    const execution = {
+      id: crypto.randomUUID(), kind: 'smtp', started_at: new Date().toISOString(),
+      message_id: `<fancy-${action.id}@fancytruck.it>`,
+      snapshot_hash: crypto.createHash('sha256').update(JSON.stringify({
+        type: action.type, target: action.target, payload: action.payload,
+      })).digest('hex'),
+    };
+    this.commitSmtpTransition(action, { status: 'EXECUTING', execution }, 'ACTION_SMTP_CLAIMED');
+    return execution;
+  }
+
+  finishSmtpExecution(id, executionId, status, result) {
+    const action = this.action(id);
+    if (!action || action.status !== 'EXECUTING' || action.execution?.kind !== 'smtp' ||
+      action.execution.id !== executionId || !['EXECUTED', 'UNCERTAIN'].includes(status)) {
+      throw new Error('Esito SMTP non associabile al tentativo corrente');
+    }
+    const at = new Date().toISOString();
+    return this.commitSmtpTransition(action, {
+      status, execution: { ...action.execution, ended_at: at }, result,
+      ...(status === 'EXECUTED' ? { executed_at: at } : {}),
+    }, status === 'EXECUTED' ? 'ACTION_SMTP_ACCEPTED' : 'ACTION_SMTP_UNCERTAIN');
+  }
+
+  commitSmtpTransition(action, patch, type) {
+    const previous = clone(action), events = this.state.events;
+    Object.assign(action, patch);
+    this.state.events = [...events, { id: crypto.randomUUID(), at: new Date().toISOString(),
+      type, action_id: action.id, execution_id: action.execution.id }];
+    try { this.save(); }
+    catch (error) {
+      // A failed settlement restores EXECUTING, never APPROVED_FOR_EXECUTION.
+      for (const key of Object.keys(action)) delete action[key];
+      Object.assign(action, previous);
+      this.state.events = events;
+      throw error;
+    }
+    return action;
+  }
+
+  reconcileInterruptedSmtpExecutions() {
+    const pending = Object.values(this.state.actions).filter(action =>
+      action.status === 'EXECUTING' && action.execution?.kind === 'smtp');
+    if (!pending.length) return 0;
+    const previous = pending.map(action => [action, clone(action)]), events = this.state.events;
+    const at = new Date().toISOString();
+    for (const action of pending) {
+      action.status = 'UNCERTAIN';
+      action.execution = { ...action.execution, interrupted_at: at };
+      action.result = { status: 'outcome_unknown_reconcile_first', delivery_verified: false };
+    }
+    this.state.events = [...events, { id: crypto.randomUUID(), at,
+      type: 'SMTP_EXECUTIONS_INTERRUPTED_ON_STARTUP', action_ids: pending.map(action => action.id) }];
+    try { this.save(); }
+    catch (error) {
+      for (const [action, snapshot] of previous) {
+        for (const key of Object.keys(action)) delete action[key];
+        Object.assign(action, snapshot);
+      }
+      this.state.events = events;
+      throw error;
+    }
+    return pending.length;
   }
 
   // Pre-execution authorization only. Persist the transition and its audit

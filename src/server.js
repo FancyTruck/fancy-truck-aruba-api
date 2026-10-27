@@ -57,8 +57,11 @@ const startedAt = Date.now();
 const store = new JsonStateStore(initialRuntime.stateFile);
 const runtime = applyRecoveryGuard(initialRuntime,store.state);
 // Only the owning server reconciles its previous process, never backup readers
-// or quarantined restores. Checkpoints and effects are deliberately untouched.
-if (!runtime.readOnly) store.reconcileInterruptedCycles();
+// or quarantined restores. No interrupted effect is automatically retried.
+if (!runtime.readOnly) {
+  store.reconcileInterruptedCycles();
+  store.reconcileInterruptedSmtpExecutions();
+}
 const approvals = new ApprovalService(store);
 let activeApiRequests=0, backupInFlight=null;
 // Do not decrement on client disconnect: an aborted response can still have a
@@ -1324,6 +1327,7 @@ app.post('/v1/:account/send', async (req, res) => {
 });
 
 app.post('/v1/actions/:id/execute', async (req, res) => {
+  let execution, providerObservation;
   try {
     assertWritable(runtime);
     const action = approvals.assertExecutable(req.params.id);
@@ -1337,13 +1341,34 @@ app.post('/v1/actions/:id/execute', async (req, res) => {
     const account = accountConfig(payload.account || 'hello');
     const transporter = nodemailer.createTransport({
       host: process.env.ARUBA_SMTP_HOST || 'smtps.aruba.it', port: Number(process.env.ARUBA_SMTP_PORT || 465), secure: true,
+      connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 15000,
       auth: { user: account.email, pass: account.password },
     });
+    execution = store.beginSmtpExecution(action.id);
     const info = await transporter.sendMail({ from: `Fancy Truck <${account.email}>`, to: payload.to || action.target,
       cc: payload.cc || undefined, replyTo: account.email, subject: payload.subject, text: payload.text || undefined,
-      html: payload.html || undefined, inReplyTo: payload.inReplyTo || undefined, references: payload.references || undefined });
-    res.json({ ok: true, action: approvals.executed(action.id, { message_id: info.messageId, accepted: info.accepted, rejected: info.rejected }) });
+      html: payload.html || undefined, inReplyTo: payload.inReplyTo || undefined, references: payload.references || undefined,
+      messageId: execution.message_id });
+    providerObservation = { message_id: info.messageId || execution.message_id,
+      accepted: Array.isArray(info.accepted) ? info.accepted : [],
+      rejected: Array.isArray(info.rejected) ? info.rejected : [],
+      pending: Array.isArray(info.pending) ? info.pending : [] };
+    if (!Array.isArray(info.accepted) || !info.accepted.length || info.rejected?.length || info.pending?.length) {
+      throw new Error('Accettazione SMTP incompleta: riconciliare il tentativo prima di altre azioni');
+    }
+    res.json({ ok: true, action: store.finishSmtpExecution(action.id, execution.id, 'EXECUTED', {
+      status: 'accepted_by_smtp', delivery_verified: false,
+      message_id: info.messageId || execution.message_id, accepted: info.accepted, rejected: info.rejected || [],
+    }) });
   } catch (error) {
+    if (execution) {
+      try { store.finishSmtpExecution(req.params.id, execution.id, 'UNCERTAIN', {
+        status: 'outcome_unknown_reconcile_first', delivery_verified: false,
+        ...(providerObservation ? { provider_observation: providerObservation } : {}),
+      }); } catch { /* The durable EXECUTING claim still blocks a retry. */ }
+      return res.status(409).json({ ok: false, code: 'SMTP_OUTCOME_UNCERTAIN',
+        error: 'Esito invio non verificato: riconciliare il tentativo prima di riprovare' });
+    }
     res.status(409).json({ ok: false, error: error instanceof Error ? error.message : 'Esecuzione bloccata' });
   }
 });
