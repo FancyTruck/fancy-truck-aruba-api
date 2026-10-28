@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-28",
+  "scope": "P03 draft action queue durability; sandbox only",
+  "base_pr26": "ad318ea9bf31b1b2e8f55161c42250c93e85d4f4",
+  "lease_commit": "6bf04270e1e03141493e11f74ce9fa3e60351253",
+  "server_blob_unchanged": "a11abed369707d1ab0efd38c37848223bb917de2",
+  "defect": "Failed queue writes left ghost actions/audit in memory; group supersession used multiple saves, allowing durable cancellation without a durable replacement.",
+  "changes": [
+    "One save commits cancellations, new draft and all associated audit entries",
+    "Failed write/rename restores held old action references, removes the new action and restores audit",
+    "Existing idempotent queue replay is readonly and cancelled/EXECUTED or SMTP-claimed records retain their previous protections",
+    "Only affected action snapshots are copied for rollback, not the full state; generic external executed/updateAction path unchanged"
+  ],
+  "tests": {
+    "baseline_unit": {
+      "total": 9,
+      "passed": 1,
+      "failed": 8
+    },
+    "patched_unit_passed": 9,
+    "branch_passed": 295,
+    "branch_failed": 0,
+    "combined_main": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+    "combined_tree": "8e3b7d56c76d3d6330510ac0b0f4455cd6ce3a9a",
+    "combined_passed": 324,
+    "combined_failed": 0,
+    "syntax_checks_passed": 5,
+    "commands": [
+      "node --test test/actionQueuePersistence.test.js",
+      "node --test test/actionQueueIntegration.test.js",
+      "npm test",
+      "npm run check"
+    ],
+    "actual_http": "POST /v1/hello/send: rename failure returns400 without ghost state, retry returns202 duplicate:false, replay returns same pending action and no new disk write",
+    "worst_case": "Selective replacement-write failure reproduces old cancellation already persisted while new draft fails; corrected transaction preserves original draft on disk",
+    "provider_calls": 0,
+    "execution_endpoint_calls": 0
+  },
+  "live_readonly": {
+    "render_commit": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+    "deploy": "dep-dbf4p1ss728c73d5nub0",
+    "status": "live",
+    "live_at": "2026-10-25T18:38:41.464733Z",
+    "service_branch": "main",
+    "auto_deploy": "yes",
+    "branch_previews": "off",
+    "scope": "fresh service/deploy metadata only; no new memory or backup/restart acceptance"
+  },
+  "remaining": [
+    "case creation/update and standalone audit persistence",
+    "provider-evidence reconciliation; uncertain attempts still block automatic retries",
+    "single owning process assumption; no cross-process locking or fsync/power-loss guarantee",
+    "cross-key/business-wide deduplication, private personal report access and coordinated project creation",
+    "live checkpoints and overall end-to-end acceptance"
+  ],
+  "acceptance": "F0/F1/F2 and four end-to-end paths remain open;4.5.1 stays accepted",
+  "effects": "development branch source only; no main push, remote merge, deploy/restart, hosted migration, production write, real send, payment/refund/fiscal action or purchase"
+}

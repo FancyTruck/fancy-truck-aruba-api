@@ -180,7 +180,6 @@ export class JsonStateStore {
   createAction(input) {
     const existing = Object.values(this.state.actions).find((item) => item.idempotency_key === input.idempotency_key);
     if (existing) return { action: existing, duplicate: true };
-    if (input.supersede_group) this.cancelActionGroup(input.supersede_group, 'SUPERSEDED_BY_NEWER_ACTION');
     const id = crypto.randomUUID();
     const action = {
       id,
@@ -191,25 +190,45 @@ export class JsonStateStore {
       executed_at: null,
       ...input,
     };
-    this.state.actions[id] = action;
-    this.audit('ACTION_QUEUED', { action_id: id, action_type: action.type, target: action.target });
+    this.commitActionQueue(action, input.supersede_group, 'SUPERSEDED_BY_NEWER_ACTION');
     return { action, duplicate: false };
   }
 
   cancelActionGroup(group, reason = 'CANCELLED') {
-    let changed = false;
-    for (const action of Object.values(this.state.actions)) {
-      // Superseding a draft cannot erase an in-flight or uncertain SMTP outcome.
-      if (action.execution?.kind === 'smtp') continue;
-      if (action.supersede_group !== group || ['EXECUTED', 'CANCELLED'].includes(action.status)) continue;
-      action.status = 'CANCELLED';
-      action.cancelled_at = new Date().toISOString();
-      action.cancel_reason = reason;
-      this.audit('ACTION_CANCELLED', { action_id: action.id, reason, supersede_group: group });
-      changed = true;
+    return this.commitActionQueue(null, group, reason);
+  }
+
+  // Draft queue mutations only: cancellation, replacement and audit are one
+  // commit. Do not use this rollback to retry an external effect.
+  commitActionQueue(newAction, group, reason) {
+    const affected = group ? Object.values(this.state.actions).filter(action =>
+      action.supersede_group === group && action.execution?.kind !== 'smtp' &&
+      !['EXECUTED', 'CANCELLED'].includes(action.status)) : [];
+    if (!newAction && !affected.length) return false;
+    const previous = affected.map(action => [action, clone(action)]);
+    const events = this.state.events, at = new Date().toISOString(), addedEvents = [];
+    for (const action of affected) {
+      Object.assign(action, { status: 'CANCELLED', cancelled_at: at, cancel_reason: reason });
+      addedEvents.push({ id: crypto.randomUUID(), at, type: 'ACTION_CANCELLED',
+        action_id: action.id, reason, supersede_group: group });
     }
-    if (changed) this.save();
-    return changed;
+    if (newAction) {
+      this.state.actions[newAction.id] = newAction;
+      addedEvents.push({ id: crypto.randomUUID(), at, type: 'ACTION_QUEUED',
+        action_id: newAction.id, action_type: newAction.type, target: newAction.target });
+    }
+    this.state.events = [...events, ...addedEvents];
+    try { this.save(); }
+    catch (error) {
+      if (newAction) delete this.state.actions[newAction.id];
+      for (const [action, snapshot] of previous) {
+        for (const key of Object.keys(action)) delete action[key];
+        Object.assign(action, snapshot);
+      }
+      this.state.events = events;
+      throw error;
+    }
+    return Boolean(affected.length);
   }
 
   action(id) {

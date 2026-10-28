@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-10-27T02:07:06.762258+00:00",
+  "updated_at": "2026-10-28T01:56:59.287646+00:00",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
   "stage": "draft PR26 plus v25-based private proxy reconciliation; no release performed",
@@ -20,34 +20,29 @@
     "rollback-failed-cycle-integration-replay-and-bounded-compaction",
     "single-commit-pre-execution-approval-and-audit-rollback",
     "lost-approval-command-response-reissue-and-readonly-confirmation-replay",
-    "generic-smtp-durable-claim-and-interrupted-uncertain-replay-barrier"
+    "generic-smtp-durable-claim-and-interrupted-uncertain-replay-barrier",
+    "atomic-action-queue-supersession-and-audit-with-held-reference-rollback"
   ],
   "tests": {
     "command": "npm test; npm run check",
-    "passed": 285,
+    "passed": 295,
     "failed": 0,
     "syntax_checks": 5,
-    "environment": "isolated PR26 with synthetic actions and stub SMTP; no external provider calls"
+    "environment": "isolated PR26, synthetic queue and actual HTTP preparation route; no send or provider calls"
   },
-  "next_action": "Design evidence-bound SMTP outcome reconciliation without automatic retry or a replacement key; audit remaining case/action mutators and cross-process ownership; continue personal report sandbox integration",
+  "next_action": "Audit remaining case creation/update and audit persistence; design provider-evidence reconciliation without automatic resend or replacement keys; cross-process ownership and personal reports remain open",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
     "business-specific fiscal/deposit rules remain to verify before activation"
   ],
-  "lease": {
-    "run_id": "fancy-night-20261028-queue",
-    "component": "Render action queue persistence",
-    "acquired_at": "2026-10-28T01:54:40.930086+00:00",
-    "expires_at": "2026-10-28T02:54:40.930086+00:00",
-    "base_head": "ad318ea9bf31b1b2e8f55161c42250c93e85d4f4"
-  },
+  "lease": null,
   "draft_pr": "https://github.com/FancyTruck/fancy-truck-aruba-api/pull/26",
   "components": [
     {
       "component": "Render mail/CRM service",
       "development": "PR26",
-      "isolated_tests": 285
+      "isolated_tests": 295
     },
     {
       "component": "Sites Odoo MCP connector",
@@ -138,17 +133,17 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-10-27T03:07:06.762258+01:00",
-  "run_id": "fancy-night-20261027-smtp-claim",
-  "current_lot": "P03 generic SMTP persistent claim, uncertain outcomes and restart quarantine",
+  "updated_at_rome": "2026-10-28T02:56:59.287646+01:00",
+  "run_id": "fancy-night-20261028-queue",
+  "current_lot": "P03 atomic draft action queue, supersession and audit",
   "live_render_deploy": "dep-dbf4p1ss728c73d5nub0",
   "upstream_integration_tests": {
     "main": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
-    "passed": 314,
+    "passed": 324,
     "failed": 0,
     "syntax_checks": 5,
     "environment": "local merge-tree snapshot only; no remote merge",
-    "tree": "ccac416d0268191736750910a1c5ac4b88aa4fed"
+    "tree": "8e3b7d56c76d3d6330510ac0b0f4455cd6ce3a9a"
   },
   "source_integrity": {
     "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
@@ -157,12 +152,12 @@
     "previous_corrected_project_guard_server_blob": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc"
   },
   "last_lease": {
-    "run_id": "fancy-night-20261027-smtp-claim",
-    "component": "Render generic SMTP execution",
-    "acquired_at": "2026-10-27T01:59:22.804200+00:00",
-    "expires_at": "2026-10-27T02:59:22.804200+00:00",
-    "base_head": "72b10971558ca4524b45d840f0051d850cccf286",
-    "released_at": "2026-10-27T02:07:06.762258+00:00",
-    "status": "released"
+    "run_id": "fancy-night-20261028-queue",
+    "component": "Render action queue persistence",
+    "acquired_at": "2026-10-28T01:54:40.930086+00:00",
+    "expires_at": "2026-10-28T02:54:40.930086+00:00",
+    "base_head": "ad318ea9bf31b1b2e8f55161c42250c93e85d4f4",
+    "status": "released",
+    "released_at": "2026-10-28T01:56:59.287646+00:00"
   }
 }

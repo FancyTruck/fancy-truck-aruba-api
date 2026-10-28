@@ -16,3 +16,5 @@
 - `night-verification-2026-10-26.json`: lost-response recovery;5/7 new unit tests fail on baseline, all pass after patch.268 branch and297 local upstream-combination tests and5syntax checks pass; actual HTTP disconnect after commit and reopened-state checks use synthetic actions only.
 
 - `night-verification-2026-10-27.json`: generic SMTP claim barrier. Six HTTP baseline scenarios fail and pass after correction;10 persistence/real-startup tests pass;285 branch/314 local upstream-combination tests and5syntax checks pass. Stub SMTP only; no real sends, live restart or new backup/memory acceptance.
+
+- `night-verification-2026-10-28.json`: action queue/supersession atomicity.8 of9 new unit tests fail on baseline; all9 pass after correction, plus actual HTTP preparation failure/retry/replay.295 branch/324 local upstream-combination tests and5syntax checks pass. No real send/provider execution or new live acceptance.
