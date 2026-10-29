@@ -36,7 +36,13 @@
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
     "business-specific fiscal/deposit rules remain to verify before activation"
   ],
-  "lease": null,
+  "lease": {
+    "run_id": "fancy-night-20261029-case-audit",
+    "component": "Render case/audit persistence",
+    "acquired_at": "2026-10-29T01:35:23.780146+00:00",
+    "expires_at": "2026-10-29T02:35:23.780146+00:00",
+    "base_head": "0238ecb876d44784e6f31d43d973ae72e9066390"
+  },
   "draft_pr": "https://github.com/FancyTruck/fancy-truck-aruba-api/pull/26",
   "components": [
     {
