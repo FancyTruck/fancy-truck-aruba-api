@@ -18,3 +18,5 @@
 - `night-verification-2026-10-27.json`: generic SMTP claim barrier. Six HTTP baseline scenarios fail and pass after correction;10 persistence/real-startup tests pass;285 branch/314 local upstream-combination tests and5syntax checks pass. Stub SMTP only; no real sends, live restart or new backup/memory acceptance.
 
 - `night-verification-2026-10-28.json`: action queue/supersession atomicity.8 of9 new unit tests fail on baseline; all9 pass after correction, plus actual HTTP preparation failure/retry/replay.295 branch/324 local upstream-combination tests and5syntax checks pass. No real send/provider execution or new live acceptance.
+
+- `night-verification-2026-10-29.json`: standalone audit and case rollback.8/9 baseline failures,9/9 corrected tests; actual mail/thread modules with synthetic post-effect audit failure retain replay barrier.304 branch/333 local combined tests and5syntax checks pass. Cases remain workflow simulation; no new live acceptance.

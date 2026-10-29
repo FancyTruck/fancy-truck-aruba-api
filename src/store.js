@@ -108,9 +108,10 @@ export class JsonStateStore {
 
   audit(type, payload = {}) {
     const row = { id: crypto.randomUUID(), at: new Date().toISOString(), type, ...payload };
-    this.state.events.push(row);
-    if (this.state.events.length > 10000) this.state.events.splice(0, this.state.events.length - 10000);
-    this.save();
+    const events = this.state.events;
+    this.state.events = [...events, row];
+    try { this.save(); }
+    catch (error) { this.state.events = events; throw error; }
     return row;
   }
 
@@ -355,15 +356,22 @@ export class JsonStateStore {
     if (this.state.cases[id]) return { item: this.state.cases[id], duplicate: true };
     const item = { id, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), ...input };
     this.state.cases[id] = item;
-    this.audit('CASE_CREATED', { case_id: id, stage: item.stage });
+    try { this.audit('CASE_CREATED', { case_id: id, stage: item.stage }); }
+    catch (error) { delete this.state.cases[id]; throw error; }
     return { item, duplicate: false };
   }
 
   updateCase(id, patch) {
     const item = this.case(id);
     if (!item) throw new Error(`Pratica ${id} non trovata`);
+    const previous = clone(item);
     Object.assign(item, patch, { updated_at: new Date().toISOString() });
-    this.save();
+    try { this.save(); }
+    catch (error) {
+      for (const key of Object.keys(item)) delete item[key];
+      Object.assign(item, previous);
+      throw error;
+    }
     return item;
   }
 

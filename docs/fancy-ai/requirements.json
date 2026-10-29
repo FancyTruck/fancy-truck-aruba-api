@@ -65,6 +65,10 @@
         {
           "date": "2026-10-28",
           "kind": "atomic draft queue/cancellation/supersession and audit, rollback on write/rename failure;8 of9 new unit tests fail on preceding checkpoint, all pass after fix; actual HTTP queue failure/retry/replay;295 branch and324 local combined tests pass; synthetic only, no real send or parent/live acceptance"
+        },
+        {
+          "date": "2026-10-29",
+          "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
         }
       ],
       "updated_at": "2026-10-22"
@@ -154,6 +158,10 @@
         {
           "date": "2026-10-28",
           "kind": "atomic draft queue/cancellation/supersession and audit, rollback on write/rename failure;8 of9 new unit tests fail on preceding checkpoint, all pass after fix; actual HTTP queue failure/retry/replay;295 branch and324 local combined tests pass; synthetic only, no real send or parent/live acceptance"
+        },
+        {
+          "date": "2026-10-29",
+          "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
@@ -175,6 +183,10 @@
         {
           "date": "2026-10-28",
           "kind": "atomic draft queue/cancellation/supersession and audit, rollback on write/rename failure;8 of9 new unit tests fail on preceding checkpoint, all pass after fix; actual HTTP queue failure/retry/replay;295 branch and324 local combined tests pass; synthetic only, no real send or parent/live acceptance"
+        },
+        {
+          "date": "2026-10-29",
+          "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
         }
       ]
     },
@@ -214,6 +226,10 @@
         {
           "date": "2026-10-28",
           "kind": "atomic draft queue/cancellation/supersession and audit, rollback on write/rename failure;8 of9 new unit tests fail on preceding checkpoint, all pass after fix; actual HTTP queue failure/retry/replay;295 branch and324 local combined tests pass; synthetic only, no real send or parent/live acceptance"
+        },
+        {
+          "date": "2026-10-29",
+          "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
         }
       ]
     },
@@ -475,6 +491,10 @@
         {
           "date": "2026-10-28",
           "kind": "atomic draft queue/cancellation/supersession and audit, rollback on write/rename failure;8 of9 new unit tests fail on preceding checkpoint, all pass after fix; actual HTTP queue failure/retry/replay;295 branch and324 local combined tests pass; synthetic only, no real send or parent/live acceptance"
+        },
+        {
+          "date": "2026-10-29",
+          "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
         }
       ]
     },
@@ -506,6 +526,10 @@
         {
           "date": "2026-10-28",
           "kind": "atomic draft queue/cancellation/supersession and audit, rollback on write/rename failure;8 of9 new unit tests fail on preceding checkpoint, all pass after fix; actual HTTP queue failure/retry/replay;295 branch and324 local combined tests pass; synthetic only, no real send or parent/live acceptance"
+        },
+        {
+          "date": "2026-10-29",
+          "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
         }
       ]
     },
@@ -607,6 +631,10 @@
         {
           "date": "2026-10-28",
           "kind": "atomic draft queue/cancellation/supersession and audit, rollback on write/rename failure;8 of9 new unit tests fail on preceding checkpoint, all pass after fix; actual HTTP queue failure/retry/replay;295 branch and324 local combined tests pass; synthetic only, no real send or parent/live acceptance"
+        },
+        {
+          "date": "2026-10-29",
+          "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-10-28T01:56:59.287646+00:00",
+  "updated_at": "2026-10-29T01:37:45.325612+00:00",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
   "stage": "draft PR26 plus v25-based private proxy reconciliation; no release performed",
@@ -21,34 +21,29 @@
     "single-commit-pre-execution-approval-and-audit-rollback",
     "lost-approval-command-response-reissue-and-readonly-confirmation-replay",
     "generic-smtp-durable-claim-and-interrupted-uncertain-replay-barrier",
-    "atomic-action-queue-supersession-and-audit-with-held-reference-rollback"
+    "atomic-action-queue-supersession-and-audit-with-held-reference-rollback",
+    "failed-standalone-audit-and-case-create-update-rollback"
   ],
   "tests": {
     "command": "npm test; npm run check",
-    "passed": 295,
+    "passed": 304,
     "failed": 0,
     "syntax_checks": 5,
-    "environment": "isolated PR26, synthetic queue and actual HTTP preparation route; no send or provider calls"
+    "environment": "isolated PR26; filesystem failures and real mail/thread modules with synthetic provider adapter"
   },
-  "next_action": "Audit remaining case creation/update and audit persistence; design provider-evidence reconciliation without automatic resend or replacement keys; cross-process ownership and personal reports remain open",
+  "next_action": "Design evidence-bound external outcome reconciliation and single-process ownership enforcement; review caller mutations before persistence and workflow effect boundaries before any activation; personal report and live acceptance remain open",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
     "business-specific fiscal/deposit rules remain to verify before activation"
   ],
-  "lease": {
-    "run_id": "fancy-night-20261029-case-audit",
-    "component": "Render case/audit persistence",
-    "acquired_at": "2026-10-29T01:35:23.780146+00:00",
-    "expires_at": "2026-10-29T02:35:23.780146+00:00",
-    "base_head": "0238ecb876d44784e6f31d43d973ae72e9066390"
-  },
+  "lease": null,
   "draft_pr": "https://github.com/FancyTruck/fancy-truck-aruba-api/pull/26",
   "components": [
     {
       "component": "Render mail/CRM service",
       "development": "PR26",
-      "isolated_tests": 295
+      "isolated_tests": 304
     },
     {
       "component": "Sites Odoo MCP connector",
@@ -139,17 +134,17 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-10-28T02:56:59.287646+01:00",
-  "run_id": "fancy-night-20261028-queue",
-  "current_lot": "P03 atomic draft action queue, supersession and audit",
+  "updated_at_rome": "2026-10-29T02:37:45.325612+01:00",
+  "run_id": "fancy-night-20261029-case-audit",
+  "current_lot": "P03 failed standalone audit and case persistence rollback",
   "live_render_deploy": "dep-dbf4p1ss728c73d5nub0",
   "upstream_integration_tests": {
     "main": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
-    "passed": 324,
+    "passed": 333,
     "failed": 0,
     "syntax_checks": 5,
     "environment": "local merge-tree snapshot only; no remote merge",
-    "tree": "8e3b7d56c76d3d6330510ac0b0f4455cd6ce3a9a"
+    "tree": "3fc7e017eb9721a42dabda23f3eec70a3f298574"
   },
   "source_integrity": {
     "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
@@ -158,12 +153,12 @@
     "previous_corrected_project_guard_server_blob": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc"
   },
   "last_lease": {
-    "run_id": "fancy-night-20261028-queue",
-    "component": "Render action queue persistence",
-    "acquired_at": "2026-10-28T01:54:40.930086+00:00",
-    "expires_at": "2026-10-28T02:54:40.930086+00:00",
-    "base_head": "ad318ea9bf31b1b2e8f55161c42250c93e85d4f4",
+    "run_id": "fancy-night-20261029-case-audit",
+    "component": "Render case/audit persistence",
+    "acquired_at": "2026-10-29T01:35:23.780146+00:00",
+    "expires_at": "2026-10-29T02:35:23.780146+00:00",
+    "base_head": "0238ecb876d44784e6f31d43d973ae72e9066390",
     "status": "released",
-    "released_at": "2026-10-28T01:56:59.287646+00:00"
+    "released_at": "2026-10-29T01:37:45.325612+00:00"
   }
 }

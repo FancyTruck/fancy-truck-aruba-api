@@ -1,0 +1,71 @@
+{
+  "date": "2026-10-29",
+  "scope": "P03 standalone audit and case save failure handling; source/sandbox only",
+  "base_pr26": "0238ecb876d44784e6f31d43d973ae72e9066390",
+  "lease_commit": "6e17018d67b64ceec18e83c46884bddfa6834951",
+  "server_blob_unchanged": "a11abed369707d1ab0efd38c37848223bb917de2",
+  "defect": "Failed standalone audit left phantom events which a later successful save could persist. Failed case creation left ghost cases/audits; failed updates retained nondurable patch fields and timestamps.",
+  "changes": [
+    "audit appends via a replacement collection and restores prior events after save failure, preserving existing compaction bounds",
+    "createCase removes a new nondurable case if its combined case/audit save fails",
+    "updateCase restores the held case object to the snapshot taken at method entry, removing newly added properties",
+    "external execution and uncertain effect barriers unchanged; failed audit never proves an external effect did not occur"
+  ],
+  "tests": {
+    "baseline": {
+      "total": 9,
+      "passed": 1,
+      "failed": 8
+    },
+    "patched_new_passed": 9,
+    "branch_passed": 304,
+    "branch_failed": 0,
+    "combined_main": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+    "combined_tree": "3fc7e017eb9721a42dabda23f3eec70a3f298574",
+    "combined_passed": 333,
+    "combined_failed": 0,
+    "syntax_checks": 5,
+    "commands": [
+      "node --test test/caseAuditPersistence.test.js",
+      "npm test",
+      "npm run check"
+    ],
+    "injected_failures": [
+      "writeFileSync",
+      "renameSync",
+      "post-effect audit failure",
+      "audit compaction and subsequent save"
+    ],
+    "runtime_integration": "runMailOperation + linkThreadMessage, both imported by actual server; one synthetic message_post followed by failed audit leaves durable STARTED; retry suspends without repeating the adapter effect",
+    "real_provider_calls": 0,
+    "simulated_message_posts": 1
+  },
+  "mutator_audit": {
+    "covered_by_prior_lots": "save/compaction, remember, cursors/mail operation rows, integration, cycle begin/finish, queue/supersession, approvals and generic SMTP claims",
+    "new_scope": "standalone audit, createCase and updateCase",
+    "unchanged_external_update": "updateAction remains used by ApprovalService.executed after external effects. Do not replace it with approval-restoring rollback; Peu SQLite effect ledger separately blocks uncertain replay.",
+    "limits": "Rollback snapshots the case at method entry, so it cannot undo caller mutations made before updateCase. Whole business workflows are not transactional. Cycle owner-startup failure aborts startup rather than guaranteeing all held references."
+  },
+  "runtime_mapping": {
+    "audit": "called by actual server, mail/thread and CRM paths",
+    "cases": "used by workflow.js simulation, not imported by inspected server; no new runtime wiring or business activation"
+  },
+  "live_readonly": {
+    "render_commit": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+    "deploy": "dep-dbf4p1ss728c73d5nub0",
+    "status": "live",
+    "live_at": "2026-10-25T18:38:41.464733Z",
+    "branch": "main",
+    "auto_deploy": "yes",
+    "branch_previews": "off",
+    "scope": "fresh service/deploy metadata only; no new OOM, memory, backup or live restart verification"
+  },
+  "remaining": [
+    "provider-evidence reconciliation without automatic retries or replacement keys",
+    "single-process ownership, cross-process locking and fsync/power-loss guarantees",
+    "caller mutation and economic workflow boundaries before activation",
+    "private personal report access, coordinated project creator and live acceptance"
+  ],
+  "acceptance": "F0/F1/F2 and all four end-to-end paths remain open;4.5.1 stays accepted",
+  "effects": "isolated branch source only; no main push, remote merge, deploy/restart, hosted migration, production write, real send or economic action"
+}
