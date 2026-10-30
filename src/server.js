@@ -1,3 +1,4 @@
+import { intakeStatus, syncIntakeWatchdog, suspensionDescription } from './intakeWatchdog.js';
 import { ensureCustomerAttention } from './customerAttention.js';
 import { matchQuotationThread } from './threadReferences.js';
 import { linkThreadMessage } from './threadLinking.js';
@@ -672,7 +673,7 @@ async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
   });
   if (decision.action === 'skip') return { skipped: true, reason: decision.reason };
   if (decision.action === 'review') return { suspended: true, ...decision };
-  if (decision.action === 'link') return linkThreadMessage({parsed,match:decision.match,direction:'incoming',call:odooCall,store});
+  if (decision.action === 'link') { await flagCustomerRequest(decision.match.lead.id); return linkThreadMessage({parsed,match:decision.match,direction:'incoming',call:odooCall,store}); }
   if (decision.action === 'reply') return processQuoteReply(parsed, uid, decision.lead);
   const kind = decision.kind;
 
@@ -759,6 +760,19 @@ async function processSentMessage(parsed, uid, account, validity, mailbox) {
   return linkThreadMessage({parsed,match,direction:'outgoing',call:odooCall,store});
 }
 
+let watchdogRunning=false;
+async function checkIntakeWatchdog() {
+  if(runtime.readOnly || watchdogRunning) return;
+  watchdogRunning=true;
+  try {
+    const result=await syncIntakeWatchdog({state:store.state,call:odooCall,login:process.env.ODOO_LOGIN||process.env.PIETRO_EMAIL,operating:runtime.automationEnabled && withinOperatingWindow()});
+    store.integration('intake:watchdog',{...result,last_success_at:new Date().toISOString(),error:null});
+  } catch(error) {
+    console.error(JSON.stringify({event:'intake_watchdog_failed',error:error.message}));
+    try { store.integration('intake:watchdog',{status:'ERROR',error:error.message}); } catch {}
+  } finally { watchdogRunning=false; }
+}
+
 let operationalCycleRunning = false;
 
 async function runOperationalCycle({ force = false } = {}) {
@@ -803,7 +817,7 @@ async function runOperationalCycle({ force = false } = {}) {
         summary.read += result.rows.length;
         summary.created += result.created.length;
         summary.suspended += result.suspended.length;
-        summary.errors.push(...result.suspended.map((row) => `${source} UID ${row.uid}: ${row.error}`));
+        summary.errors.push(...result.suspended.map((row) => `${source} UID ${row.uid}: ${suspensionDescription(row)}`));
         store.integration(`aruba:${source}`, {
           status: result.suspended.length ? 'OK_WITH_SUSPENSIONS' : 'OK',
           last_success_at: new Date().toISOString(),
@@ -857,6 +871,7 @@ async function runOperationalCycle({ force = false } = {}) {
     throw error;
   } finally {
     operationalCycleRunning = false;
+    await checkIntakeWatchdog();
   }
 }
 
@@ -1030,6 +1045,8 @@ app.post('/v1/classification-reviews/:id/resolve', (req, res) => {
 app.get('/v1/procedure/commercial', (_req, res) => {
   res.json({ ok: true, procedure: COMMERCIAL_PROCEDURE });
 });
+
+app.get('/v1/intake/status', (_req,res)=>res.json(intakeStatus(store.state,{operating:runtime.automationEnabled && withinOperatingWindow()})));
 
 app.get('/v1/automation/status', (_req, res) => {
   const state = store.state;
@@ -1421,6 +1438,8 @@ const server = app.listen(port, runtime.host, (error) => {
     .catch((error) => console.error(`ODOO FLUSSO PREVENTIVI: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`));
   }
   if (runtime.automationEnabled && !runtime.readOnly) {
+    setTimeout(checkIntakeWatchdog,30000);
+    setInterval(checkIntakeWatchdog,5*60*1000);
     setTimeout(() => runOperationalCycle().catch((error) => console.error(`CICLO OPERATIVO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 15000);
     setInterval(() => runOperationalCycle().catch((error) => console.error(`CICLO OPERATIVO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 60 * 60 * 1000);
   }

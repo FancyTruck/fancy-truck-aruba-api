@@ -40,6 +40,7 @@ export async function pollMailbox({ client, account, store, parse, processMessag
           reason: 'large_message_requires_review', size: metadata.size, candidate_ids: [],
         });
         // Only advance once the recoverable review is persisted. Never mark it processed in Odoo.
+        store.recordMailOutcome?.(account, validity, uid, {suspended:true,review_id:item.id,reason:item.reason || "large_message_requires_review"});
         const next = { ...checkpoint, lastUid: uid };
         store.setCursor(key, next); checkpoint = next;
         rows.push({ suspended: true, uid, account, review_id: item.id, reason: 'large_message_requires_review' });
@@ -50,11 +51,13 @@ export async function pollMailbox({ client, account, store, parse, processMessag
       if (message.source.length > 10 * 1024 * 1024) throw new Error('Messaggio oltre il limite dichiarato: verifica necessaria');
       const parsed = await parse(message.source);
       const result = await processMessage(parsed, uid, validity);
+      store.recordMailOutcome?.(account, validity, uid, result);
       const next = { ...checkpoint, lastUid: uid };
       store.setCursor(key, next);
       checkpoint = next;
-      rows.push(result);
+      rows.push({...result, uid, account});
     } catch (error) {
+      try { store.recordMailOutcome?.(account, validity, uid, {retry_pending:true,error:error.message}); } catch {}
       rows.push({ suspended: true, retry_pending: true, uid,
         error: error instanceof Error ? error.message : 'errore sconosciuto' });
       break;

@@ -13,6 +13,7 @@ const EMPTY_STATE = {
   cursors: {},
   classification_reviews: {},
   mail_operations: {},
+  mail_outcomes: {},
 };
 
 function clone(value) {
@@ -95,6 +96,19 @@ export class JsonStateStore {
       else this.state.mail_operations[key] = previous;
       throw error;
     }
+  }
+
+  recordMailOutcome(account, validity, uid, result) {
+    const key = JSON.stringify([account, validity, uid]);
+    const previous = this.state.mail_outcomes;
+    const status = result.retry_pending ? 'RETRY_PENDING' : result.suspended ? 'REVIEW' : result.lead_id || result.linked ? 'ODOO_LINKED' : result.skipped ? 'EXCLUDED' : 'PROCESSED';
+    this.state.mail_outcomes = { ...previous, [key]: {account, validity, uid, status, at:new Date().toISOString(), ...result} };
+    // Rolling operational ledger; mailbox and durable reviews retain source evidence.
+    const keys=Object.keys(this.state.mail_outcomes);
+    for(const old of keys.slice(0,Math.max(0,keys.length-10000))) {
+      if(this.state.mail_outcomes[old].status!=='RETRY_PENDING') delete this.state.mail_outcomes[old];
+    }
+    try { this.save(); } catch(error) { this.state.mail_outcomes=previous; throw error; }
   }
 
   audit(type, payload = {}) {
