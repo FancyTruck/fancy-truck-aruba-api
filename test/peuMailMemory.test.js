@@ -12,10 +12,10 @@ test('oversized legacy rows return explicit incomplete coverage and remain store
  const {db,service}=fixture({text:'preserve',attachments:[{content:'x'.repeat(17*1024*1024)}]});
  try{assert.equal(service.messages('pietro','INBOX')[0].payload.content_status,'requires_large_message_download');assert.ok(db.prepare('SELECT length(payload) n FROM mail_messages').get().n>16777216);}finally{db.close();}
 });
-test('large IMAP message stops without downloading or advancing the caller cursor',async()=>{
+test('large IMAP message with missing envelope stops without downloading or advancing the caller cursor',async()=>{
  let released=false,downloads=0;const cursor={validity:'1',uid:9};
  const client={mailbox:{uidValidity:1},getMailboxLock:async()=>({release(){released=true;}}),search:async()=>[10],fetchOne:async(_id,q)=>{if(q.source)downloads++;return {size:21*1024*1024};}};
- await assert.rejects(readFolder(client,'INBOX',cursor,1),{code:'mail_sync_large_message_requires_review'});assert.equal(downloads,0);assert.equal(cursor.uid,9);assert.ok(released);
+ await assert.rejects(readFolder(client,'INBOX',cursor,1),{code:'message_metadata_unavailable'});assert.equal(downloads,0);assert.equal(cursor.uid,9);assert.ok(released);
 });
 test('IMAP source is bounded even if reported size is incorrect',async()=>{
  let released=false;
