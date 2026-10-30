@@ -14,7 +14,7 @@ function setup(t) {
   return { store, queries, processed, account: 'hello', now: Date.UTC(2026, 9, 20),
     client: { mailbox: { uidValidity: 123n },
       search: async query => { queries.push(query); return [3, 1, 2]; },
-      fetchOne: async uid => ({ source: String(uid) }) },
+      fetchOne: async uid => ({ size: 100, source: String(uid) }) },
     parse: async source => ({ text: source }),
     processMessage: async (_parsed, uid) => { processed.push(uid); return { uid }; },
   };
@@ -90,4 +90,22 @@ test('checkpoint write failure rolls back memory and disk and stops the batch', 
   assert.equal(new JsonStateStore(args.store.filePath).cursor(key).lastUid, 0);
   assert.deepEqual(args.processed, [1]);
   args.store.save = save;
+});
+
+test('oversized message is durably queued without body download and later mail continues', async t => {
+  const args = setup(t); const downloaded = [];
+  args.client.fetchOne = async (uid, options) => {
+    if (options.size) return { size: uid === 1 ? 155786971 : 100, envelope: {subject:'Large plan',from:[{address:'owner@example.com'}]} };
+    downloaded.push(uid); return {source:String(uid)};
+  };
+  const rows = await pollMailbox(args);
+  assert.deepEqual(downloaded,[2,3]); assert.deepEqual(args.processed,[2,3]);
+  assert.equal(rows[0].reason,'large_message_requires_review');
+  assert.equal(Object.values(new JsonStateStore(args.store.filePath).state.classification_reviews).length,1);
+  assert.equal(args.store.cursor(key).lastUid,3);
+});
+test('large-message review persistence failure retains cursor and never fetches body', async t => {
+  const args=setup(t);args.client.fetchOne=async (_uid,q)=>{assert(q.size);return {size:155786971,envelope:{subject:'Large'}};};
+  args.store.queueClassification=()=>{throw Error('disk full');};
+  assert.equal((await pollMailbox(args))[0].retry_pending,true);assert.equal(args.store.cursor(key).lastUid,0);
 });

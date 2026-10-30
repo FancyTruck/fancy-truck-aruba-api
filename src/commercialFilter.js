@@ -49,6 +49,12 @@ export function classifyCommercialMessage(subject = '', text = '', headers = new
       && !customerRequest.test(body)) {
     return { kind: null, reason: 'forward_requires_review' };
   }
+  // A project brief may request our creative proposal without naming a truck model.
+  const activationBrief = /\b(?:brand awareness|branding|attivazioni|concept)\b/i.test(body)
+    && /\b(?:evento|eventi|giornate|mezzo)\b/i.test(body)
+    && /\b(?:budget|costi|quotazione)\b/i.test(body)
+    && /(?:mi affiderei a voi|da sviluppare|ci ha chiesto un.idea|vorremmo|avremmo bisogno)/i.test(body);
+  if (activationBrief) return { kind: 'brand_activation', reason: 'explicit_commercial_request' };
   const service = catalogueModelsIn(value).length > 0 || /\b(?:food\s*truck|bar\s*truck|truck|airstream|horsebox|container|gazebo|ape|catering|road\s*tour|roadshow|brand activation|noleggio|noleggiare)\b/i.test(value);
   const intent = /\b(?:richiest[ae]|richied\w*|vorre[im]\w*|vorremmo|avremmo|cerchiamo|ci serv\w*|necessit\w*|preventiv[oi]|quotazion[ei]|disponibilit[aà]|informazioni|interessat[oi]|request|quote|looking for|would like|availability)\b/i.test(value);
   const eventFood = /\b(?:partecip\w*|adesion\w*)\b/i.test(value) && /\b(?:street\s*food|food|festival|fiera)\b/i.test(value);

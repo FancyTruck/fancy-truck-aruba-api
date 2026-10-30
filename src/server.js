@@ -1,3 +1,4 @@
+import { ensureCustomerAttention } from './customerAttention.js';
 import { matchQuotationThread } from './threadReferences.js';
 import { linkThreadMessage } from './threadLinking.js';
 import { pollSentMailbox } from './sentTracking.js';
@@ -617,6 +618,7 @@ async function processQuoteReply(parsed, uid, lead) {
     const resolved = await findOrCreatePartnerFromEmail(parsed);
     if (resolved.partner) partner = await updatePartnerFromText(resolved.partner, parsed.text);
   }
+  await flagCustomerRequest(lead.id);
   const replyText = String(parsed.text || '').trim().slice(0, 12000);
   const combinedText = `${lead.description || ''}\n\nRisposta cliente:\n${replyText}\n\n${marker}`;
   await odooCall('crm.lead', 'write', [[lead.id], {
@@ -648,6 +650,19 @@ async function processQuoteReply(parsed, uid, lead) {
   return { lead_id: lead.id, reply: true, order_id: draft.order?.id, ready_for_review: true };
 }
 
+async function flagCustomerRequest(leadId) {
+  const leads = await odooCall('crm.lead', 'search_read', [[['id', '=', leadId]]], { fields: ['user_id'], limit: 1 });
+  if (!leads.length) throw Error('Richiesta CRM non trovata');
+  const assigned = leads[0].user_id?.[0];
+  if (assigned) return ensureCustomerAttention({ call: odooCall, leadId, ownerId: assigned });
+  const login = String(process.env.ODOO_LOGIN || process.env.PIETRO_EMAIL || '').trim();
+  if (!login) throw Error('Login responsabile richieste non configurato');
+  const users = await odooCall('res.users', 'search_read', [[['login', '=ilike', login], ['active', '=', true]]], { fields: ['id'], limit: 2 });
+  if (users.length !== 1) throw Error('Responsabile richieste non univoco');
+  await odooCall('crm.lead', 'write', [[leadId], { user_id: users[0].id }]);
+  return ensureCustomerAttention({ call: odooCall, leadId, ownerId: users[0].id });
+}
+
 async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
   parsed = { ...parsed, text: currentMessage(parsed.text) };
   const sender = parsed.from?.value?.[0];
@@ -666,7 +681,7 @@ async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
   const existingLead = await odooCall('crm.lead', 'search_read', [[['description', 'ilike', marker]]], {
     fields: ['name', 'partner_id', 'stage_id'], limit: 1,
   });
-  if (existingLead.length) return { skipped: true, duplicate: true, lead_id: existingLead[0].id };
+  if (existingLead.length) { await flagCustomerRequest(existingLead[0].id); return { skipped: true, duplicate: true, lead_id: existingLead[0].id }; }
 
   const found = await findOrCreatePartnerFromEmail(parsed);
   const created = found.created;
@@ -678,6 +693,7 @@ async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
     email_from: senderEmail, description: `Richiesta ricevuta via ${accountName}@fancytruck.it\n\n${cleanBody}\n\n${marker}`,
   }]]);
   const leadId = Array.isArray(leadIds) ? leadIds[0] : leadIds;
+  await flagCustomerRequest(leadId);
   store.audit('ODOO_LEAD_CREATED', { lead_id: leadId, sender_domain: emailDomain(senderEmail), partner_id: partner?.id || null });
 
   const missingFiscal = partner ? missingFiscalDetails(partner) : ['ragione sociale o partita IVA'];

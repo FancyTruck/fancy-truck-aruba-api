@@ -9,7 +9,7 @@ test('four production intake paths use Odoo contract and approval queue without 
   const directory=fs.mkdtempSync(path.join(os.tmpdir(),'fancy-intake-'));
   Object.assign(process.env,{APP_ENV:'test',READ_ONLY:'false',AUTOMATION_ENABLED:'false',STARTUP_CHECKS:'false',
     STATE_FILE:path.join(directory,'state.json'),PORT:'0',API_TOKEN:'test-only',
-    ODOO_URL:'https://odoo-contract.test',ODOO_DB:'test',ODOO_API_KEY:'test-only',ODOO_PARTNER_AUTOCOMPLETE:'false'});
+    ODOO_LOGIN:'owner@example.test',ODOO_URL:'https://odoo-contract.test',ODOO_DB:'test',ODOO_API_KEY:'test-only',ODOO_PARTNER_AUTOCOMPLETE:'false'});
   const realFetch=globalThis.fetch;
   let lead=null, orders=[], writes=[], counter=100, aiAddresses=null, routeCount=0;
   const partner={id:7,name:'Cliente Test',company_type:'company',property_product_pricelist:[1,'Default'],email:'cliente@example.test',vat:'IT12345678901',phone:'010000000',l10n_it_pec_email:'test@example.test',l10n_it_pa_index:'TEST123'};
