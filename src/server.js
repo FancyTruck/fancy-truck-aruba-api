@@ -3,6 +3,11 @@ import { linkThreadMessage } from './threadLinking.js';
 import { pollSentMailbox } from './sentTracking.js';
 import { reconcileCrm } from './crmReconciliation.js';
 import { buildBriefing } from './briefing.js';
+import { automationHealth } from './automationHealth.js';
+import { quotationDisposition } from './quotationIdentity.js';
+import { httpFailureDiagnostics } from './httpDiagnostics.js';
+import { auditCrmCase } from './crmAudit.js';
+import { resolveProjectAssociation } from './projectAssociation.js';
 import { runExternalBackup } from './externalBackup.js';
 import { applyRecoveryGuard } from './recoveryGuard.js';
 import { backupFailureDetails } from './externalBundleBackup.js';
@@ -22,6 +27,7 @@ import { pollOdooMessages } from './odooPolling.js';
 import { runMailOperation } from './mailOperations.js';
 import { quotationPricelist, procedureStage } from './commercialSafeguards.js';
 import { pollMailbox } from './mailPolling.js';
+import { readBoundedMessage } from './mailMessage.js';
 import crypto from 'node:crypto';
 import express from 'express';
 import { ImapFlow } from 'imapflow';
@@ -41,6 +47,8 @@ import {
 } from './commercialProcedure.js';
 
 const app = express();
+// Install before the JSON parser so rejected oversized bodies are observed.
+app.use(httpFailureDiagnostics());
 app.use(express.json({ limit: '2mb' }));
 
 const port = Number(process.env.PORT || 3000);
@@ -50,8 +58,11 @@ const startedAt = Date.now();
 const store = new JsonStateStore(initialRuntime.stateFile);
 const runtime = applyRecoveryGuard(initialRuntime,store.state);
 // Only the owning server reconciles its previous process, never backup readers
-// or quarantined restores. Checkpoints and effects are deliberately untouched.
-if (!runtime.readOnly) store.reconcileInterruptedCycles();
+// or quarantined restores. No interrupted effect is automatically retried.
+if (!runtime.readOnly) {
+  store.reconcileInterruptedCycles();
+  store.reconcileInterruptedSmtpExecutions();
+}
 const approvals = new ApprovalService(store);
 let activeApiRequests=0, backupInFlight=null;
 // Do not decrement on client disconnect: an aborted response can still have a
@@ -418,41 +429,33 @@ async function createReviewActivity(lead, order, reviewItems) {
   }
 }
 
-async function createEconomicProject(lead, order, partner) {
+async function associateEconomicProject(lead, order, partner) {
   const projectName = `${order.name || order.id} — ${lead.name}`.slice(0, 240);
-  const existing = await odooCall('project.project', 'search_read', [[['name', '=', projectName]]], {
-    fields: ['name'], limit: 1,
-  });
-  let projectId = existing[0]?.id;
-  if (!projectId) {
-    const fields = await odooCall('ir.model.fields', 'search_read', [[
-      ['model', '=', 'project.project'], ['name', 'in', ['partner_id', 'sale_order_id']],
-    ]], { fields: ['name'], limit: 10 });
-    const available = new Set(fields.map((field) => field.name));
-    const values = { name: projectName };
-    if (available.has('partner_id')) values.partner_id = partner.id;
-    if (available.has('sale_order_id')) values.sale_order_id = order.id;
-    const ids = await odooCall('project.project', 'create', [[values]]);
-    projectId = Array.isArray(ids) ? ids[0] : ids;
+  const result = await resolveProjectAssociation({ call: odooCall, leadId: lead.id,
+    orderId: order.id, partnerId: partner.id, projectName });
+  if (result.status !== 'REUSED') {
+    const { item } = store.queueClassification({ source_key: `project-association:${lead.id}:${order.id}`,
+      account: 'odoo', subject: lead.name || '', reason: result.reason,
+      candidate_ids: [lead.id], order_candidate_ids: [order.id] });
+    return { ...result, review_id: item.id };
   }
-  const tasks = await odooCall('project.task', 'search_read', [[
-    ['project_id', '=', projectId], ['name', '=', '00 – RIEPILOGO ECONOMICO'],
-  ]], { fields: ['name'], limit: 1 });
-  if (!tasks.length) {
-    await odooCall('project.task', 'create', [[{
-      project_id: projectId, name: '00 – RIEPILOGO ECONOMICO', partner_id: partner.id,
-      description: `<p>Riepilogo economico collegato alla bozza ${escapeHtml(order.name || String(order.id))}. Sostituire le stime con i costi effettivi senza sommarli due volte.</p>`,
-    }]]);
-  }
-  return { id: projectId, name: projectName };
+  return result;
 }
 
 async function createDraftFromCrmLead(lead, partner, kind, combinedText, key, parsed) {
   if (kind !== 'rental') throw new Error('I veicoli Fancy Truck sono esclusivamente a noleggio');
   const existing = await odooCall('sale.order', 'search_read', [[['opportunity_id', '=', lead.id]]], {
-    fields: ['name', 'state', 'opportunity_id', 'is_rental_order'], limit: 1,
+    fields: ['name', 'state', 'opportunity_id', 'partner_id', 'client_order_ref', 'is_rental_order'], limit: 101,
   });
-  if (existing.length) return { order: existing[0], duplicate: true };
+  const disposition = quotationDisposition(existing, { leadId: lead.id, partnerId: partner.id, key,
+    complete: existing.length < 101 });
+  if (disposition.kind === 'replay') return { order: disposition.order, duplicate: true };
+  if (disposition.kind === 'review') {
+    const { item } = store.queueClassification({ source_key: `quotation-scope:${lead.id}:${key}`,
+      account: 'odoo', message_id: parsed?.messageId || null, subject: lead.name || '',
+      reason: disposition.reason, candidate_ids: [lead.id], order_candidate_ids: disposition.order_ids });
+    return { suspended: true, awaiting_scope_review: true, review_id: item.id, reason: disposition.reason };
+  }
   store.cancelActionGroup(`missing-details:odoo-lead-${lead.id}`, 'REQUEST_COMPLETED');
 
   const dates = italianRentalDates(combinedText);
@@ -556,17 +559,17 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key, pa
   } else {
     reviewItems.push('Programma, servizi, logistica, personalizzazione e condizioni economiche da confermare');
   }
+  const economicProject = await associateEconomicProject(lead, order[0] || { id: orderId, name: String(orderId) }, partner);
+  reviewItems.push(economicProject.status === 'REUSED'
+    ? `Progetto esistente collegato: ${economicProject.name}. Attività e ciclo operativo da verificare.`
+    : `Associazione progetto da verificare (${economicProject.reason}); revisione ${economicProject.review_id}. Nessun progetto o lavoro creato.`);
   await odooCall('crm.lead', 'message_post', [[lead.id]], {
     body: `<p>Bozza ${isRental ? 'Noleggi' : 'Vendite'} <strong>${escapeHtml(order[0]?.name || orderId)}</strong> generata dalla presente opportunità CRM.</p><ul>${reviewItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul><p>La bozza non è stata inviata al cliente.</p>`,
     message_type: 'comment', subtype_xmlid: 'mail.mt_note',
   });
   await createReviewActivity(lead, order[0] || { id: orderId }, reviewItems);
-  const economicProject = await createEconomicProject(lead, order[0] || { id: orderId, name: String(orderId) }, partner);
-  await odooCall('crm.lead', 'message_post', [[lead.id]], {
-    body: `<p>Creato progetto economico <strong>${escapeHtml(economicProject.name)}</strong> con un solo lavoro <strong>00 – RIEPILOGO ECONOMICO</strong>.</p>`,
-    message_type: 'comment', subtype_xmlid: 'mail.mt_note',
-  });
-  store.audit('ODOO_DRAFT_BUNDLE_CREATED', { lead_id: lead.id, order_id: orderId, project_id: economicProject.id });
+  store.audit('ODOO_DRAFT_BUNDLE_CREATED', { lead_id: lead.id, order_id: orderId,
+    project_id: economicProject.id, project_status: economicProject.status });
   return { order: order[0] || { id: orderId }, project: economicProject, duplicate: false, rental_price_verified: rentalPriceVerified, logistics_status: logistics.status, logistics_price_verified: logisticsPriceVerified };
 }
 
@@ -643,7 +646,7 @@ async function processQuoteReply(parsed, uid, lead) {
     return { lead_id: lead.id, reply: true, kind, ready_for_review: true };
   }
   const draft = await createDraftFromCrmLead(lead, partner, kind, combinedText, key, parsed);
-  if (draft.awaiting_customer_choice || draft.awaiting_customer_details) return { lead_id: lead.id, reply: true, ...draft };
+  if (draft.awaiting_customer_choice || draft.awaiting_customer_details || draft.awaiting_scope_review) return { lead_id: lead.id, reply: true, ...draft };
   await setLeadProcedureStatus(lead.id, 'PRONTA_CONTROLLO_PIETRO');
   return { lead_id: lead.id, reply: true, order_id: draft.order?.id, ready_for_review: true };
 }
@@ -703,7 +706,7 @@ async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
     return { lead_id: leadId, kind, ready_for_review: true };
   }
   const draft = await createDraftFromCrmLead(lead, partner, kind, cleanBody, key, parsed);
-  if (draft.awaiting_customer_choice || draft.awaiting_customer_details) return { lead_id: leadId, ...draft };
+  if (draft.awaiting_customer_choice || draft.awaiting_customer_details || draft.awaiting_scope_review) return { lead_id: leadId, ...draft };
   await setLeadProcedureStatus(leadId, 'PRONTA_CONTROLLO_PIETRO');
   return { lead_id: leadId, partner_id: partner.id, partner_created: created, order_id: draft.order?.id, kind, ready_for_review: true };
 }
@@ -893,11 +896,9 @@ app.get('/health', (_req, res) => {
 
 app.get('/v1/diagnostics', requireToken, (_req, res) => {
   const state = store.state;
-  const lastCycle = state.cycles.at(-1) || null;
   const operatingNow = withinOperatingWindow();
-  const stale = operatingNow && (lastCycle?.ended_at
-    ? Date.now() - new Date(lastCycle.ended_at).getTime() > 2 * 60 * 60 * 1000
-    : Date.now() - startedAt > 10 * 60 * 1000);
+  const health = automationHealth({ runtime, cycles: state.cycles, operatingNow, startedAt });
+  const { lastCycle, stale } = health;
 
   // Liveness stays HTTP 200 while the process is alive. A stale automation
   // cycle is reported as degraded data instead of disconnecting the web API.
@@ -906,7 +907,8 @@ app.get('/v1/diagnostics', requireToken, (_req, res) => {
     ready: true,
     service: 'fancy-truck-aruba-api',
     procedure_version: COMMERCIAL_PROCEDURE_VERSION,
-    automation_status: runtime.readOnly || !runtime.automationEnabled ? 'DISABLED' : stale ? 'DEGRADED' : 'OK',
+    automation_status: health.status,
+    automation_reasons: health.reasons,
     environment: runtime.environment,
     read_only: runtime.readOnly,
     recovery_required: Boolean(runtime.recoveryRequired),
@@ -1049,6 +1051,22 @@ app.get('/v1/odoo/health', async (_req, res) => {
     res.json({ ok: true, service: 'odoo', crm_stages: stages });
   } catch (error) {
     res.status(502).json({ ok: false, error: error instanceof Error ? error.message : 'Errore Odoo' });
+  }
+});
+
+app.get('/v1/odoo/crm/leads/:id/audit', async (req, res) => {
+  const leadId = Number(req.params.id);
+  const limit = req.query.limit === undefined ? 10 : Number(req.query.limit);
+  if (!/^\d+$/.test(req.params.id) || !Number.isSafeInteger(leadId) || leadId < 1
+    || !Number.isInteger(limit) || limit < 1 || limit > 20) {
+    return res.status(400).json({ ok: false, error: 'ID pratica o limite audit non valido' });
+  }
+  res.set('Cache-Control', 'no-store');
+  try {
+    const result = await auditCrmCase({ call: odooCall, leadId, limit });
+    res.status(result.found ? 200 : 404).json({ ok: true, ...result });
+  } catch {
+    res.status(502).json({ ok: false, error: 'Audit pratica non completato' });
   }
 });
 
@@ -1272,13 +1290,12 @@ app.get('/v1/:account/messages', async (req, res) => {
 
 app.get('/v1/:account/messages/:uid', async (req, res) => {
   const uid = Number(req.params.uid);
-  if (!Number.isInteger(uid) || uid < 1) return res.status(400).json({ ok: false, error: 'UID non valido' });
+  if (!Number.isSafeInteger(uid) || uid < 1) return res.status(400).json({ ok: false, error: 'UID non valido' });
   try {
     const parsed = await withImap(req.params.account, async (client) => {
       const lock = await client.getMailboxLock('INBOX', { readOnly: true });
       try {
-        const raw = await client.download(uid, undefined, { uid: true });
-        return simpleParser(raw.content);
+        return await readBoundedMessage({ client, uid, parse: simpleParser });
       } finally { lock.release(); }
     });
     res.json({ ok: true, message: {
@@ -1289,7 +1306,8 @@ app.get('/v1/:account/messages/:uid', async (req, res) => {
         size: item.size, checksum: item.checksum || null })),
     } });
   } catch (error) {
-    res.status(502).json({ ok: false, error: error instanceof Error ? error.message : 'Errore IMAP' });
+    res.status(error?.code === 'MAIL_SOURCE_LIMIT' ? 413 : 502).json({ ok: false, code: error?.code || 'IMAP_READ_FAILED',
+      error: error instanceof Error ? error.message : 'Errore IMAP' });
   }
 });
 
@@ -1312,6 +1330,7 @@ app.post('/v1/:account/send', async (req, res) => {
 });
 
 app.post('/v1/actions/:id/execute', async (req, res) => {
+  let execution, providerObservation;
   try {
     assertWritable(runtime);
     const action = approvals.assertExecutable(req.params.id);
@@ -1325,13 +1344,34 @@ app.post('/v1/actions/:id/execute', async (req, res) => {
     const account = accountConfig(payload.account || 'hello');
     const transporter = nodemailer.createTransport({
       host: process.env.ARUBA_SMTP_HOST || 'smtps.aruba.it', port: Number(process.env.ARUBA_SMTP_PORT || 465), secure: true,
+      connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 15000,
       auth: { user: account.email, pass: account.password },
     });
+    execution = store.beginSmtpExecution(action.id);
     const info = await transporter.sendMail({ from: `Fancy Truck <${account.email}>`, to: payload.to || action.target,
       cc: payload.cc || undefined, replyTo: account.email, subject: payload.subject, text: payload.text || undefined,
-      html: payload.html || undefined, inReplyTo: payload.inReplyTo || undefined, references: payload.references || undefined });
-    res.json({ ok: true, action: approvals.executed(action.id, { message_id: info.messageId, accepted: info.accepted, rejected: info.rejected }) });
+      html: payload.html || undefined, inReplyTo: payload.inReplyTo || undefined, references: payload.references || undefined,
+      messageId: execution.message_id });
+    providerObservation = { message_id: info.messageId || execution.message_id,
+      accepted: Array.isArray(info.accepted) ? info.accepted : [],
+      rejected: Array.isArray(info.rejected) ? info.rejected : [],
+      pending: Array.isArray(info.pending) ? info.pending : [] };
+    if (!Array.isArray(info.accepted) || !info.accepted.length || info.rejected?.length || info.pending?.length) {
+      throw new Error('Accettazione SMTP incompleta: riconciliare il tentativo prima di altre azioni');
+    }
+    res.json({ ok: true, action: store.finishSmtpExecution(action.id, execution.id, 'EXECUTED', {
+      status: 'accepted_by_smtp', delivery_verified: false,
+      message_id: info.messageId || execution.message_id, accepted: info.accepted, rejected: info.rejected || [],
+    }) });
   } catch (error) {
+    if (execution) {
+      try { store.finishSmtpExecution(req.params.id, execution.id, 'UNCERTAIN', {
+        status: 'outcome_unknown_reconcile_first', delivery_verified: false,
+        ...(providerObservation ? { provider_observation: providerObservation } : {}),
+      }); } catch { /* The durable EXECUTING claim still blocks a retry. */ }
+      return res.status(409).json({ ok: false, code: 'SMTP_OUTCOME_UNCERTAIN',
+        error: 'Esito invio non verificato: riconciliare il tentativo prima di riprovare' });
+    }
     res.status(409).json({ ok: false, error: error instanceof Error ? error.message : 'Esecuzione bloccata' });
   }
 });

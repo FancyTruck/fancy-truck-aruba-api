@@ -1,0 +1,246 @@
+{
+  "date": "2026-10-22",
+  "mode": "readonly live observation; no production mutation",
+  "render": {
+    "commit": "5f8b02503e8366f1baf0b6bd6886a6dfd656a9ae",
+    "deploy": "dep-dbcvo5on74is73fnhc6g",
+    "live_at": "2026-10-22T12:06:19.308096Z",
+    "memory": {
+      "unit": "MiB",
+      "min": 142.80858993530273,
+      "max": 149.70312118530273,
+      "samples": 13,
+      "from": "2026-10-22T14:44:53.345Z",
+      "to": "2026-10-22T15:44:53.345Z",
+      "limit": 512
+    },
+    "http": [
+      {
+        "status": "200",
+        "reportedCount": 284
+      }
+    ],
+    "failure_events": {
+      "from": "2026-10-21T23:21:32Z",
+      "end": "provider current time at query",
+      "server_failed": 0,
+      "server_restarted": 0,
+      "pagination_cursor": "empty"
+    },
+    "sync": {
+      "event": "peu_aruba_sync",
+      "sampleCount": 71,
+      "first": "2026-10-22T10:02:50.836730069Z",
+      "last": "2026-10-22T15:41:54.490748152Z",
+      "statuses": [
+        "synced"
+      ],
+      "checkpoint_correctness": "not established"
+    },
+    "commercial_cycle_logs": {
+      "matched": 0,
+      "query": "cycle/checkpoint/approval/startup since 2026-10-22T00:00Z",
+      "interpretation": "no matching evidence; not proof cycles are absent"
+    }
+  },
+  "backup": {
+    "source": "original runtime progress and verification logs; source path inspected, no new restore run by this session",
+    "format": 2,
+    "scope": "operational-only-v1",
+    "bytes": 76318,
+    "verified_at": "2026-10-22T00:29:59.927Z",
+    "stages": [
+      "captured",
+      "encrypted",
+      "uploaded",
+      "downloaded",
+      "decrypted",
+      "extracted",
+      "integrity_checked",
+      "VERIFIED"
+    ],
+    "isolated_process": true,
+    "restore_writes_blocked": true,
+    "distinct_from_previous_76184_byte_object": true,
+    "remaining": "retention/alarm acceptance and independent artifact reinspection not performed"
+  },
+  "sites": {
+    "proxy_version": 22,
+    "connector_version": 17,
+    "metadata": "independently read",
+    "user_report": {
+      "local_tests": 11,
+      "builds": "both passed",
+      "connector_typecheck": "passed",
+      "proxy_typecheck": "19 pre-existing errors, same as supplied baseline",
+      "note_and_activity_create_replay": "user reports real creation and duplicate:true on retries",
+      "read_update_acceptance": "COMPLETED per owner report; final state and pagination independently read by this session",
+      "test_activity": "remains open and labelled COLLAUDO",
+      "multiuser": "not added; technical-user ACLs remain"
+    },
+    "source_reconciliation": "private development branches based on prior versions; reconcile newly published sources before release"
+  },
+  "odoo": {
+    "quotation": "existing test quote remains draft; totals 1764.08+388.10=2152.18",
+    "quote_lines": "600 rental plus 582.04 delivery and 582.04 collection; logistics review note remains",
+    "project": "matching project visible by name; native sale_order_id is false, exact linkage not demonstrated"
+  },
+  "overall": "partial operational verification; no full phase or end-to-end acceptance",
+  "unavailable": [
+    "authenticated application diagnostics/checkpoints/queues",
+    "pending approval content under administrative policy"
+  ],
+  "notes_activity_acceptance": {
+    "id": "4.5.1",
+    "status": "collaudato",
+    "date": "2026-10-22",
+    "owner_report": [
+      "real title/note/deadline updates reread in Odoo",
+      "retry duplicate:true",
+      "stale revision rejected",
+      "original deadline restored",
+      "unrelated activity revision unchanged",
+      "no email or commercial action invoked"
+    ],
+    "direct_read_checks": {
+      "note_found": true,
+      "note_pagination": "two descending disjoint pages plus target reread",
+      "activity_pagination": "before target returns older activity only",
+      "test_activity_open": true,
+      "test_activity_label": "COLLAUDO",
+      "deadline": "2026-10-23",
+      "unrelated_activity_revision": "unchanged"
+    },
+    "reported_local_report": "outputs/odoo-notes-activities-live-completed.json; not available/read in this checkout",
+    "this_session_write": "extra reversible-title test was rejected by automatic approval review; no write executed, no bypass or retry; no longer needed after owner completion report",
+    "parent_phases": "remain open"
+  },
+  "observed_connector_errors": {
+    "activity_read": "one INVALID_ARGUMENT with explicit limit; exact repeated request subsequently succeeded; transient/not reproduced",
+    "project_read": "query-filtered requests returned INVALID_ARGUMENT; unfiltered limit=1 read succeeded; root cause unresolved"
+  },
+  "commercial_traceability_owner_update": {
+    "date": "2026-10-22",
+    "source": "owner-supplied readonly audit; no new Odoo read by this registry update",
+    "reported_report": "outputs/commercial-traceability-audit-20261022.json; not read in this checkout",
+    "project": {
+      "test_project_id": 15,
+      "test_order": "S00331",
+      "sale_order_id": false,
+      "partner_id": 464,
+      "task_count": 1,
+      "creation_command": "not invoked; existing name+order matching could create a duplicate rather than repair the record"
+    },
+    "catering_activation": {
+      "records": [
+        502,
+        504
+      ],
+      "customer_reply_notes": true,
+      "ready_for_owner_review_note": true,
+      "open_activities": 0,
+      "interpretation": "does not establish missed work, lack of other queues or complete handoff"
+    },
+    "food": {
+      "record": 501,
+      "open_activities": 0,
+      "notes_observed": "only internal OdooBot note",
+      "interpretation": "referral/handoff not demonstrated by these reads"
+    },
+    "notes_activity_api": "4.5.1 remains accepted",
+    "four_path_end_to_end": "open",
+    "effects": "no Odoo writes or sends in supplied audit",
+    "historical_evidence": "backup restore and memory observations belong to the earlier verification, not a new check here"
+  },
+  "release_check_registry_update": {
+    "date": "2026-10-22",
+    "source": "direct GitHub PR metadata and Render latest deploy read during this update",
+    "pr26": {
+      "draft": true,
+      "merged": false,
+      "head_observed": "46d1602fe468cdd13ed4724a9cc3154939edc87f"
+    },
+    "render": {
+      "status": "live",
+      "commit": "5f8b02503e8366f1baf0b6bd6886a6dfd656a9ae",
+      "deploy": "dep-dbcvo5on74is73fnhc6g"
+    },
+    "interpretation": "PR26 remains an unmerged draft; current live deployment is PR27. Do not claim private branch features are live."
+  },
+  "project_link_owner_update": {
+    "date": "2026-10-22",
+    "source": "owner supplied UI reload and API verification; not re-executed by this registry update",
+    "reported_report": "outputs/S00331-link-verification.json; not read in this checkout",
+    "project_id": 15,
+    "verified_relation": {
+      "field": "reinvoiced_sale_order_id",
+      "value": [
+        331,
+        "S00331"
+      ]
+    },
+    "distinct_relations": [
+      "sale_order_id",
+      "reinvoiced_sale_order_id",
+      "sale_line_id",
+      "allow_billable"
+    ],
+    "project_count": 1,
+    "task_count": 1,
+    "order": {
+      "id": 331,
+      "state": "draft",
+      "total": 2152.18,
+      "amounts": "unchanged",
+      "historical_order_date": "2026-10-22 retained"
+    },
+    "observed_ui_side_effect": {
+      "action": "selecting UI Sales Order automatically confirmed the draft",
+      "recovery": "cancelled then restored to draft",
+      "transfers": {
+        "WH/OUT/00066": "cancelled",
+        "WH/IN/00064": "cancelled"
+      },
+      "history": "retained; not an untouched-draft test"
+    },
+    "proxy_v23": {
+      "published": "owner reported",
+      "build": "passed",
+      "real_read": "passed",
+      "relations": "read separately, never treated as equivalent"
+    },
+    "creation_method": "create_project_for_order deduplication unchanged; do not use to repair this case",
+    "acceptance": "existing-case linkage verified only; broader phases remain open"
+  },
+  "continuity_owner_update": {
+    "date": "2026-10-22",
+    "source": "owner report plus direct corrected server blob verification",
+    "main_isolated_tests": {
+      "commit": "5f8b025",
+      "passed": 23
+    },
+    "pr26_source_error": "literal tool truncation marker replaced intake handlers in ad56eb2 server.js; main unaffected",
+    "repair_commit": "f7be6305ffb6ba9f2504b40a2d19fad539e6e3be",
+    "repair_scope": "server.js only; main handlers restored, awaiting_scope_review preserved",
+    "owner_integration": {
+      "tests_passed": 246,
+      "failed": 0,
+      "syntax_checks_passed": 5,
+      "full_history_merge_tree": "no conflicts; API mergeable:false alone not proof"
+    },
+    "direct_this_session": {
+      "server_blob_sha": "a128e39a7685f5474967b4c6528f70e93583b902",
+      "blob_verified": true,
+      "syntax_checks_passed": 5,
+      "render_explicit_workspace_read": "succeeded"
+    },
+    "reported_files": [
+      "outputs/continuity-audit-20261022.json",
+      "logcontinuity-pr26-tests.log"
+    ],
+    "files_read": false,
+    "live_checkpoint_acceptance": "open",
+    "effects": "no merge/deploy/restart/Odoo writes/sends",
+    "phase_closure": "F0/F1/F2 remain open"
+  }
+}

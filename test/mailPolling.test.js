@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { JsonStateStore } from '../src/store.js';
-import { pollMailbox } from '../src/mailPolling.js';
+import { pollMailbox, MAX_POLL_SOURCE_BYTES } from '../src/mailPolling.js';
 
 function setup(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fancy-poll-'));
@@ -14,12 +14,68 @@ function setup(t) {
   return { store, queries, processed, account: 'hello', now: Date.UTC(2026, 9, 20),
     client: { mailbox: { uidValidity: 123n },
       search: async query => { queries.push(query); return [3, 1, 2]; },
-      fetchOne: async uid => ({ source: String(uid) }) },
+      fetchOne: async (uid, query) => query.size ? { size: String(uid).length } : { source: String(uid) } },
     parse: async source => ({ text: source }),
     processMessage: async (_parsed, uid) => { processed.push(uid); return { uid }; },
   };
 }
 const key = 'imap:hello:checkpoint';
+
+test('oversized business mail is not downloaded, parsed, or checkpointed', async t => {
+  const args = setup(t);
+  const reads = [];
+  args.client.fetchOne = async (uid, query) => {
+    reads.push({ uid, query });
+    assert.equal(query.size, true);
+    return { size: MAX_POLL_SOURCE_BYTES + 1 };
+  };
+  args.parse = () => assert.fail('oversized MIME must not be parsed');
+  const [row] = await pollMailbox(args);
+  assert.equal(row.code, 'MAIL_SOURCE_LIMIT');
+  assert.equal(row.retry_pending, true);
+  assert.equal(args.store.cursor(key).lastUid, 0);
+  assert.deepEqual(args.processed, []);
+  assert.equal(reads.length, 1);
+  assert.equal(new JsonStateStore(args.store.filePath).cursor(key).lastUid, 0);
+});
+
+test('size must be verified and download remains bounded if metadata understates it', async t => {
+  for (const size of [undefined, -1, NaN, '100', 1.5]) {
+    const args = setup(t);
+    args.client.fetchOne = async (_uid, query) => {
+      assert.equal(query.size, true);
+      return { size };
+    };
+    const [row] = await pollMailbox(args);
+    assert.equal(row.code, 'MESSAGE_SIZE_UNAVAILABLE');
+    assert.equal(args.store.cursor(key).lastUid, 0);
+  }
+  const args = setup(t);
+  args.client.fetchOne = async (_uid, query, options) => {
+    assert.equal(options.uid, true);
+    if (query.size) return { size: 10 };
+    assert.deepEqual(query.source, { start: 0, maxLength: MAX_POLL_SOURCE_BYTES + 1 });
+    return { source: Buffer.alloc(MAX_POLL_SOURCE_BYTES + 1) };
+  };
+  const [row] = await pollMailbox(args);
+  assert.equal(row.code, 'MAIL_SOURCE_LIMIT');
+  assert.equal(args.store.cursor(key).lastUid, 0);
+  assert.deepEqual(args.processed, []);
+});
+
+test('a bounded failure preserves the previous completed UID for retry after restart', async t => {
+  const args = setup(t);
+  const fetch = args.client.fetchOne;
+  args.client.fetchOne = async (uid, query, options) =>
+    uid === 2 && query.size ? { size: MAX_POLL_SOURCE_BYTES + 1 } : fetch(uid, query, options);
+  await pollMailbox(args);
+  assert.deepEqual(args.processed, [1]);
+  const reloaded = new JsonStateStore(args.store.filePath);
+  assert.equal(reloaded.cursor(key).lastUid, 1);
+  await pollMailbox({ ...args, store: reloaded, client: { ...args.client, fetchOne: fetch } });
+  assert.deepEqual(args.processed, [1, 2, 3]);
+  assert.equal(reloaded.cursor(key).lastUid, 3);
+});
 
 test('failure stops at incomplete message; restart after days resumes in order', async t => {
   const args = setup(t);
@@ -91,3 +147,4 @@ test('checkpoint write failure rolls back memory and disk and stops the batch', 
   assert.deepEqual(args.processed, [1]);
   args.store.save = save;
 });
+

@@ -1,0 +1,783 @@
+{
+  "notice": "Stable ID index only; consult the owner's full project register for detailed decisions. Empty evidence means not established, not missing implementation.",
+  "requirements": [
+    {
+      "id": "0.1",
+      "objective": "Inventario componenti",
+      "status": "da verificare",
+      "implementation": "Three source components identified: Render service, Sites MCP and Sites contracts/reports proxy",
+      "gap": "Source inspected; live internal schedulers and native Odoo automation not established",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "source inspection and isolated local tests; not live acceptance"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "direct Render live PR27, Sites v22/v17, memory/HTTP/events; detailed sanitized operational verification file"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
+        }
+      ],
+      "updated_at": "2026-10-22"
+    },
+    {
+      "id": "0.2",
+      "objective": "Audit cicli e checkpoint",
+      "status": "da verificare",
+      "implementation": "Admin-only read-only exact-case notes/activities/quotes audit endpoint added in PR26",
+      "gap": "Production cycles/checkpoints and commercial handoff not verified",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "source inspection and isolated local tests; not live acceptance"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "direct Render live PR27, Sites v22/v17, memory/HTTP/events; detailed sanitized operational verification file"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "owner isolated main+correctedPR26:246/246 tests and5syntax checks; this session verified corrected server blob and5syntax checks; live checkpoint proof remains open"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "direct bounded Render metadata, metrics and original backup progress logs; see night-verification-2026-10-23.json"
+        },
+        {
+          "date": "2026-10-24",
+          "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
+        },
+        {
+          "date": "2026-10-25",
+          "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
+        },
+        {
+          "date": "2026-10-26",
+          "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
+        },
+        {
+          "date": "2026-10-27",
+          "kind": "P03 actual generic SMTP HTTP route now persists a claim before stub transport; six baseline scenarios fail, six pass after correction; interrupted claim quarantined on actual owner-server startup, readonly/restore guards preserved;285 branch and314 local upstream tests pass; no real sends or live acceptance"
+        },
+        {
+          "date": "2026-10-28",
+          "kind": "atomic draft queue/cancellation/supersession and audit, rollback on write/rename failure;8 of9 new unit tests fail on preceding checkpoint, all pass after fix; actual HTTP queue failure/retry/replay;295 branch and324 local combined tests pass; synthetic only, no real send or parent/live acceptance"
+        },
+        {
+          "date": "2026-10-29",
+          "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
+        },
+        {
+          "date": "2026-10-30",
+          "kind": "interactive message reader bounded at20MiB before MIME parsing;6 unit tests and actual HTTP IMAP-stub test pass, HTTP regression fails on prior checkpoint;311 branch/340 local upstream-combination tests and6syntax checks pass. Initial missing-checkout problem recovered. No OOM-cause or live acceptance claim."
+        }
+      ],
+      "updated_at": "2026-10-22"
+    },
+    {
+      "id": "0.3",
+      "objective": "Approvazione pendente",
+      "status": "da verificare"
+    },
+    {
+      "id": "0.4",
+      "objective": "Rinvii e blocchi",
+      "status": "da verificare"
+    },
+    {
+      "id": "1.1",
+      "objective": "Separazione privilegi e credenziali",
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-25",
+          "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
+        },
+        {
+          "date": "2026-10-26",
+          "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
+        }
+      ]
+    },
+    {
+      "id": "1.2",
+      "objective": "Resilienza OAuth",
+      "status": "da verificare"
+    },
+    {
+      "id": "1.3",
+      "objective": "Ripristino backup applicativo",
+      "status": "da verificare",
+      "implementation": "Operational bundle format 2: runtime source and original download/decryption/integrity/isolated-restore progress observed",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "direct runtime logs at 00:29:56–00:29:59 UTC, 76318-byte bundle, VERIFIED, isolated_process=true, restore_writes_blocked=true; source path inspected"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "direct bounded Render metadata, metrics and original backup progress logs; see night-verification-2026-10-23.json"
+        }
+      ],
+      "gap": "New original runtime logs show a different verified isolated restore; no independent object download/restore in this session; retention/alarm acceptance remains open",
+      "next_action": "Verify remaining backup retention/alarm criteria without duplicating or deleting backups"
+    },
+    {
+      "id": "1.4",
+      "objective": "Persistenza e recupero",
+      "status": "da verificare",
+      "implementation": "Private report component: persistent dispatch claims, read-only status, snapshot-bound review confirmation of proven registration; exact message and attachment metadata verification; no Odoo writes during review",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "29 isolated component tests with SQLite and mocked Odoo; TypeScript/build passed"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "owner isolated main+correctedPR26:246/246 tests and5syntax checks; this session verified corrected server blob and5syntax checks; live checkpoint proof remains open"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "direct bounded Render metadata, metrics and original backup progress logs; see night-verification-2026-10-23.json"
+        },
+        {
+          "date": "2026-10-24",
+          "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
+        },
+        {
+          "date": "2026-10-25",
+          "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
+        },
+        {
+          "date": "2026-10-26",
+          "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
+        },
+        {
+          "date": "2026-10-27",
+          "kind": "P03 actual generic SMTP HTTP route now persists a claim before stub transport; six baseline scenarios fail, six pass after correction; interrupted claim quarantined on actual owner-server startup, readonly/restore guards preserved;285 branch and314 local upstream tests pass; no real sends or live acceptance"
+        },
+        {
+          "date": "2026-10-28",
+          "kind": "atomic draft queue/cancellation/supersession and audit, rollback on write/rename failure;8 of9 new unit tests fail on preceding checkpoint, all pass after fix; actual HTTP queue failure/retry/replay;295 branch and324 local combined tests pass; synthetic only, no real send or parent/live acceptance"
+        },
+        {
+          "date": "2026-10-29",
+          "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
+        },
+        {
+          "date": "2026-10-30",
+          "kind": "interactive message reader bounded at20MiB before MIME parsing;6 unit tests and actual HTTP IMAP-stub test pass, HTTP regression fails on prior checkpoint;311 branch/340 local upstream-combination tests and6syntax checks pass. Initial missing-checkout problem recovered. No OOM-cause or live acceptance claim."
+        }
+      ],
+      "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
+      "updated_at": "2026-10-22"
+    },
+    {
+      "id": "1.5",
+      "objective": "Diagnostica e allarmi",
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-24",
+          "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
+        },
+        {
+          "date": "2026-10-27",
+          "kind": "P03 actual generic SMTP HTTP route now persists a claim before stub transport; six baseline scenarios fail, six pass after correction; interrupted claim quarantined on actual owner-server startup, readonly/restore guards preserved;285 branch and314 local upstream tests pass; no real sends or live acceptance"
+        },
+        {
+          "date": "2026-10-28",
+          "kind": "atomic draft queue/cancellation/supersession and audit, rollback on write/rename failure;8 of9 new unit tests fail on preceding checkpoint, all pass after fix; actual HTTP queue failure/retry/replay;295 branch and324 local combined tests pass; synthetic only, no real send or parent/live acceptance"
+        },
+        {
+          "date": "2026-10-29",
+          "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
+        },
+        {
+          "date": "2026-10-30",
+          "kind": "interactive message reader bounded at20MiB before MIME parsing;6 unit tests and actual HTTP IMAP-stub test pass, HTTP regression fails on prior checkpoint;311 branch/340 local upstream-combination tests and6syntax checks pass. Initial missing-checkout problem recovered. No OOM-cause or live acceptance claim."
+        }
+      ]
+    },
+    {
+      "id": "2.1",
+      "objective": "Mappa ingressi email",
+      "status": "da verificare"
+    },
+    {
+      "id": "2.2",
+      "objective": "Classificazione quattro percorsi",
+      "status": "da verificare"
+    },
+    {
+      "id": "2.3",
+      "objective": "Estrazione con provenienza",
+      "status": "da verificare"
+    },
+    {
+      "id": "2.4",
+      "objective": "Collegamento thread",
+      "status": "da verificare"
+    },
+    {
+      "id": "2.5",
+      "objective": "Recupero incrementale",
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "owner isolated main+correctedPR26:246/246 tests and5syntax checks; this session verified corrected server blob and5syntax checks; live checkpoint proof remains open"
+        },
+        {
+          "date": "2026-10-27",
+          "kind": "P03 actual generic SMTP HTTP route now persists a claim before stub transport; six baseline scenarios fail, six pass after correction; interrupted claim quarantined on actual owner-server startup, readonly/restore guards preserved;285 branch and314 local upstream tests pass; no real sends or live acceptance"
+        },
+        {
+          "date": "2026-10-28",
+          "kind": "atomic draft queue/cancellation/supersession and audit, rollback on write/rename failure;8 of9 new unit tests fail on preceding checkpoint, all pass after fix; actual HTTP queue failure/retry/replay;295 branch and324 local combined tests pass; synthetic only, no real send or parent/live acceptance"
+        },
+        {
+          "date": "2026-10-29",
+          "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
+        }
+      ]
+    },
+    {
+      "id": "2.6",
+      "objective": "Campioni e regressioni",
+      "status": "da verificare"
+    },
+    {
+      "id": "3.1",
+      "objective": "Raccolta dati commerciale",
+      "status": "da verificare"
+    },
+    {
+      "id": "3.2",
+      "objective": "Instradamento commerciale",
+      "status": "da verificare",
+      "implementation": "Exact-case audit exposes bounded activity/note evidence with completeness flags",
+      "gap": "Complete responsible-person handoff is not demonstrated by these reads; zero open activities does not prove no work or no other queues",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "source inspection and isolated local tests; not live acceptance"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "owner reports published note/activity creation and idempotent replay; 11 local tests and successful builds; live read/update not independently verified here"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "Bounded live notes/activity acceptance 4.5.1 completed; does not establish full parent requirement or commercial handoff"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "owner readonly audit: catering/activation have acquired-reply and ready-for-owner-review notes but zero open activities; food has zero open activities and only OdooBot internal note"
+        }
+      ],
+      "updated_at": "2026-10-22",
+      "next_action": "Verify actual assignment, handoff acceptance and other operational queues without inferring from activity counts"
+    },
+    {
+      "id": "3.3",
+      "objective": "Preventivi nativi",
+      "status": "da verificare"
+    },
+    {
+      "id": "3.4",
+      "objective": "Logistica",
+      "status": "da verificare"
+    },
+    {
+      "id": "3.5",
+      "objective": "Regole economiche",
+      "status": "da verificare"
+    },
+    {
+      "id": "3.6",
+      "objective": "Invio e follow-up autorizzati",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.1",
+      "objective": "Pipeline e commessa",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.2",
+      "objective": "Documenti e amministrazione",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.3",
+      "objective": "Pianificazione operazioni",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.4",
+      "objective": "Verbali e anomalie",
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-23",
+          "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
+        }
+      ]
+    },
+    {
+      "id": "4.5",
+      "objective": "Chiusura operativa",
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "owner reports published note/activity creation and idempotent replay; 11 local tests and successful builds; live read/update not independently verified here"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "Bounded live notes/activity acceptance 4.5.1 completed; does not establish full parent requirement or commercial handoff"
+        }
+      ]
+    },
+    {
+      "id": "4.5.1",
+      "objective": "Collaudo reale lettura/aggiornamento note e attività Odoo",
+      "status": "collaudato",
+      "source": "owner update 2026-10-22 and published Sites v22/OAuth v17",
+      "decision_successiva": "Close this bounded acceptance item only; leave test activity open, preserve other activity and all other phase states",
+      "implementation": "Native paginated internal notes/open activities and expected-revision activity updates; persistent replay/uncertainty handling",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "Owner reports title/note/deadline update plus Odoo reread, duplicate:true replay and rejection of stale revision; original deadline restored"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "Direct connector reads verify target note, disjoint note pages, activity pagination, open COLLAUDO activity with restored deadline and unchanged other activity revision"
+        }
+      ],
+      "gap": "No gap within this bounded acceptance scope; no broader end-to-end/multiuser acceptance inferred",
+      "next_action": "No repeated test writes; proceed to remaining requirements",
+      "responsible": "Fancy/Odoo; owner supplied completed live write-test report",
+      "completion_criterion": "Exact test note/activity read, permitted fields updated/reread, replay harmless, stale revision refused, original deadline restored and unrelated activity unchanged",
+      "updated_at": "2026-10-22"
+    },
+    {
+      "id": "4.6",
+      "objective": "Flotta",
+      "status": "da verificare",
+      "implementation": "Native fleet list in inspected Odoo proxy; authorized live bounded listing succeeded",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "live readonly connector health and fleet listing limit 1; one record returned; private data omitted"
+        }
+      ],
+      "gap": "Maintenance, registration documents, insurance/expiry, ownership/third-party rules and availability not verified",
+      "next_action": "Inventory native fleet capabilities and exact source linkage before developing gaps",
+      "updated_at": "2026-10-22"
+    },
+    {
+      "id": "4.7",
+      "objective": "Caso annuale e rendiconto mensile",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.8",
+      "objective": "Cauzioni",
+      "status": "da verificare"
+    },
+    {
+      "id": "5.1",
+      "objective": "Catalogo capacità",
+      "status": "da verificare"
+    },
+    {
+      "id": "5.2",
+      "objective": "Revisioni e approvazioni",
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "owner reports published note/activity creation and idempotent replay; 11 local tests and successful builds; live read/update not independently verified here"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "Bounded live notes/activity acceptance 4.5.1 completed; does not establish full parent requirement or commercial handoff"
+        }
+      ]
+    },
+    {
+      "id": "5.3",
+      "objective": "Notifiche pertinenti",
+      "status": "da verificare"
+    },
+    {
+      "id": "5.4",
+      "objective": "Collaudo condiviso",
+      "status": "da verificare"
+    },
+    {
+      "id": "5.5",
+      "objective": "Accesso quotidiano",
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-23",
+          "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
+        },
+        {
+          "date": "2026-10-25",
+          "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
+        },
+        {
+          "date": "2026-10-26",
+          "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
+        }
+      ]
+    },
+    {
+      "id": "6.1",
+      "objective": "Identità Odoo",
+      "status": "differito per scelta"
+    },
+    {
+      "id": "6.2",
+      "objective": "Privilegi e revoca",
+      "status": "differito per scelta"
+    },
+    {
+      "id": "6.3",
+      "objective": "Passaggio casella a Peu",
+      "status": "differito per scelta"
+    },
+    {
+      "id": "6.4",
+      "objective": "Nessuna escalation tecnica",
+      "status": "differito per scelta"
+    },
+    {
+      "id": "7.1",
+      "objective": "Matrice requisito-prova",
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "four commercial paths remain open for end-to-end acceptance; note/activity API acceptance remains separately closed"
+        }
+      ]
+    },
+    {
+      "id": "7.2",
+      "objective": "Scenari di guasto",
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "owner isolated main+correctedPR26:246/246 tests and5syntax checks; this session verified corrected server blob and5syntax checks; live checkpoint proof remains open"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "direct bounded Render metadata, metrics and original backup progress logs; see night-verification-2026-10-23.json"
+        },
+        {
+          "date": "2026-10-24",
+          "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
+        },
+        {
+          "date": "2026-10-25",
+          "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
+        },
+        {
+          "date": "2026-10-26",
+          "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
+        },
+        {
+          "date": "2026-10-27",
+          "kind": "P03 actual generic SMTP HTTP route now persists a claim before stub transport; six baseline scenarios fail, six pass after correction; interrupted claim quarantined on actual owner-server startup, readonly/restore guards preserved;285 branch and314 local upstream tests pass; no real sends or live acceptance"
+        },
+        {
+          "date": "2026-10-28",
+          "kind": "atomic draft queue/cancellation/supersession and audit, rollback on write/rename failure;8 of9 new unit tests fail on preceding checkpoint, all pass after fix; actual HTTP queue failure/retry/replay;295 branch and324 local combined tests pass; synthetic only, no real send or parent/live acceptance"
+        },
+        {
+          "date": "2026-10-29",
+          "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
+        },
+        {
+          "date": "2026-10-30",
+          "kind": "interactive message reader bounded at20MiB before MIME parsing;6 unit tests and actual HTTP IMAP-stub test pass, HTTP regression fails on prior checkpoint;311 branch/340 local upstream-combination tests and6syntax checks pass. Initial missing-checkout problem recovered. No OOM-cause or live acceptance claim."
+        }
+      ]
+    },
+    {
+      "id": "7.3",
+      "objective": "Procedure operative",
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-23",
+          "kind": "direct bounded Render metadata, metrics and original backup progress logs; see night-verification-2026-10-23.json"
+        },
+        {
+          "date": "2026-10-24",
+          "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
+        },
+        {
+          "date": "2026-10-25",
+          "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
+        },
+        {
+          "date": "2026-10-26",
+          "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
+        },
+        {
+          "date": "2026-10-27",
+          "kind": "P03 actual generic SMTP HTTP route now persists a claim before stub transport; six baseline scenarios fail, six pass after correction; interrupted claim quarantined on actual owner-server startup, readonly/restore guards preserved;285 branch and314 local upstream tests pass; no real sends or live acceptance"
+        },
+        {
+          "date": "2026-10-28",
+          "kind": "atomic draft queue/cancellation/supersession and audit, rollback on write/rename failure;8 of9 new unit tests fail on preceding checkpoint, all pass after fix; actual HTTP queue failure/retry/replay;295 branch and324 local combined tests pass; synthetic only, no real send or parent/live acceptance"
+        },
+        {
+          "date": "2026-10-29",
+          "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
+        }
+      ]
+    },
+    {
+      "id": "7.4",
+      "objective": "Costi e limiti",
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-30",
+          "kind": "interactive message reader bounded at20MiB before MIME parsing;6 unit tests and actual HTTP IMAP-stub test pass, HTTP regression fails on prior checkpoint;311 branch/340 local upstream-combination tests and6syntax checks pass. Initial missing-checkout problem recovered. No OOM-cause or live acceptance claim."
+        }
+      ]
+    },
+    {
+      "id": "7.5",
+      "objective": "Rilascio e osservazione",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.1",
+      "objective": "Bozza fattura e fonte fiscale",
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-23",
+          "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
+        }
+      ]
+    },
+    {
+      "id": "8.2",
+      "objective": "Quadratura attive e passive",
+      "status": "da verificare",
+      "implementation": "MCP and actual proxy validate explicit amounts/residuals on development branches",
+      "gap": "Proxy posts CRM note only; bank reconciliation and accounting not demonstrated",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "source inspection and isolated local tests; not live acceptance"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
+        }
+      ],
+      "updated_at": "2026-10-22"
+    },
+    {
+      "id": "8.3",
+      "objective": "Solleciti",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.4",
+      "objective": "Imputazione passive",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.5",
+      "objective": "DKV",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.6",
+      "objective": "Telepass",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.7",
+      "objective": "Carte",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.8",
+      "objective": "QUADRA e fatture estere",
+      "status": "da verificare"
+    },
+    {
+      "id": "1.4.1",
+      "objective": "Esecuzione a chat chiusa",
+      "status": "da verificare",
+      "implementation": "Private report component: persistent dispatch claims, read-only status, snapshot-bound review confirmation of proven registration; exact message and attachment metadata verification; no Odoo writes during review",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "29 isolated component tests with SQLite and mocked Odoo; TypeScript/build passed"
+        },
+        {
+          "date": "2026-10-24",
+          "kind": "P03 persistence-failure rollback in actual store/server sandbox;253 branch and272 upstream-combination tests;10 regressions fail on baseline; not live acceptance"
+        },
+        {
+          "date": "2026-10-25",
+          "kind": "atomic pre-execution approval/audit tested with disk failures, reopening and actual HTTP endpoints;260 branch and279 local upstream tests pass; synthetic only, no live acceptance"
+        },
+        {
+          "date": "2026-10-26",
+          "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
+        },
+        {
+          "date": "2026-10-27",
+          "kind": "P03 actual generic SMTP HTTP route now persists a claim before stub transport; six baseline scenarios fail, six pass after correction; interrupted claim quarantined on actual owner-server startup, readonly/restore guards preserved;285 branch and314 local upstream tests pass; no real sends or live acceptance"
+        },
+        {
+          "date": "2026-10-28",
+          "kind": "atomic draft queue/cancellation/supersession and audit, rollback on write/rename failure;8 of9 new unit tests fail on preceding checkpoint, all pass after fix; actual HTTP queue failure/retry/replay;295 branch and324 local combined tests pass; synthetic only, no real send or parent/live acceptance"
+        },
+        {
+          "date": "2026-10-29",
+          "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
+        }
+      ],
+      "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
+      "updated_at": "2026-10-22"
+    },
+    {
+      "id": "2.1.1",
+      "objective": "Applicabilità pulizia Gmail storica",
+      "status": "da verificare"
+    },
+    {
+      "id": "3.3.1",
+      "objective": "Preventivi multipli legittimi",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.1.1",
+      "objective": "Pipeline completa",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.1.2",
+      "objective": "Progetto collegato",
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "live readonly: matching test project exists by name but native sale_order_id=false"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "owner readonly audit: test project15, sale_order_id=false, partner464, one task; creation command not invoked"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "owner UI reload/API verification: existing project15 linked to draft331 through reinvoiced_sale_order_id; one project, one task; proxyv23 distinguishes project relations"
+        },
+        {
+          "date": "2026-10-22",
+          "kind": "v23-based private development branch: 21 isolated tests, build passed, 19 baseline typecheck errors unchanged; exact relation preflight and order-scoped persistent creation guard"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "corrected PR26 development: readonly exact-order project association; real intake with mocked Odoo; 242 branch tests and 261 upstream-combination tests passed"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
+        }
+      ],
+      "gap": "Development guard not deployed; single creator across services, native automation/cardinality, task creation and operational lifecycle acceptance remain open",
+      "next_action": "Reconcile current proxy source and define an authoritative single creator before enabling generic project creation",
+      "verified_scope": "S00331 existing-case link via reinvoiced_sale_order_id verified; sale_order_id=false was not proof of no relationship",
+      "implementation": "Render intake consumes only a uniquely evidenced project relation; no project/task writes. Direct/billing/line fields stay distinct. Missing/conflicting evidence persists review; draft is never confirmed. Separate Sites project-creation track remains private and unreleased."
+    },
+    {
+      "id": "4.1.3",
+      "objective": "Costi e margini",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.2.1",
+      "objective": "Contratti mobile",
+      "status": "da verificare",
+      "implementation": "Existing mobile report app inspected; source matches for contracts remain broad",
+      "gap": "Exact commessa linkage and phone signing acceptance open",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "source inspection and isolated local tests; not live acceptance"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
+        }
+      ],
+      "updated_at": "2026-10-22"
+    },
+    {
+      "id": "4.2.2",
+      "objective": "Allegato grafica approvata",
+      "status": "da verificare"
+    },
+    {
+      "id": "4.4.1",
+      "objective": "Verbali con foto HD",
+      "status": "da verificare",
+      "implementation": "Private report component: persistent dispatch claims, read-only status, snapshot-bound review confirmation of proven registration; exact message and attachment metadata verification; no Odoo writes during review",
+      "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
+      "evidence": [
+        {
+          "date": "2026-10-22",
+          "kind": "29 isolated component tests with SQLite and mocked Odoo; TypeScript/build passed"
+        },
+        {
+          "date": "2026-10-23",
+          "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
+        }
+      ],
+      "updated_at": "2026-10-22"
+    },
+    {
+      "id": "8.1.1",
+      "objective": "Descrizione fattura pertinente",
+      "status": "da verificare"
+    },
+    {
+      "id": "8.2.1",
+      "objective": "Recupero cronologico storico",
+      "status": "da verificare"
+    }
+  ],
+  "common_fields": {
+    "implementation": "not established by this baseline",
+    "evidence": [],
+    "source": "owner project register; recovered automation requirements reconciled with later decisions",
+    "next_action": "verify implementation and runtime wiring before changing behavior",
+    "dependencies": [],
+    "responsible": "Fancy; Peu/Odoo/owner where required by the project register",
+    "completion_criterion": "dated requirement-specific evidence; isolated tests do not close production acceptance",
+    "gap": "live functional acceptance not established",
+    "updated_at": "2026-10-22"
+  }
+}

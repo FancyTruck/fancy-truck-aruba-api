@@ -1,0 +1,181 @@
+{
+  "version": 1,
+  "updated_at": "2026-10-30T01:29:16.864Z",
+  "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
+  "branch": "work/fancy-foundations-20261022",
+  "stage": "draft PR26; single-message source bound locally tested, not released",
+  "functional_acceptance": "open",
+  "completed_development": [
+    "bounded-business-mail-polling",
+    "honest-cycle-diagnostics",
+    "explicit-backup-cap-reason",
+    "quotation-source-replay-versus-scope-review",
+    "private-http-failure-telemetry",
+    "admin-only-readonly-case-audit",
+    "durable-report-dispatch-claim-and-readonly-odoo-reconciliation",
+    "snapshot-bound-reviewed-registration-confirmation-without-odoo-writes",
+    "readonly-render-project-association-without-competing-creator",
+    "v25-private-project-report-finance-reconciliation-preserving-personal-auth",
+    "v21-validation-patch-already-present-source-audit",
+    "rollback-failed-cycle-integration-replay-and-bounded-compaction",
+    "single-commit-pre-execution-approval-and-audit-rollback",
+    "lost-approval-command-response-reissue-and-readonly-confirmation-replay",
+    "generic-smtp-durable-claim-and-interrupted-uncertain-replay-barrier",
+    "atomic-action-queue-supersession-and-audit-with-held-reference-rollback",
+    "failed-standalone-audit-and-case-create-update-rollback",
+    "bounded-interactive-message-source-before-mime-parsing"
+  ],
+  "tests": {
+    "command": "node --test test/mailMessage.test.js test/mailMessageIntegration.test.js; npm test; npm run check; node --check src/mailMessage.js",
+    "passed": 311,
+    "failed": 0,
+    "syntax_checks": 6,
+    "environment": "Node24.22.1, clean reconstructed cloud checkout, synthetic unit and actual HTTP IMAP fixtures"
+  },
+  "next_action": "Continue representative parser/concurrency memory analysis and provider-evidence reconciliation; live checkpoint and operational acceptance stay open",
+  "blocked": [
+    "administrative browser policy for pending approval/application diagnostics; no bypass",
+    "production rollout, hosted migrations and operational acceptance are outside this run authorization",
+    "business-specific fiscal/deposit rules remain to verify before activation"
+  ],
+  "lease": null,
+  "draft_pr": "https://github.com/FancyTruck/fancy-truck-aruba-api/pull/26",
+  "components": [
+    {
+      "component": "Render mail/CRM service",
+      "development": "PR26",
+      "isolated_tests": 311
+    },
+    {
+      "component": "Sites Odoo MCP connector",
+      "development_branch": "work/fancy-mcp-validation-20261022",
+      "development_commit": "6407e68b8a5f6f2506dc115ab3baa758a5c3c87a",
+      "isolated_tests": 26,
+      "typecheck": "passed",
+      "build": "passed",
+      "live_version_observed": 21,
+      "reconciliation_required": "Prior validation/transport helpers are byte-identical in current published source; actual route retains them plus signed principal delegation. No redundant patch applied.",
+      "source_commit": "4ea602f4eb742c50cfd27c77a7b23a6fa974549f",
+      "prior_development_branch": "work/fancy-mcp-validation-20261022",
+      "prior_development_commit": "6407e68b8a5f6f2506dc115ab3baa758a5c3c87a",
+      "development": "prior validation work already included through commit61f2f221e4956782904dade06b383ec4227ddecd; current source regression-checked"
+    },
+    {
+      "component": "Sites contracts/reports and Odoo proxy",
+      "development_branch": "work/fancy-proxy-reconcile-20261023",
+      "development_commit": "2b25b2c04d44336b37d6bd07c814405bbe1b17d5",
+      "isolated_tests": 65,
+      "typecheck": "passed",
+      "build": "passed",
+      "live_version_observed": 25,
+      "reconciliation_required": "Preserved report and project tracks reconciled onto exact v25 source48e1016; private branch not deployed. Personal mobile/report access and shared creator remain open.",
+      "live_version_reported_by_owner": 23,
+      "development_tracks": [
+        {
+          "branch": "work/fancy-finance-audit-20261022",
+          "commit": "51d43c7f227a5d2ca1981dafcd5a0712493e4901",
+          "baseline": "older pre-v22 source; preserve and reconcile",
+          "isolated_tests": 29
+        },
+        {
+          "branch": "work/fancy-project-dedup-20261022",
+          "commit": "e40affde4841d3667b93971a3c9ebcdb21e8a970",
+          "baseline": "v23 source c784d9520e054357df8e28206f7e3ec8c36d1059",
+          "isolated_tests": 21,
+          "build": "passed",
+          "typecheck": "19 baseline diagnostics unchanged; not passed"
+        },
+        {
+          "branch": "work/fancy-proxy-reconcile-20261023",
+          "commit": "2b25b2c04d44336b37d6bd07c814405bbe1b17d5",
+          "baseline": "v25 source48e1016b6a96524e10f7520ea206fa2c6ec7b8ae",
+          "isolated_tests": 65,
+          "typecheck": "passed;19 baseline diagnostics resolved by preserved report typing fixes",
+          "build": "passed",
+          "remote_readback": "exact tree equals local tested tree"
+        }
+      ]
+    }
+  ],
+  "live_readonly_evidence": [
+    {
+      "date": "2026-10-22",
+      "scope": "authorized Odoo health and bounded fleet listing (limit 1)",
+      "result": "health succeeded; one native fleet record returned",
+      "does_not_prove": "maintenance, expiry, availability, full fleet completeness or delivery"
+    }
+  ],
+  "operational_evidence": "docs/fancy-ai/operational-verification-2026-10-22.json",
+  "live_render_commit": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+  "acceptance_items": {
+    "4.5.1": {
+      "status": "collaudato",
+      "date": "2026-10-22",
+      "scope": "real notes/activity reading, update, replay and stale-revision rejection on existing COLLAUDO record; activity stays open",
+      "evidence": "owner completion report plus independent readonly final-state and pagination verification",
+      "does_not_close": "parent phase, commercial handoff, multiuser authorization or end-to-end acceptance"
+    }
+  },
+  "verified_project_case": {
+    "source": "owner UI/API verification 2026-10-22",
+    "order": 331,
+    "project": 15,
+    "field": "reinvoiced_sale_order_id",
+    "state": "case link verified; creation deduplication and parent requirement remain open"
+  },
+  "required_server_correction": {
+    "commit": "f7be6305ffb6ba9f2504b40a2d19fad539e6e3be",
+    "server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
+    "rule": "Never restore pre-fix server snapshots; fetch current branch and verify remote source before changing code"
+  },
+  "continuity_evidence": {
+    "source": "owner isolated main+correctedPR26 integration",
+    "tests_passed": 246,
+    "failed": 0,
+    "syntax_checks": 5,
+    "scope": "local isolated; not live checkpoints or end-to-end acceptance"
+  },
+  "updated_at_rome": "2026-10-30T02:29:16+01:00",
+  "run_id": "fancy-night-20261030-message-bound",
+  "current_lot": "P01 bounded interactive message MIME reader, isolated verification completed",
+  "live_render_deploy": "dep-dbf4p1ss728c73d5nub0",
+  "upstream_integration_tests": {
+    "main": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+    "passed": 340,
+    "failed": 0,
+    "syntax_checks": 6,
+    "environment": "local merge-tree snapshot only; no remote merge",
+    "tree": "60f7cf8b95d841e8bee673c5ffd7b42b54a951d2"
+  },
+  "source_integrity": {
+    "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
+    "intentional_new_server_blob": "9ba35a907c6165a9051434d59fd7d72850fe24cc",
+    "scope": "Intentional single-message route source bound and import only; full pre-edit server blob verified by create_blob SHA equality; intake handlers, awaiting_scope_review, project and SMTP guards preserved",
+    "previous_corrected_project_guard_server_blob": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc",
+    "previous_single_message_server_blob": "a11abed369707d1ab0efd38c37848223bb917de2"
+  },
+  "last_lease": {
+    "run_id": "fancy-night-20261030-message-validation",
+    "component": "Render single-message test/checkpoint",
+    "acquired_at": "2026-10-30T01:28:07.047Z",
+    "expires_at": "2026-10-30T02:28:07.047Z",
+    "base_head": "d0ac9d19bc9a2af733cdc4108bcc1c620d0403a2",
+    "status": "released",
+    "released_at": "2026-10-30T01:29:16.864Z"
+  },
+  "last_verified_tests": {
+    "command": "npm test; npm run check",
+    "passed": 304,
+    "failed": 0,
+    "syntax_checks": 5,
+    "environment": "isolated PR26; filesystem failures and real mail/thread modules with synthetic provider adapter",
+    "source_commit": "e443d868685ff9dd1e29b76eebf5dd521c52d61f",
+    "date": "2026-10-29"
+  },
+  "pending_development": [],
+  "execution_recovery": {
+    "initial_issue": "prior ephemeral checkout no longer existed; initial unavailable-runtime conclusion corrected",
+    "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
+    "node": "v24.22.1"
+  }
+}
