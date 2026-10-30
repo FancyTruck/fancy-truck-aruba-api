@@ -72,7 +72,7 @@
         },
         {
           "date": "2026-10-30",
-          "kind": "source diagnosis: interactive message reader used unbounded download unlike existing bounded polling; 20MiB draft guard and synthetic tests prepared. Node/syntax/suite checks NON ESEGUITO because executor unavailable; not OOM-cause/live evidence."
+          "kind": "interactive message reader bounded at20MiB before MIME parsing;6 unit tests and actual HTTP IMAP-stub test pass, HTTP regression fails on prior checkpoint;311 branch/340 local upstream-combination tests and6syntax checks pass. Initial missing-checkout problem recovered. No OOM-cause or live acceptance claim."
         }
       ],
       "updated_at": "2026-10-22"
@@ -169,7 +169,7 @@
         },
         {
           "date": "2026-10-30",
-          "kind": "source diagnosis: interactive message reader used unbounded download unlike existing bounded polling; 20MiB draft guard and synthetic tests prepared. Node/syntax/suite checks NON ESEGUITO because executor unavailable; not OOM-cause/live evidence."
+          "kind": "interactive message reader bounded at20MiB before MIME parsing;6 unit tests and actual HTTP IMAP-stub test pass, HTTP regression fails on prior checkpoint;311 branch/340 local upstream-combination tests and6syntax checks pass. Initial missing-checkout problem recovered. No OOM-cause or live acceptance claim."
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
@@ -198,7 +198,7 @@
         },
         {
           "date": "2026-10-30",
-          "kind": "source diagnosis: interactive message reader used unbounded download unlike existing bounded polling; 20MiB draft guard and synthetic tests prepared. Node/syntax/suite checks NON ESEGUITO because executor unavailable; not OOM-cause/live evidence."
+          "kind": "interactive message reader bounded at20MiB before MIME parsing;6 unit tests and actual HTTP IMAP-stub test pass, HTTP regression fails on prior checkpoint;311 branch/340 local upstream-combination tests and6syntax checks pass. Initial missing-checkout problem recovered. No OOM-cause or live acceptance claim."
         }
       ]
     },
@@ -510,7 +510,7 @@
         },
         {
           "date": "2026-10-30",
-          "kind": "source diagnosis: interactive message reader used unbounded download unlike existing bounded polling; 20MiB draft guard and synthetic tests prepared. Node/syntax/suite checks NON ESEGUITO because executor unavailable; not OOM-cause/live evidence."
+          "kind": "interactive message reader bounded at20MiB before MIME parsing;6 unit tests and actual HTTP IMAP-stub test pass, HTTP regression fails on prior checkpoint;311 branch/340 local upstream-combination tests and6syntax checks pass. Initial missing-checkout problem recovered. No OOM-cause or live acceptance claim."
         }
       ]
     },
@@ -556,7 +556,7 @@
       "evidence": [
         {
           "date": "2026-10-30",
-          "kind": "source diagnosis: interactive message reader used unbounded download unlike existing bounded polling; 20MiB draft guard and synthetic tests prepared. Node/syntax/suite checks NON ESEGUITO because executor unavailable; not OOM-cause/live evidence."
+          "kind": "interactive message reader bounded at20MiB before MIME parsing;6 unit tests and actual HTTP IMAP-stub test pass, HTTP regression fails on prior checkpoint;311 branch/340 local upstream-combination tests and6syntax checks pass. Initial missing-checkout problem recovered. No OOM-cause or live acceptance claim."
         }
       ]
     },

@@ -1,6 +1,6 @@
 {
   "date": "2026-10-30",
-  "scope": "P01 single-message read bound; untested source draft",
+  "scope": "P01 interactive MIME source bound; isolated tests completed",
   "base_pr26": "e443d868685ff9dd1e29b76eebf5dd521c52d61f",
   "lease_commit": "a32ccb5249cbd6be6b138d3afb09083add02ffb4",
   "source_integrity": {
@@ -18,33 +18,35 @@
     "no cursor, mailbox, Odoo or business write"
   ],
   "checks": {
-    "node_tests": "NON ESEGUITO",
-    "syntax": "NON ESEGUITO",
-    "suite": "NON ESEGUITO",
-    "upstream_combination": "NON ESEGUITO",
-    "reason": "exec_command failed before process creation: exec-server No such file or directory. Two attempts, then continued through supported GitHub connector.",
-    "prepared_test_files": [
-      "test/mailMessage.test.js",
-      "test/mailMessageIntegration.test.js"
-    ],
-    "prepared_scenarios": [
-      "oversized and invalid metadata",
-      "lying metadata/oversized returned bytes",
-      "exact20MiB boundary and UID semantics",
-      "missing source/unsafe UID/parser failure",
-      "actual HTTP route with stub IMAP; 413/502/200 and cleanup/state invariance"
-    ],
+    "node": "v24.22.1",
+    "new_tests_passed": 7,
+    "new_tests_failed": 0,
+    "baseline_http": {
+      "source_commit": "e443d868685ff9dd1e29b76eebf5dd521c52d61f",
+      "passed": 0,
+      "failed": 1,
+      "reason": "old unbounded-download path invokes forbidden stub download and returns502 instead of guarded413"
+    },
+    "branch_passed": 311,
+    "branch_failed": 0,
+    "combined_main": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+    "combined_tree": "60f7cf8b95d841e8bee673c5ffd7b42b54a951d2",
+    "combined_passed": 340,
+    "combined_failed": 0,
+    "syntax_checks_passed": 6,
     "commands": [
+      "npm ci --ignore-scripts --no-audit --no-fund",
       "node --test test/mailMessage.test.js test/mailMessageIntegration.test.js",
       "npm test",
-      "npm run check"
+      "npm run check",
+      "node --check src/mailMessage.js"
     ],
-    "historical_only": {
-      "source_commit": "e443d868685ff9dd1e29b76eebf5dd521c52d61f",
-      "branch_passed": 304,
-      "combined_passed": 333,
-      "syntax_checks": 5,
-      "date": "2026-10-29"
+    "provider_calls": 0,
+    "http_fixture": "real server bound to ephemeral localhost; ImapFlow methods stubbed; oversized/unknown/lying/valid response, zero download calls, four lock releases/logouts and unchanged state",
+    "initial_execution_issue": {
+      "initial_issue": "prior ephemeral checkout no longer existed; initial unavailable-runtime conclusion corrected",
+      "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
+      "node": "v24.22.1"
     }
   },
   "live_readonly": {
@@ -58,11 +60,11 @@
     "scope": "fresh metadata only; no memory/backup/restart acceptance"
   },
   "limitations": [
-    "Untested draft: do not merge or deploy before Node execution and review",
+    "Isolated tests do not establish production release or representative OOM/concurrency acceptance",
     "No memory benchmark or representative concurrent load was run; historical OOM root cause remains undiagnosed",
     "20MiB source cap is per request; MIME parse amplification and concurrent request budgeting remain separate work",
-    "main combination not newly constructed/tested; API comparison is not merge-conflict proof",
     "Prior specific4.5.1 acceptance remains closed; parent F0/F1/F2 and end-to-end remain open"
   ],
-  "effects": "GitHub isolated development branch only. No main push, remote merge/deploy/restart, hosted migration, production write, real send or economic action."
+  "effects": "GitHub isolated development branch only. No main push, remote merge/deploy/restart, hosted migration, production write, real send or economic action.",
+  "validation_lease_commit": "c7dcddae87f1620c97ab5eff29af5fe2dedecbac"
 }

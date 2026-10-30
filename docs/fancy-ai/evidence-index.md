@@ -21,4 +21,4 @@
 
 - `night-verification-2026-10-29.json`: standalone audit and case rollback.8/9 baseline failures,9/9 corrected tests; actual mail/thread modules with synthetic post-effect audit failure retain replay barrier.304 branch/333 local combined tests and5syntax checks pass. Cases remain workflow simulation; no new live acceptance.
 
-- `night-verification-2026-10-30.json`: source-only diagnosis and untested single-message MIME limit draft. Full original server blob verified. Node tests/syntax/suite/upstream combination NON ESEGUITO: executor cannot create a process. Historical304/333 counts apply only to e443d86. No live acceptance.
+- `night-verification-2026-10-30.json`: bounded interactive MIME reader.6 unit+1 actual HTTP tests pass; HTTP regression fails on e443d86.311 branch/340 local upstream-combination tests and6syntax checks pass after reconstructing the missing ephemeral checkout. Full pre-edit server blob verified; no new OOM/live acceptance.

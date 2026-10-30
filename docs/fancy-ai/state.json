@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "updated_at": "2026-10-30T01:25:46.296Z",
+  "updated_at": "2026-10-30T01:29:16.864Z",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
-  "stage": "draft PR26; new single-message patch NOT EXECUTED or release-ready",
+  "stage": "draft PR26; single-message source bound locally tested, not released",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
@@ -22,32 +22,29 @@
     "lost-approval-command-response-reissue-and-readonly-confirmation-replay",
     "generic-smtp-durable-claim-and-interrupted-uncertain-replay-barrier",
     "atomic-action-queue-supersession-and-audit-with-held-reference-rollback",
-    "failed-standalone-audit-and-case-create-update-rollback"
+    "failed-standalone-audit-and-case-create-update-rollback",
+    "bounded-interactive-message-source-before-mime-parsing"
   ],
   "tests": {
-    "status": "NON ESEGUITO",
-    "command": "node --test test/mailMessage.test.js test/mailMessageIntegration.test.js; npm test; npm run check",
-    "reason": "exec-server failed to create a process: No such file or directory; no Node test/syntax/build execution available"
+    "command": "node --test test/mailMessage.test.js test/mailMessageIntegration.test.js; npm test; npm run check; node --check src/mailMessage.js",
+    "passed": 311,
+    "failed": 0,
+    "syntax_checks": 6,
+    "environment": "Node24.22.1, clean reconstructed cloud checkout, synthetic unit and actual HTTP IMAP fixtures"
   },
-  "next_action": "Restore authorized Node executor and run the prepared single-message unit/HTTP tests, npm test and npm run check, then local upstream merge-tree checks; do not release the untested draft",
+  "next_action": "Continue representative parser/concurrency memory analysis and provider-evidence reconciliation; live checkpoint and operational acceptance stay open",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
     "business-specific fiscal/deposit rules remain to verify before activation"
   ],
-  "lease": {
-    "run_id": "fancy-night-20261030-message-validation",
-    "component": "Render single-message test/checkpoint",
-    "acquired_at": "2026-10-30T01:28:07.047Z",
-    "expires_at": "2026-10-30T02:28:07.047Z",
-    "base_head": "d0ac9d19bc9a2af733cdc4108bcc1c620d0403a2"
-  },
+  "lease": null,
   "draft_pr": "https://github.com/FancyTruck/fancy-truck-aruba-api/pull/26",
   "components": [
     {
       "component": "Render mail/CRM service",
       "development": "PR26",
-      "isolated_tests": 304
+      "isolated_tests": 311
     },
     {
       "component": "Sites Odoo MCP connector",
@@ -138,21 +135,17 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-10-30T02:25:46+01:00",
+  "updated_at_rome": "2026-10-30T02:29:16+01:00",
   "run_id": "fancy-night-20261030-message-bound",
-  "current_lot": "P01 single-message MIME limit draft, execution runtime unavailable",
+  "current_lot": "P01 bounded interactive message MIME reader, isolated verification completed",
   "live_render_deploy": "dep-dbf4p1ss728c73d5nub0",
   "upstream_integration_tests": {
-    "status": "NON ESEGUITO for this draft",
-    "last_verified": {
-      "main": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
-      "passed": 333,
-      "failed": 0,
-      "syntax_checks": 5,
-      "environment": "local merge-tree snapshot only; no remote merge",
-      "tree": "3fc7e017eb9721a42dabda23f3eec70a3f298574"
-    },
-    "last_verified_source_commit": "e443d868685ff9dd1e29b76eebf5dd521c52d61f"
+    "main": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+    "passed": 340,
+    "failed": 0,
+    "syntax_checks": 6,
+    "environment": "local merge-tree snapshot only; no remote merge",
+    "tree": "60f7cf8b95d841e8bee673c5ffd7b42b54a951d2"
   },
   "source_integrity": {
     "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
@@ -162,13 +155,13 @@
     "previous_single_message_server_blob": "a11abed369707d1ab0efd38c37848223bb917de2"
   },
   "last_lease": {
-    "run_id": "fancy-night-20261030-message-bound",
-    "component": "Render single-message source limit",
-    "acquired_at": "2026-10-30T01:23:51.819Z",
-    "expires_at": "2026-10-30T02:23:51.819Z",
-    "base_head": "e443d868685ff9dd1e29b76eebf5dd521c52d61f",
+    "run_id": "fancy-night-20261030-message-validation",
+    "component": "Render single-message test/checkpoint",
+    "acquired_at": "2026-10-30T01:28:07.047Z",
+    "expires_at": "2026-10-30T02:28:07.047Z",
+    "base_head": "d0ac9d19bc9a2af733cdc4108bcc1c620d0403a2",
     "status": "released",
-    "released_at": "2026-10-30T01:25:46.296Z"
+    "released_at": "2026-10-30T01:29:16.864Z"
   },
   "last_verified_tests": {
     "command": "npm test; npm run check",
@@ -179,7 +172,10 @@
     "source_commit": "e443d868685ff9dd1e29b76eebf5dd521c52d61f",
     "date": "2026-10-29"
   },
-  "pending_development": [
-    "single-message-source-limit-draft-awaiting-node-tests"
-  ]
+  "pending_development": [],
+  "execution_recovery": {
+    "initial_issue": "prior ephemeral checkout no longer existed; initial unavailable-runtime conclusion corrected",
+    "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
+    "node": "v24.22.1"
+  }
 }
