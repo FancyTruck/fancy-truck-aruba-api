@@ -69,6 +69,10 @@
         {
           "date": "2026-10-29",
           "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
+        },
+        {
+          "date": "2026-10-30",
+          "kind": "source diagnosis: interactive message reader used unbounded download unlike existing bounded polling; 20MiB draft guard and synthetic tests prepared. Node/syntax/suite checks NON ESEGUITO because executor unavailable; not OOM-cause/live evidence."
         }
       ],
       "updated_at": "2026-10-22"
@@ -162,6 +166,10 @@
         {
           "date": "2026-10-29",
           "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
+        },
+        {
+          "date": "2026-10-30",
+          "kind": "source diagnosis: interactive message reader used unbounded download unlike existing bounded polling; 20MiB draft guard and synthetic tests prepared. Node/syntax/suite checks NON ESEGUITO because executor unavailable; not OOM-cause/live evidence."
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
@@ -187,6 +195,10 @@
         {
           "date": "2026-10-29",
           "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
+        },
+        {
+          "date": "2026-10-30",
+          "kind": "source diagnosis: interactive message reader used unbounded download unlike existing bounded polling; 20MiB draft guard and synthetic tests prepared. Node/syntax/suite checks NON ESEGUITO because executor unavailable; not OOM-cause/live evidence."
         }
       ]
     },
@@ -495,6 +507,10 @@
         {
           "date": "2026-10-29",
           "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
+        },
+        {
+          "date": "2026-10-30",
+          "kind": "source diagnosis: interactive message reader used unbounded download unlike existing bounded polling; 20MiB draft guard and synthetic tests prepared. Node/syntax/suite checks NON ESEGUITO because executor unavailable; not OOM-cause/live evidence."
         }
       ]
     },
@@ -536,7 +552,13 @@
     {
       "id": "7.4",
       "objective": "Costi e limiti",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-10-30",
+          "kind": "source diagnosis: interactive message reader used unbounded download unlike existing bounded polling; 20MiB draft guard and synthetic tests prepared. Node/syntax/suite checks NON ESEGUITO because executor unavailable; not OOM-cause/live evidence."
+        }
+      ]
     },
     {
       "id": "7.5",

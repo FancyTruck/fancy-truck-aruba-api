@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "updated_at": "2026-10-29T01:37:45.325612+00:00",
+  "updated_at": "2026-10-30T01:25:46.296Z",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
-  "stage": "draft PR26 plus v25-based private proxy reconciliation; no release performed",
+  "stage": "draft PR26; new single-message patch NOT EXECUTED or release-ready",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
@@ -25,25 +25,17 @@
     "failed-standalone-audit-and-case-create-update-rollback"
   ],
   "tests": {
-    "command": "npm test; npm run check",
-    "passed": 304,
-    "failed": 0,
-    "syntax_checks": 5,
-    "environment": "isolated PR26; filesystem failures and real mail/thread modules with synthetic provider adapter"
+    "status": "NON ESEGUITO",
+    "command": "node --test test/mailMessage.test.js test/mailMessageIntegration.test.js; npm test; npm run check",
+    "reason": "exec-server failed to create a process: No such file or directory; no Node test/syntax/build execution available"
   },
-  "next_action": "Design evidence-bound external outcome reconciliation and single-process ownership enforcement; review caller mutations before persistence and workflow effect boundaries before any activation; personal report and live acceptance remain open",
+  "next_action": "Restore authorized Node executor and run the prepared single-message unit/HTTP tests, npm test and npm run check, then local upstream merge-tree checks; do not release the untested draft",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
     "business-specific fiscal/deposit rules remain to verify before activation"
   ],
-  "lease": {
-    "run_id": "fancy-night-20261030-message-bound",
-    "component": "Render single-message source limit",
-    "acquired_at": "2026-10-30T01:23:51.819Z",
-    "expires_at": "2026-10-30T02:23:51.819Z",
-    "base_head": "e443d868685ff9dd1e29b76eebf5dd521c52d61f"
-  },
+  "lease": null,
   "draft_pr": "https://github.com/FancyTruck/fancy-truck-aruba-api/pull/26",
   "components": [
     {
@@ -140,31 +132,48 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-10-29T02:37:45.325612+01:00",
-  "run_id": "fancy-night-20261029-case-audit",
-  "current_lot": "P03 failed standalone audit and case persistence rollback",
+  "updated_at_rome": "2026-10-30T02:25:46+01:00",
+  "run_id": "fancy-night-20261030-message-bound",
+  "current_lot": "P01 single-message MIME limit draft, execution runtime unavailable",
   "live_render_deploy": "dep-dbf4p1ss728c73d5nub0",
   "upstream_integration_tests": {
-    "main": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
-    "passed": 333,
-    "failed": 0,
-    "syntax_checks": 5,
-    "environment": "local merge-tree snapshot only; no remote merge",
-    "tree": "3fc7e017eb9721a42dabda23f3eec70a3f298574"
+    "status": "NON ESEGUITO for this draft",
+    "last_verified": {
+      "main": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+      "passed": 333,
+      "failed": 0,
+      "syntax_checks": 5,
+      "environment": "local merge-tree snapshot only; no remote merge",
+      "tree": "3fc7e017eb9721a42dabda23f3eec70a3f298574"
+    },
+    "last_verified_source_commit": "e443d868685ff9dd1e29b76eebf5dd521c52d61f"
   },
   "source_integrity": {
     "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
-    "intentional_new_server_blob": "a11abed369707d1ab0efd38c37848223bb917de2",
-    "scope": "generic SMTP pre-send claim, outcome classification and owner-only interrupted-claim quarantine; corrected intake handlers and awaiting_scope_review unchanged",
-    "previous_corrected_project_guard_server_blob": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc"
+    "intentional_new_server_blob": "9ba35a907c6165a9051434d59fd7d72850fe24cc",
+    "scope": "Intentional single-message route source bound and import only; full pre-edit server blob verified by create_blob SHA equality; intake handlers, awaiting_scope_review, project and SMTP guards preserved",
+    "previous_corrected_project_guard_server_blob": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc",
+    "previous_single_message_server_blob": "a11abed369707d1ab0efd38c37848223bb917de2"
   },
   "last_lease": {
-    "run_id": "fancy-night-20261029-case-audit",
-    "component": "Render case/audit persistence",
-    "acquired_at": "2026-10-29T01:35:23.780146+00:00",
-    "expires_at": "2026-10-29T02:35:23.780146+00:00",
-    "base_head": "0238ecb876d44784e6f31d43d973ae72e9066390",
+    "run_id": "fancy-night-20261030-message-bound",
+    "component": "Render single-message source limit",
+    "acquired_at": "2026-10-30T01:23:51.819Z",
+    "expires_at": "2026-10-30T02:23:51.819Z",
+    "base_head": "e443d868685ff9dd1e29b76eebf5dd521c52d61f",
     "status": "released",
-    "released_at": "2026-10-29T01:37:45.325612+00:00"
-  }
+    "released_at": "2026-10-30T01:25:46.296Z"
+  },
+  "last_verified_tests": {
+    "command": "npm test; npm run check",
+    "passed": 304,
+    "failed": 0,
+    "syntax_checks": 5,
+    "environment": "isolated PR26; filesystem failures and real mail/thread modules with synthetic provider adapter",
+    "source_commit": "e443d868685ff9dd1e29b76eebf5dd521c52d61f",
+    "date": "2026-10-29"
+  },
+  "pending_development": [
+    "single-message-source-limit-draft-awaiting-node-tests"
+  ]
 }

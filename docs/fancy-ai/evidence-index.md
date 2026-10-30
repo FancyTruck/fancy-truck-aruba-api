@@ -20,3 +20,5 @@
 - `night-verification-2026-10-28.json`: action queue/supersession atomicity.8 of9 new unit tests fail on baseline; all9 pass after correction, plus actual HTTP preparation failure/retry/replay.295 branch/324 local upstream-combination tests and5syntax checks pass. No real send/provider execution or new live acceptance.
 
 - `night-verification-2026-10-29.json`: standalone audit and case rollback.8/9 baseline failures,9/9 corrected tests; actual mail/thread modules with synthetic post-effect audit failure retain replay barrier.304 branch/333 local combined tests and5syntax checks pass. Cases remain workflow simulation; no new live acceptance.
+
+- `night-verification-2026-10-30.json`: source-only diagnosis and untested single-message MIME limit draft. Full original server blob verified. Node tests/syntax/suite/upstream combination NON ESEGUITO: executor cannot create a process. Historical304/333 counts apply only to e443d86. No live acceptance.

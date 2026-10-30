@@ -1,0 +1,68 @@
+{
+  "date": "2026-10-30",
+  "scope": "P01 single-message read bound; untested source draft",
+  "base_pr26": "e443d868685ff9dd1e29b76eebf5dd521c52d61f",
+  "lease_commit": "a32ccb5249cbd6be6b138d3afb09083add02ffb4",
+  "source_integrity": {
+    "pre_edit_server_blob": "a11abed369707d1ab0efd38c37848223bb917de2",
+    "pre_edit_verification": "complete fetched content re-created as Git blob; returned SHA equals exact original",
+    "new_server_blob": "9ba35a907c6165a9051434d59fd7d72850fe24cc",
+    "edit_scope": "one import and exact interactive message route; other server bytes retained"
+  },
+  "diagnosis": "GET /v1/:account/messages/:uid used client.download and simpleParser(stream) without a source cap. Existing commercial polling already bounds sources at20MiB and is unchanged.",
+  "changes": [
+    "new bounded reader verifies RFC822 size before fetching MIME",
+    "fetchOne requests source range start0/maxLength20MiB+1, then verifies actual byte length before parsing",
+    "oversize produces HTTP413/MAIL_SOURCE_LIMIT; unavailable size/source fails closed",
+    "existing readonly mailbox lock and finally/logout cleanup retained; UID must be safe positive integer",
+    "no cursor, mailbox, Odoo or business write"
+  ],
+  "checks": {
+    "node_tests": "NON ESEGUITO",
+    "syntax": "NON ESEGUITO",
+    "suite": "NON ESEGUITO",
+    "upstream_combination": "NON ESEGUITO",
+    "reason": "exec_command failed before process creation: exec-server No such file or directory. Two attempts, then continued through supported GitHub connector.",
+    "prepared_test_files": [
+      "test/mailMessage.test.js",
+      "test/mailMessageIntegration.test.js"
+    ],
+    "prepared_scenarios": [
+      "oversized and invalid metadata",
+      "lying metadata/oversized returned bytes",
+      "exact20MiB boundary and UID semantics",
+      "missing source/unsafe UID/parser failure",
+      "actual HTTP route with stub IMAP; 413/502/200 and cleanup/state invariance"
+    ],
+    "commands": [
+      "node --test test/mailMessage.test.js test/mailMessageIntegration.test.js",
+      "npm test",
+      "npm run check"
+    ],
+    "historical_only": {
+      "source_commit": "e443d868685ff9dd1e29b76eebf5dd521c52d61f",
+      "branch_passed": 304,
+      "combined_passed": 333,
+      "syntax_checks": 5,
+      "date": "2026-10-29"
+    }
+  },
+  "live_readonly": {
+    "render_commit": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+    "deploy": "dep-dbf4p1ss728c73d5nub0",
+    "status": "live",
+    "live_at": "2026-10-25T18:38:41.464733Z",
+    "branch": "main",
+    "auto_deploy": "yes",
+    "previews": "off",
+    "scope": "fresh metadata only; no memory/backup/restart acceptance"
+  },
+  "limitations": [
+    "Untested draft: do not merge or deploy before Node execution and review",
+    "No memory benchmark or representative concurrent load was run; historical OOM root cause remains undiagnosed",
+    "20MiB source cap is per request; MIME parse amplification and concurrent request budgeting remain separate work",
+    "main combination not newly constructed/tested; API comparison is not merge-conflict proof",
+    "Prior specific4.5.1 acceptance remains closed; parent F0/F1/F2 and end-to-end remain open"
+  ],
+  "effects": "GitHub isolated development branch only. No main push, remote merge/deploy/restart, hosted migration, production write, real send or economic action."
+}

@@ -27,6 +27,7 @@ import { pollOdooMessages } from './odooPolling.js';
 import { runMailOperation } from './mailOperations.js';
 import { quotationPricelist, procedureStage } from './commercialSafeguards.js';
 import { pollMailbox } from './mailPolling.js';
+import { readBoundedMessage } from './mailMessage.js';
 import crypto from 'node:crypto';
 import express from 'express';
 import { ImapFlow } from 'imapflow';
@@ -1287,13 +1288,12 @@ app.get('/v1/:account/messages', async (req, res) => {
 
 app.get('/v1/:account/messages/:uid', async (req, res) => {
   const uid = Number(req.params.uid);
-  if (!Number.isInteger(uid) || uid < 1) return res.status(400).json({ ok: false, error: 'UID non valido' });
+  if (!Number.isSafeInteger(uid) || uid < 1) return res.status(400).json({ ok: false, error: 'UID non valido' });
   try {
     const parsed = await withImap(req.params.account, async (client) => {
       const lock = await client.getMailboxLock('INBOX', { readOnly: true });
       try {
-        const raw = await client.download(uid, undefined, { uid: true });
-        return simpleParser(raw.content);
+        return await readBoundedMessage({ client, uid, parse: simpleParser });
       } finally { lock.release(); }
     });
     res.json({ ok: true, message: {
@@ -1304,7 +1304,8 @@ app.get('/v1/:account/messages/:uid', async (req, res) => {
         size: item.size, checksum: item.checksum || null })),
     } });
   } catch (error) {
-    res.status(502).json({ ok: false, error: error instanceof Error ? error.message : 'Errore IMAP' });
+    res.status(error?.code === 'MAIL_SOURCE_LIMIT' ? 413 : 502).json({ ok: false, code: error?.code || 'IMAP_READ_FAILED',
+      error: error instanceof Error ? error.message : 'Errore IMAP' });
   }
 });
 
