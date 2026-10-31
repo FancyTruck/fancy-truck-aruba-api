@@ -28,6 +28,7 @@ import { runMailOperation } from './mailOperations.js';
 import { quotationPricelist, procedureStage } from './commercialSafeguards.js';
 import { pollMailbox } from './mailPolling.js';
 import { readBoundedMessage } from './mailMessage.js';
+import { createMailReadGate } from './mailReadGate.js';
 import crypto from 'node:crypto';
 import express from 'express';
 import { ImapFlow } from 'imapflow';
@@ -64,6 +65,7 @@ if (!runtime.readOnly) {
   store.reconcileInterruptedSmtpExecutions();
 }
 const approvals = new ApprovalService(store);
+const interactiveMailReadGate = createMailReadGate();
 let activeApiRequests=0, backupInFlight=null;
 // Do not decrement on client disconnect: an aborted response can still have a
 // handler doing external work. Fail closed until restart if it never finishes.
@@ -1289,6 +1291,9 @@ app.get('/v1/:account/messages', async (req, res) => {
 app.get('/v1/:account/messages/:uid', async (req, res) => {
   const uid = Number(req.params.uid);
   if (!Number.isSafeInteger(uid) || uid < 1) return res.status(400).json({ ok: false, error: 'UID non valido' });
+  const workDone = interactiveMailReadGate.claim(res);
+  if (!workDone) return res.set('Retry-After', '1').status(429).json({ ok: false, code: 'MAIL_READ_BUSY',
+    error: 'Lettura email già in corso: riprovare al termine' });
   try {
     const parsed = await withImap(req.params.account, async (client) => {
       const lock = await client.getMailboxLock('INBOX', { readOnly: true });
@@ -1306,7 +1311,7 @@ app.get('/v1/:account/messages/:uid', async (req, res) => {
   } catch (error) {
     res.status(error?.code === 'MAIL_SOURCE_LIMIT' ? 413 : 502).json({ ok: false, code: error?.code || 'IMAP_READ_FAILED',
       error: error instanceof Error ? error.message : 'Errore IMAP' });
-  }
+  } finally { workDone(); }
 });
 
 app.post('/v1/:account/send', async (req, res) => {

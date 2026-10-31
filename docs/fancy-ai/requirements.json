@@ -73,6 +73,10 @@
         {
           "date": "2026-10-30",
           "kind": "interactive message reader bounded at20MiB before MIME parsing;6 unit tests and actual HTTP IMAP-stub test pass, HTTP regression fails on prior checkpoint;311 branch/340 local upstream-combination tests and6syntax checks pass. Initial missing-checkout problem recovered. No OOM-cause or live acceptance claim."
+        },
+        {
+          "date": "2026-10-31",
+          "kind": "isolated four-request MIME burst: measured RSS275283968bytes without admission vs130920448 with one admitted/three rejected; real parser, synthetic10MiB source.316 branch tests and8syntax checks pass; actual HTTP regression fails on previous checkpoint. PR38 combination blocked by5 real merge-tree conflicts; no live OOM/phase acceptance."
         }
       ],
       "updated_at": "2026-10-22"
@@ -170,6 +174,10 @@
         {
           "date": "2026-10-30",
           "kind": "interactive message reader bounded at20MiB before MIME parsing;6 unit tests and actual HTTP IMAP-stub test pass, HTTP regression fails on prior checkpoint;311 branch/340 local upstream-combination tests and6syntax checks pass. Initial missing-checkout problem recovered. No OOM-cause or live acceptance claim."
+        },
+        {
+          "date": "2026-10-31",
+          "kind": "isolated four-request MIME burst: measured RSS275283968bytes without admission vs130920448 with one admitted/three rejected; real parser, synthetic10MiB source.316 branch tests and8syntax checks pass; actual HTTP regression fails on previous checkpoint. PR38 combination blocked by5 real merge-tree conflicts; no live OOM/phase acceptance."
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
@@ -199,6 +207,10 @@
         {
           "date": "2026-10-30",
           "kind": "interactive message reader bounded at20MiB before MIME parsing;6 unit tests and actual HTTP IMAP-stub test pass, HTTP regression fails on prior checkpoint;311 branch/340 local upstream-combination tests and6syntax checks pass. Initial missing-checkout problem recovered. No OOM-cause or live acceptance claim."
+        },
+        {
+          "date": "2026-10-31",
+          "kind": "isolated four-request MIME burst: measured RSS275283968bytes without admission vs130920448 with one admitted/three rejected; real parser, synthetic10MiB source.316 branch tests and8syntax checks pass; actual HTTP regression fails on previous checkpoint. PR38 combination blocked by5 real merge-tree conflicts; no live OOM/phase acceptance."
         }
       ]
     },
@@ -511,6 +523,10 @@
         {
           "date": "2026-10-30",
           "kind": "interactive message reader bounded at20MiB before MIME parsing;6 unit tests and actual HTTP IMAP-stub test pass, HTTP regression fails on prior checkpoint;311 branch/340 local upstream-combination tests and6syntax checks pass. Initial missing-checkout problem recovered. No OOM-cause or live acceptance claim."
+        },
+        {
+          "date": "2026-10-31",
+          "kind": "isolated four-request MIME burst: measured RSS275283968bytes without admission vs130920448 with one admitted/three rejected; real parser, synthetic10MiB source.316 branch tests and8syntax checks pass; actual HTTP regression fails on previous checkpoint. PR38 combination blocked by5 real merge-tree conflicts; no live OOM/phase acceptance."
         }
       ]
     },
@@ -557,6 +573,10 @@
         {
           "date": "2026-10-30",
           "kind": "interactive message reader bounded at20MiB before MIME parsing;6 unit tests and actual HTTP IMAP-stub test pass, HTTP regression fails on prior checkpoint;311 branch/340 local upstream-combination tests and6syntax checks pass. Initial missing-checkout problem recovered. No OOM-cause or live acceptance claim."
+        },
+        {
+          "date": "2026-10-31",
+          "kind": "isolated four-request MIME burst: measured RSS275283968bytes without admission vs130920448 with one admitted/three rejected; real parser, synthetic10MiB source.316 branch tests and8syntax checks pass; actual HTTP regression fails on previous checkpoint. PR38 combination blocked by5 real merge-tree conflicts; no live OOM/phase acceptance."
         }
       ]
     },

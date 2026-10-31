@@ -22,3 +22,5 @@
 - `night-verification-2026-10-29.json`: standalone audit and case rollback.8/9 baseline failures,9/9 corrected tests; actual mail/thread modules with synthetic post-effect audit failure retain replay barrier.304 branch/333 local combined tests and5syntax checks pass. Cases remain workflow simulation; no new live acceptance.
 
 - `night-verification-2026-10-30.json`: bounded interactive MIME reader.6 unit+1 actual HTTP tests pass; HTTP regression fails on e443d86.311 branch/340 local upstream-combination tests and6syntax checks pass after reconstructing the missing ephemeral checkout. Full pre-edit server blob verified; no new OOM/live acceptance.
+
+- `night-verification-2026-10-31.json`: real HTTP concurrency regression plus4 gate unit tests,316 branch tests/8syntax checks. Fresh-process actual-parser synthetic memory burst RSS262.5MiB baseline4 admitted vs124.9MiB gated1 admitted/3 rejected. PR38 combined suite BLOCKED by5 actual merge-tree conflicts; no new live OOM acceptance.

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-10-30T01:29:16.864Z",
+  "updated_at": "2026-10-31T01:18:32.255836+00:00",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
   "stage": "draft PR26; single-message source bound locally tested, not released",
@@ -23,34 +23,29 @@
     "generic-smtp-durable-claim-and-interrupted-uncertain-replay-barrier",
     "atomic-action-queue-supersession-and-audit-with-held-reference-rollback",
     "failed-standalone-audit-and-case-create-update-rollback",
-    "bounded-interactive-message-source-before-mime-parsing"
+    "bounded-interactive-message-source-before-mime-parsing",
+    "interactive-mime-single-admission-through-work-and-response-completion"
   ],
   "tests": {
-    "command": "node --test test/mailMessage.test.js test/mailMessageIntegration.test.js; npm test; npm run check; node --check src/mailMessage.js",
-    "passed": 311,
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs",
+    "passed": 316,
     "failed": 0,
-    "syntax_checks": 6,
-    "environment": "Node24.22.1, clean reconstructed cloud checkout, synthetic unit and actual HTTP IMAP fixtures"
+    "syntax_checks": 8,
+    "environment": "Node24.22.1 isolated PR26 with synthetic HTTP/IMAP tests"
   },
-  "next_action": "Continue representative parser/concurrency memory analysis and provider-evidence reconciliation; live checkpoint and operational acceptance stay open",
+  "next_action": "Reconcile the actual five PR38 integration conflicts in an isolated snapshot, explicitly preserving outcome reporting and reviewing large-message cursor semantics; continue independent provider reconciliation without live effects",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
     "business-specific fiscal/deposit rules remain to verify before activation"
   ],
-  "lease": {
-    "run_id": "fancy-night-20261031-mime-concurrency",
-    "component": "Render interactive MIME admission",
-    "acquired_at": "2026-10-31T01:15:08.754160+00:00",
-    "expires_at": "2026-10-31T02:15:08.754160+00:00",
-    "base_head": "5f2e2f2112a465c094c32f6ac8dff7974a034622"
-  },
+  "lease": null,
   "draft_pr": "https://github.com/FancyTruck/fancy-truck-aruba-api/pull/26",
   "components": [
     {
       "component": "Render mail/CRM service",
       "development": "PR26",
-      "isolated_tests": 311
+      "isolated_tests": 316
     },
     {
       "component": "Sites Odoo MCP connector",
@@ -112,7 +107,7 @@
     }
   ],
   "operational_evidence": "docs/fancy-ai/operational-verification-2026-10-22.json",
-  "live_render_commit": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+  "live_render_commit": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
   "acceptance_items": {
     "4.5.1": {
       "status": "collaudato",
@@ -141,33 +136,46 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-10-30T02:29:16+01:00",
-  "run_id": "fancy-night-20261030-message-bound",
-  "current_lot": "P01 bounded interactive message MIME reader, isolated verification completed",
-  "live_render_deploy": "dep-dbf4p1ss728c73d5nub0",
+  "updated_at_rome": "2026-10-31T02:18:32.255836+01:00",
+  "run_id": "fancy-night-20261031-mime-concurrency",
+  "current_lot": "P01 bound interactive MIME concurrency through work and response termination",
+  "live_render_deploy": "dep-dbiia7vb9u1s73apusp0",
   "upstream_integration_tests": {
-    "main": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
-    "passed": 340,
-    "failed": 0,
-    "syntax_checks": 6,
-    "environment": "local merge-tree snapshot only; no remote merge",
-    "tree": "60f7cf8b95d841e8bee673c5ffd7b42b54a951d2"
+    "status": "BLOCKED: actual merge-tree conflicts with PR38; no passing combined suite",
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "conflicted_paths": [
+      "src/mailPolling.js",
+      "test/intakeIntegration.test.js",
+      "test/mailPolling.test.js",
+      "test/peuMailMemory.test.js",
+      "test/threadLinking.test.js"
+    ],
+    "last_verified": {
+      "main": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+      "passed": 340,
+      "failed": 0,
+      "syntax_checks": 6,
+      "environment": "local merge-tree snapshot only; no remote merge",
+      "tree": "60f7cf8b95d841e8bee673c5ffd7b42b54a951d2"
+    },
+    "resolution_required": "preserve PR38 intake outcomes/attention and reconcile10MiB review-and-advance behavior with PR26 20MiB suspend-and-hold policy; do not select a side silently"
   },
   "source_integrity": {
     "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
-    "intentional_new_server_blob": "9ba35a907c6165a9051434d59fd7d72850fe24cc",
-    "scope": "Intentional single-message route source bound and import only; full pre-edit server blob verified by create_blob SHA equality; intake handlers, awaiting_scope_review, project and SMTP guards preserved",
+    "intentional_new_server_blob": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "scope": "one gate import/instance and interactive message admission/finally; repaired intake and existing polling/SMTP guards retained",
     "previous_corrected_project_guard_server_blob": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc",
-    "previous_single_message_server_blob": "a11abed369707d1ab0efd38c37848223bb917de2"
+    "previous_single_message_server_blob": "a11abed369707d1ab0efd38c37848223bb917de2",
+    "previous_server_blob": "9ba35a907c6165a9051434d59fd7d72850fe24cc"
   },
   "last_lease": {
-    "run_id": "fancy-night-20261030-message-validation",
-    "component": "Render single-message test/checkpoint",
-    "acquired_at": "2026-10-30T01:28:07.047Z",
-    "expires_at": "2026-10-30T02:28:07.047Z",
-    "base_head": "d0ac9d19bc9a2af733cdc4108bcc1c620d0403a2",
+    "run_id": "fancy-night-20261031-mime-concurrency",
+    "component": "Render interactive MIME admission",
+    "acquired_at": "2026-10-31T01:15:08.754160+00:00",
+    "expires_at": "2026-10-31T02:15:08.754160+00:00",
+    "base_head": "5f2e2f2112a465c094c32f6ac8dff7974a034622",
     "status": "released",
-    "released_at": "2026-10-30T01:29:16.864Z"
+    "released_at": "2026-10-31T01:18:32.255836+00:00"
   },
   "last_verified_tests": {
     "command": "npm test; npm run check",
