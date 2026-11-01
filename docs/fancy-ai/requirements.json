@@ -19,9 +19,14 @@
         {
           "date": "2026-10-23",
           "kind": "private v25 proxy tracks reconciled,65 isolated tests/TypeScript/build passed; current MCPv21 already contains validation,26 tests/TypeScript/build passed. Source-only evidence, no parent/live acceptance."
+        },
+        {
+          "date": "2026-11-01",
+          "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
+          "reference": "night-verification-2026-11-01.json"
         }
       ],
-      "updated_at": "2026-10-22"
+      "updated_at": "2026-11-01"
     },
     {
       "id": "0.2",
@@ -77,9 +82,14 @@
         {
           "date": "2026-10-31",
           "kind": "isolated four-request MIME burst: measured RSS275283968bytes without admission vs130920448 with one admitted/three rejected; real parser, synthetic10MiB source.316 branch tests and8syntax checks pass; actual HTTP regression fails on previous checkpoint. PR38 combination blocked by5 real merge-tree conflicts; no live OOM/phase acceptance."
+        },
+        {
+          "date": "2026-11-01",
+          "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
+          "reference": "night-verification-2026-11-01.json"
         }
       ],
-      "updated_at": "2026-10-22"
+      "updated_at": "2026-11-01"
     },
     {
       "id": "0.3",
@@ -178,10 +188,15 @@
         {
           "date": "2026-10-31",
           "kind": "isolated four-request MIME burst: measured RSS275283968bytes without admission vs130920448 with one admitted/three rejected; real parser, synthetic10MiB source.316 branch tests and8syntax checks pass; actual HTTP regression fails on previous checkpoint. PR38 combination blocked by5 real merge-tree conflicts; no live OOM/phase acceptance."
+        },
+        {
+          "date": "2026-11-01",
+          "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
+          "reference": "night-verification-2026-11-01.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-10-22"
+      "updated_at": "2026-11-01"
     },
     {
       "id": "1.5",
@@ -211,8 +226,14 @@
         {
           "date": "2026-10-31",
           "kind": "isolated four-request MIME burst: measured RSS275283968bytes without admission vs130920448 with one admitted/three rejected; real parser, synthetic10MiB source.316 branch tests and8syntax checks pass; actual HTTP regression fails on previous checkpoint. PR38 combination blocked by5 real merge-tree conflicts; no live OOM/phase acceptance."
+        },
+        {
+          "date": "2026-11-01",
+          "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
+          "reference": "night-verification-2026-11-01.json"
         }
-      ]
+      ],
+      "updated_at": "2026-11-01"
     },
     {
       "id": "2.1",
@@ -254,8 +275,14 @@
         {
           "date": "2026-10-29",
           "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
+        },
+        {
+          "date": "2026-11-01",
+          "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
+          "reference": "night-verification-2026-11-01.json"
         }
-      ]
+      ],
+      "updated_at": "2026-11-01"
     },
     {
       "id": "2.6",
@@ -480,8 +507,14 @@
         {
           "date": "2026-10-22",
           "kind": "four commercial paths remain open for end-to-end acceptance; note/activity API acceptance remains separately closed"
+        },
+        {
+          "date": "2026-11-01",
+          "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
+          "reference": "night-verification-2026-11-01.json"
         }
-      ]
+      ],
+      "updated_at": "2026-11-01"
     },
     {
       "id": "7.2",
@@ -527,8 +560,14 @@
         {
           "date": "2026-10-31",
           "kind": "isolated four-request MIME burst: measured RSS275283968bytes without admission vs130920448 with one admitted/three rejected; real parser, synthetic10MiB source.316 branch tests and8syntax checks pass; actual HTTP regression fails on previous checkpoint. PR38 combination blocked by5 real merge-tree conflicts; no live OOM/phase acceptance."
+        },
+        {
+          "date": "2026-11-01",
+          "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
+          "reference": "night-verification-2026-11-01.json"
         }
-      ]
+      ],
+      "updated_at": "2026-11-01"
     },
     {
       "id": "7.3",
@@ -562,8 +601,14 @@
         {
           "date": "2026-10-29",
           "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
+        },
+        {
+          "date": "2026-11-01",
+          "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
+          "reference": "night-verification-2026-11-01.json"
         }
-      ]
+      ],
+      "updated_at": "2026-11-01"
     },
     {
       "id": "7.4",
@@ -577,8 +622,14 @@
         {
           "date": "2026-10-31",
           "kind": "isolated four-request MIME burst: measured RSS275283968bytes without admission vs130920448 with one admitted/three rejected; real parser, synthetic10MiB source.316 branch tests and8syntax checks pass; actual HTTP regression fails on previous checkpoint. PR38 combination blocked by5 real merge-tree conflicts; no live OOM/phase acceptance."
+        },
+        {
+          "date": "2026-11-01",
+          "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
+          "reference": "night-verification-2026-11-01.json"
         }
-      ]
+      ],
+      "updated_at": "2026-11-01"
     },
     {
       "id": "7.5",
@@ -677,10 +728,15 @@
         {
           "date": "2026-10-29",
           "kind": "standalone audit and case persistence rollback;8/9 new tests fail on prior checkpoint and9/9 pass after patch; mail/thread runtime modules with synthetic provider retain STARTED barrier after post-effect audit failure;304 branch and333 local combined tests,5syntax checks; case workflow remains simulation, no live acceptance"
+        },
+        {
+          "date": "2026-11-01",
+          "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
+          "reference": "night-verification-2026-11-01.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-10-22"
+      "updated_at": "2026-11-01"
     },
     {
       "id": "2.1.1",

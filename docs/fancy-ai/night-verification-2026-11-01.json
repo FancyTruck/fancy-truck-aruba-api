@@ -1,0 +1,121 @@
+{
+  "date": "2026-11-01",
+  "updated_at": "2026-11-01T01:16:23.696392+00:00",
+  "run_id": "fancy-night-20261101-pr38-reconciliation",
+  "modules": [
+    "P00",
+    "P01",
+    "P03",
+    "P22"
+  ],
+  "requirement_ids": [
+    "0.1",
+    "0.2",
+    "1.4",
+    "1.4.1",
+    "1.5",
+    "2.5",
+    "7.1",
+    "7.2",
+    "7.3",
+    "7.4"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "pr26_source": "a450bb3ddfabf40191aa56fa0bbd2390a2476044",
+    "pr26_lease": "79c5e34489390f5e1914db28a46a4f39398ba71d",
+    "integration_branch": "work/fancy-pr38-reconcile-20261101",
+    "history": "one-parent isolated continuation based on actual current main; no remote merge; PR26 source preserved",
+    "integration_commit": "2fa25d288ddbe16c1014d23459efcaeefced3aa6"
+  },
+  "conflicts_resolved": [
+    "src/mailPolling.js",
+    "test/intakeIntegration.test.js",
+    "test/mailPolling.test.js",
+    "test/peuMailMemory.test.js",
+    "test/threadLinking.test.js"
+  ],
+  "implementation": [
+    "Preserve all PR38 mail outcomes, customer-attention and intake-watchdog source/tests, plus corrected PR26 intake and awaiting_scope_review, readonly project association, approval/store/SMTP persistence guards and bounded interactive MIME admission.",
+    "Preserve deployed main 10MiB inline polling threshold. Large messages with recoverable envelope become a durable local classification review; cursor advances only after review/outcome/checkpoint persistence. Review explicitly reports content_processed=false and does not imply Odoo processing or delivery.",
+    "Missing size/envelope, excessive actual source, or failed persistence keeps the failed UID pending; bounded fetch starts at zero. Interactive single-message limit stays20MiB and admission stays one request per process.",
+    "Update forced-cycle persistence regression for the additional PR38 watchdog error-save attempt while retaining500, RUNNING durable state, recoverable INTERRUPTED state, unchanged cursor and zero provider calls."
+  ],
+  "validation": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs",
+    "passed": 357,
+    "failed": 0,
+    "syntax_checks": 8,
+    "runtime": "Node24.22.1",
+    "environment": "isolated combined source; synthetic fixtures, local HTTP, filesystem fault injection; no providers",
+    "new_tests": {
+      "file": "test/pr38PollingReconciliation.test.js",
+      "passed": 4,
+      "cases": [
+        "review save failure",
+        "outcome save failure",
+        "checkpoint save failure",
+        "exact sent-folder recovery identifiers"
+      ],
+      "invariants": "reopened UID unchanged after failure; one review after retry; explicit REVIEW not PROCESSED; no MIME/provider processing; watchdog reports pending review"
+    },
+    "initial_full_run": {
+      "passed": 356,
+      "failed": 1,
+      "resolution": "test expected3 persistence attempts before PR38; now4 including watchdog error persistence; no runtime guard removed"
+    }
+  },
+  "source_integrity": {
+    "pr26_server_blob_preserved": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "combined_server_blob": "bfdf0f7d2694b8123f175b03ef52cb0f867f603c",
+    "combined_polling_blob": "6fa5ad50940eddd8c838e998f271eaf0c3ce4d3e",
+    "new_test_blob": "525c97c193ec0f77c2c63f7ece14bbb20aabeb08",
+    "remote_readback": "full fetched remote tree equals tested local index; all56 changed paths hash-equal",
+    "combined_tree": "5d810d6c49b92d84884a8d0710e17b4c3dabb710",
+    "verified_changed_paths": 56
+  },
+  "live_readonly": {
+    "render_commit": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "deploy": "dep-dbiia7vb9u1s73apusp0",
+    "live_at": "2026-10-30T23:16:33.079353Z",
+    "service": "srv-daa7rk4s728c73fl46tg",
+    "workspace": "tea-daa7c667bikc73fkk940",
+    "auto_deploy_branch": "main",
+    "previews": "off",
+    "scope": "metadata only; independent prior deployment, no release by this run"
+  },
+  "oom": {
+    "historical_oom": "confirmed; application cause not established",
+    "new_evidence": "no new memory/load profile; prior dated fixture profile remains historical",
+    "live_acceptance": "open"
+  },
+  "backup": {
+    "new_download_integrity_decrypt_restore": "NOT EXECUTED; no new provider object access or restore",
+    "prior_evidence": "retain dated successful isolated restore log evidence; not a new observation",
+    "remaining": "retention/alarms and operational acceptance"
+  },
+  "open": [
+    "provider-evidence reconciliation without resend or replacement keys",
+    "single-process ownership and cross-process coordination",
+    "live checkpoint/restart/representative-load acceptance",
+    "private Sites personal/mobile/report and shared project creator criteria",
+    "F0/F1/F2 and four commercial end-to-end paths remain open; F6 deferred"
+  ],
+  "next_action": "Continue evidence-bound uncertain-outcome review and ownership enforcement on reconciled source; authorized live release/acceptance remains separate.",
+  "effects": {
+    "main_push": false,
+    "remote_merge": false,
+    "deploy_restart": false,
+    "production_write": false,
+    "hosted_migration": false,
+    "send": false,
+    "fiscal_payment_refund_purchase": false,
+    "new_automation": false
+  },
+  "privacy": "synthetic fixtures and sanitized evidence only; no private Sites source or personal records copied",
+  "lease": {
+    "commit": "79c5e34489390f5e1914db28a46a4f39398ba71d",
+    "status": "released after verified source preservation",
+    "released_at": "2026-11-01T01:17:50.367407+00:00"
+  }
+}

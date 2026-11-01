@@ -24,3 +24,5 @@
 - `night-verification-2026-10-30.json`: bounded interactive MIME reader.6 unit+1 actual HTTP tests pass; HTTP regression fails on e443d86.311 branch/340 local upstream-combination tests and6syntax checks pass after reconstructing the missing ephemeral checkout. Full pre-edit server blob verified; no new OOM/live acceptance.
 
 - `night-verification-2026-10-31.json`: real HTTP concurrency regression plus4 gate unit tests,316 branch tests/8syntax checks. Fresh-process actual-parser synthetic memory burst RSS262.5MiB baseline4 admitted vs124.9MiB gated1 admitted/3 rejected. PR38 combined suite BLOCKED by5 actual merge-tree conflicts; no new live OOM acceptance.
+
+- `night-verification-2026-11-01.json`: five PR38 conflicts resolved in a current-main-based isolated source branch,357/357 synthetic tests and8syntax checks. Four new durable-review fault/reopen/replay tests; all PR38 outcome/watchdog/attention functionality retained. PR26 source preserved; no live acceptance or deployment.
