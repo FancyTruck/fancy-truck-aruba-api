@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-26",
+  "scope": "P03/P04 pre-execution response recovery; local only",
+  "base_pr26": "52fc3b3d6a648d98b1ff6e754a76b7cb6068c7b1",
+  "server_blob_unchanged": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc",
+  "changes": [
+    "exact original actor/command may reissue a pending final token on the same action; previous token invalidated",
+    "same exact consumed final token retrieves already-approved result without writing state/audit",
+    "unknown legacy evidence, executed/cancelled/uncertain states and other-action tokens fail closed",
+    "malformed token suffix now rejected"
+  ],
+  "secret_storage": "nonce/token never persisted; only confirmation digests retained",
+  "tests": {
+    "new_unit_baseline": {
+      "passed": 2,
+      "failed": 5,
+      "total": 7
+    },
+    "branch_passed": 268,
+    "branch_failed": 0,
+    "upstream_combination_passed": 297,
+    "upstream_combination_failed": 0,
+    "syntax_checks_passed": 5,
+    "actual_http": "AbortController drops command/confirm response AFTER commitApproval succeeds; retry recovers one synthetic action; no new final audit on confirmation replay",
+    "reopen": "new JsonStateStore and ApprovalService validate recovery after reopening",
+    "provider_calls": 0,
+    "execution_endpoints_called": 0
+  },
+  "live_readonly": {
+    "render_commit": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+    "deploy": "dep-dbf4p1ss728c73d5nub0",
+    "status": "live",
+    "live_at": "2026-10-25T18:38:41.464733Z",
+    "memory": {
+      "from": "2026-10-25T23:30:00Z",
+      "to": "2026-10-26T01:30:00Z",
+      "samples": 13,
+      "min_bytes": 154865660,
+      "max_bytes": 247693310
+    },
+    "interpretation": "bounded sampled memory and release-state only; not OOM root cause, checkpoint correctness or live recovery acceptance"
+  },
+  "remaining": [
+    "generic case/action persistence audit",
+    "external execution claim and uncertain-effect reconciliation unchanged",
+    "no fsync/power-loss or multi-process guarantee",
+    "personal report mobile access and generic project creation coordination still open"
+  ],
+  "acceptance": "F0/F1/F2, all four end-to-end paths and live recovery remain open;4.5.1 remains accepted",
+  "effects": "source development branch only; no main push, merge, deploy, restart, Odoo mutation, send, payment, refund, hosted migration or purchase; newer live deployment was independent"
+}

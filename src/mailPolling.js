@@ -1,4 +1,9 @@
-// Checkpoint only completed messages, in UID order. Stop on the first failure.
+export const MAX_POLL_SOURCE_BYTES = 20 * 1024 * 1024;
+export const MAX_INLINE_SOURCE_BYTES = 10 * 1024 * 1024;
+const mailProblem = (code, message) => Object.assign(new Error(message), { code });
+
+// Checkpoint completed work OR a durably saved, recoverable review handoff.
+// A review handoff never means body processing or an Odoo registration succeeded.
 export async function pollMailbox({ client, account, store, parse, processMessage, now = Date.now() }) {
   const validity = String(client.mailbox?.uidValidity || '');
   if (!validity) throw new Error('UIDVALIDITY non disponibile: controllo sospeso');
@@ -27,9 +32,9 @@ export async function pollMailbox({ client, account, store, parse, processMessag
     try {
       // Inspect metadata before buffering attachments; a 150 MB email can kill a 512 MB worker.
       const metadata = await client.fetchOne(uid, { size: true, envelope: true }, { uid: true });
-      if (!Number.isSafeInteger(metadata?.size) || metadata.size < 0) throw new Error('Dimensione messaggio non verificabile');
-      if (metadata.size > 10 * 1024 * 1024) {
-        if (!metadata.envelope) throw new Error('Metadati messaggio grande non disponibili');
+      if (!Number.isSafeInteger(metadata?.size) || metadata.size < 0) throw mailProblem('MESSAGE_SIZE_UNAVAILABLE', 'Dimensione messaggio non verificabile');
+      if (metadata.size > MAX_INLINE_SOURCE_BYTES) {
+        if (!metadata.envelope) throw mailProblem('MAIL_SOURCE_LIMIT', 'Messaggio grande senza metadati recuperabili: checkpoint conservato');
         const env = metadata.envelope;
         const { item } = store.queueClassification({
           source_key: JSON.stringify(['large-message', account, validity, uid]),
@@ -40,15 +45,15 @@ export async function pollMailbox({ client, account, store, parse, processMessag
           reason: 'large_message_requires_review', size: metadata.size, candidate_ids: [],
         });
         // Only advance once the recoverable review is persisted. Never mark it processed in Odoo.
-        store.recordMailOutcome?.(account, validity, uid, {suspended:true,review_id:item.id,reason:item.reason || "large_message_requires_review"});
+        store.recordMailOutcome?.(account, validity, uid, {suspended:true,content_processed:false,review_id:item.id,reason:item.reason || "large_message_requires_review"});
         const next = { ...checkpoint, lastUid: uid };
         store.setCursor(key, next); checkpoint = next;
-        rows.push({ suspended: true, uid, account, review_id: item.id, reason: 'large_message_requires_review' });
+        rows.push({ suspended: true, content_processed: false, uid, account, review_id: item.id, reason: 'large_message_requires_review' });
         continue;
       }
-      const message = await client.fetchOne(uid, { source: { maxLength: 10 * 1024 * 1024 + 1 } }, { uid: true });
+      const message = await client.fetchOne(uid, { source: { start: 0, maxLength: MAX_INLINE_SOURCE_BYTES + 1 } }, { uid: true });
       if (!message?.source) throw new Error('Messaggio non disponibile: verifica necessaria');
-      if (message.source.length > 10 * 1024 * 1024) throw new Error('Messaggio oltre il limite dichiarato: verifica necessaria');
+      if (Buffer.byteLength(message.source) > MAX_INLINE_SOURCE_BYTES) throw mailProblem('MAIL_SOURCE_LIMIT', 'Messaggio oltre il limite dichiarato: checkpoint conservato');
       const parsed = await parse(message.source);
       const result = await processMessage(parsed, uid, validity);
       store.recordMailOutcome?.(account, validity, uid, result);
@@ -58,7 +63,7 @@ export async function pollMailbox({ client, account, store, parse, processMessag
       rows.push({...result, uid, account});
     } catch (error) {
       try { store.recordMailOutcome?.(account, validity, uid, {retry_pending:true,error:error.message}); } catch {}
-      rows.push({ suspended: true, retry_pending: true, uid,
+      rows.push({ suspended: true, retry_pending: true, uid, code: error?.code || 'MAIL_PROCESSING_FAILED',
         error: error instanceof Error ? error.message : 'errore sconosciuto' });
       break;
     }

@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-24",
+  "scope": "P03 development-only persistence failures; bounded readonly live evidence",
+  "base_pr26": "14cdbb1f56c8a7dcc3a92891afa4e46073047552",
+  "server_blob_unchanged": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc",
+  "defect": "failed cycle start/completion, integration success and remember could remain in memory despite failed disk commit; failed compaction discarded history/replay keys",
+  "fix": "rollback affected state on write/rename failures, use replacement collections for compaction, remove abandoned temporary file; preserve cycle references",
+  "tests": {
+    "new_regressions_on_baseline": {
+      "passed": 0,
+      "failed": 10
+    },
+    "branch_passed": 253,
+    "branch_failed": 0,
+    "upstream_combination_passed": 272,
+    "upstream_combination_failed": 0,
+    "syntax_checks_passed": 5,
+    "actual_endpoint": "POST /v1/automation/run and GET /v1/diagnostics; simulated persistence failure; zero provider fetches",
+    "restart": "fresh JsonStateStore reopens RUNNING cycle and reconciles INTERRUPTED while retaining cursor"
+  },
+  "limits": [
+    "no fsync/power-loss guarantee added",
+    "other mutators not universally transactional",
+    "single-process store, no multi-process locking claim",
+    "not live checkpoint/restart acceptance"
+  ],
+  "render": {
+    "commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
+    "deploy": "dep-dbd6pteq1p3s73dn9tkg",
+    "memory": {
+      "from": "2026-10-23T22:00:00Z",
+      "to": "2026-10-24T00:00:00Z",
+      "samples": 13,
+      "min_bytes": 177721340,
+      "max_bytes": 189927420,
+      "limit_bytes": 536870900
+    },
+    "events": {
+      "since": "2026-10-23T00:35:00Z",
+      "server_failed_returned": 0,
+      "server_restarted_returned": 0,
+      "cursor": "empty"
+    },
+    "interpretation": "bounded observations; no OOM root-cause or representative-load acceptance"
+  },
+  "backup": "no new read or restore performed; prior verified backup evidence remains historical",
+  "effects": "development branch only; no main push, merge, deploy, restart, Odoo mutation, message or economic action",
+  "acceptance": "F0/F1/F2 and end-to-end open;4.5.1 accepted scope unchanged"
+}

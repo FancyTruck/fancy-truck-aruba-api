@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-27",
+  "scope": "P03 generic SMTP claim and uncertain-outcome barrier; source and sandbox only",
+  "base_pr26": "72b10971558ca4524b45d840f0051d850cccf286",
+  "lease_commit": "91da35d8ba202a19f628d4edec037eab590c68a3",
+  "source_integrity": {
+    "previous_server_blob": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc",
+    "new_server_blob": "a11abed369707d1ab0efd38c37848223bb917de2",
+    "scope": "intentional changes only to generic execution route and owner startup reconciliation; repaired intake and project guard retained"
+  },
+  "demonstrated_defect": "Generic SMTP action remained APPROVED_FOR_EXECUTION while awaiting the provider; concurrent requests or timeout/restart could send the same action again. Partial acceptance was incorrectly marked executed, and a failed final save left approval on disk.",
+  "changes": [
+    "one durable execution claim plus audit BEFORE sendMail; failed claim save rolls back and never invokes transport",
+    "per-action claim stores attempt ID, exact payload/type/target snapshot hash and predetermined Message-ID for future reconciliation; Message-ID is not a provider deduplication guarantee",
+    "full provider-reported acceptance recorded as accepted_by_smtp with delivery_verified=false",
+    "timeouts, rejection/partial/pending results and failed settlement never restore execution eligibility; no automatic retry",
+    "owner startup marks interrupted SMTP claims UNCERTAIN; readers, readonly mode and restore quarantine do not mutate them",
+    "superseding draft cancellation leaves claimed SMTP attempts unchanged; Peu-specific SQLite effect ledger and authorization flow unchanged",
+    "generic SMTP timeouts bounded consistently with existing Peu transport settings",
+    "retain available partial SMTP response evidence in private state for later reconciliation, without treating it as delivery or automatic-retry permission"
+  ],
+  "tests": {
+    "commands": [
+      "node --test test/smtpExecutionIntegration.test.js",
+      "node --test test/smtpExecutionPersistence.test.js",
+      "npm test",
+      "npm run check"
+    ],
+    "baseline_http_scenarios": {
+      "passed": 0,
+      "failed": 6,
+      "node_test_totals_including_parent": {
+        "passed": 0,
+        "failed": 7
+      }
+    },
+    "patched_http_scenarios": {
+      "passed": 6,
+      "failed": 0,
+      "node_test_totals_including_parent": {
+        "passed": 7,
+        "failed": 0
+      }
+    },
+    "persistence_and_actual_startup_tests": {
+      "passed": 10,
+      "failed": 0
+    },
+    "branch_passed": 285,
+    "branch_failed": 0,
+    "combined_main": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+    "combined_tree": "ccac416d0268191736750910a1c5ac4b88aa4fed",
+    "combined_passed": 314,
+    "combined_failed": 0,
+    "syntax_checks_passed": 5,
+    "http_transport": "nodemailer.createTransport stub only; synthetic example.invalid recipient; no SMTP connection",
+    "actual_startup": "separate Node processes import the real server on ephemeral localhost; provider fetch and SMTP constructors fail if called",
+    "provider_calls": 0
+  },
+  "live_readonly": {
+    "render_commit": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+    "deploy": "dep-dbf4p1ss728c73d5nub0",
+    "status": "live",
+    "live_at": "2026-10-25T18:38:41.464733Z",
+    "branch": "main",
+    "auto_deploy": "yes",
+    "branch_previews": "off",
+    "scope": "fresh deployment/service metadata only; no new memory, backup or live restart tests"
+  },
+  "limitations": [
+    "single owning process/store assumption; no multi-process lock or fsync/power-loss guarantee",
+    "no reconciliation UI/provider evidence yet; uncertain and interrupted attempts remain blocked; never replace an uncertain key merely to bypass this barrier",
+    "per-action replay barrier does not establish deduplication between distinct business actions or new idempotency keys",
+    "preexisting case/action creation and other mutator durability still require audit",
+    "no live checkpoint/restart/OOM or end-to-end acceptance"
+  ],
+  "acceptance": "F0/F1/F2, four end-to-end paths and overall/live acceptance remain open;4.5.1 remains accepted",
+  "effects": "development branch source only; no main push, remote merge, deploy, restart, hosted migration, Odoo mutation, real send, fiscal operation, payment, refund or purchase"
+}

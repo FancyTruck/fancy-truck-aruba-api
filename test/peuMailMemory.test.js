@@ -12,6 +12,14 @@ test('oversized legacy rows return explicit incomplete coverage and remain store
  const {db,service}=fixture({text:'preserve',attachments:[{content:'x'.repeat(17*1024*1024)}]});
  try{assert.equal(service.messages('pietro','INBOX')[0].payload.content_status,'requires_large_message_download');assert.ok(db.prepare('SELECT length(payload) n FROM mail_messages').get().n>16777216);}finally{db.close();}
 });
+test('large IMAP message returns explicit metadata without downloading or mutating caller cursor',async()=>{
+ let released=false,downloads=0;const cursor={validity:'1',uid:9};
+ const client={mailbox:{uidValidity:1},getMailboxLock:async()=>({release(){released=true;}}),search:async()=>[10],fetchOne:async(_id,q)=>{if(q.source)downloads++;return q.size?{size:21*1024*1024}:{uid:10,flags:new Set(),envelope:{subject:'Large message'}};}};
+ const result=await readFolder(client,'INBOX',cursor,1);
+ assert.equal(result.items[0].content_status,'requires_large_message_download');
+ assert.equal(result.items[0].source,null);assert.equal(result.cursor.uid,10);
+ assert.equal(downloads,0);assert.equal(cursor.uid,9);assert.ok(released);
+});
 test('large IMAP message with missing envelope stops without downloading or advancing the caller cursor',async()=>{
  let released=false,downloads=0;const cursor={validity:'1',uid:9};
  const client={mailbox:{uidValidity:1},getMailboxLock:async()=>({release(){released=true;}}),search:async()=>[10],fetchOne:async(_id,q)=>{if(q.source)downloads++;return {size:21*1024*1024};}};

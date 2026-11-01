@@ -1,0 +1,133 @@
+{
+  "date": "2026-10-31",
+  "scope": "P01 interactive MIME concurrency guard and synthetic memory profile",
+  "base_pr26": "5f2e2f2112a465c094c32f6ac8dff7974a034622",
+  "lease_commit": "b3f124cae16fbf62ad3e4f12ad091de81630c565",
+  "source_integrity": {
+    "prior_server_blob": "9ba35a907c6165a9051434d59fd7d72850fe24cc",
+    "new_server_blob": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "scope": "gate import, per-process instance and exact interactive-read admission/finally only"
+  },
+  "changes": [
+    "one interactive MIME read per owning process; excess requests receive429 MAIL_READ_BUSY/Retry-After1 before IMAP connection",
+    "no in-memory request queue; existing20MiB per-message cap remains",
+    "ownership releases only after BOTH handler work completion and response finish/close; disconnect cannot admit more pending parser/provider work",
+    "errors, buffered responses, early disconnects and idempotent completion are tested"
+  ],
+  "tests": {
+    "branch_passed": 316,
+    "branch_failed": 0,
+    "syntax_checks_passed": 8,
+    "new_gate_unit_passed": 4,
+    "actual_http_passed": 1,
+    "baseline_http": {
+      "passed": 0,
+      "failed": 1,
+      "trigger": "second simultaneous request returns200 on prior5f2e2f2 instead of429"
+    },
+    "http_cases": "overlap, zero extra IMAP connects while busy, abort during pending source read, recovery after owner completes, read error cleanup",
+    "provider_calls": 0
+  },
+  "memory_profile": {
+    "command_baseline": "node --expose-gc --max-old-space-size=192 scripts/profile-interactive-mail.mjs baseline",
+    "command_gated": "node --expose-gc --max-old-space-size=192 scripts/profile-interactive-mail.mjs gated",
+    "baseline": {
+      "mode": "baseline",
+      "fixture": {
+        "source_bytes": 10486142,
+        "text_bytes": 2097152,
+        "attachment_decoded_bytes": 6291456
+      },
+      "burst_requests": 4,
+      "accepted": 4,
+      "rejected": 0,
+      "sourceReads": 4,
+      "maxActive": 4,
+      "initial": {
+        "rss": 89837568,
+        "heapTotal": 60485632,
+        "heapUsed": 25106432,
+        "external": 29460083,
+        "arrayBuffers": 10919874
+      },
+      "peak": {
+        "rss": 275283968,
+        "heapTotal": 60485632,
+        "heapUsed": 25389760,
+        "external": 199167121,
+        "arrayBuffers": 144974187
+      },
+      "os_peak_rss_bytes": 275283968,
+      "elapsed_ms": 275,
+      "node": "v24.22.1",
+      "scope": "synthetic fresh-process module profile; not live OOM causation or total service budget"
+    },
+    "gated": {
+      "mode": "gated",
+      "fixture": {
+        "source_bytes": 10486142,
+        "text_bytes": 2097152,
+        "attachment_decoded_bytes": 6291456
+      },
+      "burst_requests": 4,
+      "accepted": 1,
+      "rejected": 3,
+      "sourceReads": 1,
+      "maxActive": 1,
+      "initial": {
+        "rss": 90591232,
+        "heapTotal": 61009920,
+        "heapUsed": 25106032,
+        "external": 29460083,
+        "arrayBuffers": 10919838
+      },
+      "peak": {
+        "rss": 130920448,
+        "heapTotal": 61009920,
+        "heapUsed": 25524272,
+        "external": 69141789,
+        "arrayBuffers": 46406135
+      },
+      "os_peak_rss_bytes": 130920448,
+      "elapsed_ms": 84,
+      "node": "v24.22.1",
+      "scope": "synthetic fresh-process module profile; not live OOM causation or total service budget"
+    },
+    "interpretation": "fresh-process synthetic4-request bursts using actual bounded reader and mailparser, attachment projection and response serialization. Baseline admits4, guarded admits1/rejects3; not equal throughput, a total service memory budget, or historical OOM proof.192MiB old-space flag is not a512MiB RSS/cgroup cap; sampled metric maxima need not occur simultaneously."
+  },
+  "upstream": {
+    "status": "BLOCKED: actual merge-tree conflicts with PR38; no passing combined suite",
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "conflicted_paths": [
+      "src/mailPolling.js",
+      "test/intakeIntegration.test.js",
+      "test/mailPolling.test.js",
+      "test/peuMailMemory.test.js",
+      "test/threadLinking.test.js"
+    ],
+    "last_verified": {
+      "main": "e5c6f315282b68b4e7da8c55e6eabf27d2251024",
+      "passed": 340,
+      "failed": 0,
+      "syntax_checks": 6,
+      "environment": "local merge-tree snapshot only; no remote merge",
+      "tree": "60f7cf8b95d841e8bee673c5ffd7b42b54a951d2"
+    },
+    "resolution_required": "preserve PR38 intake outcomes/attention and reconcile10MiB review-and-advance behavior with PR26 20MiB suspend-and-hold policy; do not select a side silently"
+  },
+  "live_readonly": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "deploy": "dep-dbiia7vb9u1s73apusp0",
+    "status": "live",
+    "live_at": "2026-10-30T23:16:33.079353Z",
+    "scope": "fresh deployment metadata; independent PR38 release, not this branch"
+  },
+  "remaining": [
+    "actual PR38 merge-tree reconciliation, especially large-message review/cursor behavior",
+    "global polling/Peu memory and concurrent-process budgets not covered by the interactive gate",
+    "provider outcome reconciliation, single-writer ownership and power-loss guarantees",
+    "representative live OOM/checkpoint/end-to-end acceptance"
+  ],
+  "effects": "isolated branch only; no main push, remote merge, deploy/restart, Odoo write, hosted migration, send or economic action",
+  "acceptance": "F0/F1/F2 and four end-to-end paths remain open;4.5.1 remains accepted"
+}
