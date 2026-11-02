@@ -194,7 +194,13 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": null,
+  "lease": {
+    "run_id": "fancy-night-20261102-smtp-visibility",
+    "component": "Render combined-source SMTP uncertainty diagnostics",
+    "acquired_at": "2026-11-02T01:19:31.554133+00:00",
+    "expires_at": "2026-11-02T02:19:31.554133+00:00",
+    "base_head": "d0e6c26e4140943d5cb3ccc6fd2424032fba2d60"
+  },
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
     "commit": "2fa25d288ddbe16c1014d23459efcaeefced3aa6",
