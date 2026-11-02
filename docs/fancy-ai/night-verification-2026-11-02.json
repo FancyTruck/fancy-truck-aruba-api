@@ -1,0 +1,67 @@
+{
+  "date": "2026-11-02",
+  "updated_at": "2026-11-02T01:21:30.257779+00:00",
+  "run_id": "fancy-night-20261102-smtp-visibility",
+  "modules": [
+    "P03",
+    "P20",
+    "P22"
+  ],
+  "requirement_ids": [
+    "0.2",
+    "1.4",
+    "1.4.1",
+    "1.5",
+    "2.5",
+    "5.1",
+    "5.2",
+    "7.2",
+    "7.3"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "integration_branch": "work/fancy-pr38-reconcile-20261101",
+    "integration_parent": "2fa25d288ddbe16c1014d23459efcaeefced3aa6",
+    "pr26_parent": "d0e6c26e4140943d5cb3ccc6fd2424032fba2d60",
+    "lease": "556759e612e5bea0b9c85d2cc060066ee35386d8",
+    "integration_commit": "5368363f74cf6deb3e73e9610ef9e7f3526352f7"
+  },
+  "defect": "intakeStatus and existing watchdog could report OK while generic SMTP actions were durably UNCERTAIN; only Odoo mail_operations were counted.",
+  "implementation": "Existing intakeStatus and watchdog now count SMTP_OUTCOMES_UNCERTAIN. Readonly projection exposes action/attempt/Message-ID/start references only, with delivery_verified=false; no body, recipient, raw provider response or business payload. Existing internal watchdog note describes blocked SMTP and retains repeat stability. No execution, retry, clearance, new queue or provider reconciliation endpoint.",
+  "runtime": "src/server.js already uses intakeStatus in GET /v1/intake/status and syncIntakeWatchdog after cycles/scheduled checks. server.js unchanged on both preserved branches.",
+  "tests": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js",
+    "passed": 361,
+    "failed": 0,
+    "syntax_checks": 9,
+    "new_test": "test/smtpUncertaintyDiagnostics.test.js",
+    "baseline_new_passed": 0,
+    "baseline_new_failed": 4,
+    "corrected_new_passed": 4,
+    "coverage": [
+      "uncertain-only projection and no private-payload leakage",
+      "exclude successful/active/unrelated attempts; legacy missing identifiers remain visible",
+      "existing watchdog activity with simulated Odoo adapter remains ATTENTION and repeat performs no further note write",
+      "actual readonly HTTP intake route on reopened persistent generic SMTP UNCERTAIN claim: identical disk bytes, unchanged state, zero provider calls"
+    ],
+    "environment": "Node24.22.1; synthetic fixtures, local HTTP and simulated Odoo only; not live acceptance"
+  },
+  "source_integrity": {
+    "server_blob_unchanged": "bfdf0f7d2694b8123f175b03ef52cb0f867f603c",
+    "pr26_server_blob_unchanged": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "remote_readback": "whole remote tree equals local tested tree; all7 changed paths verified",
+    "tree": "5f6f48a955641dcb658ceb3d26682eba461d603d",
+    "verified_files": 7
+  },
+  "readonly_live": "Fresh Render configuration: auto-deploy main only, previews off; Git main unchanged at e0c775f. No new metrics, provider object inspection or restore executed.",
+  "oom": "Historical OOM confirmed, application cause/live representative-load acceptance still open; no new profiling.",
+  "backup": "No new download/integrity/decryption/restore. Retain dated prior successful restore evidence; retention/alarms remain open.",
+  "limits": [
+    "diagnostics do not reconcile provider evidence or authorize retries",
+    "EXECUTING remains active until existing owner-startup quarantine changes interrupted claim to UNCERTAIN",
+    "single-process ownership and provider correlation remain open",
+    "F0/F1/F2, commercial handoff and four end-to-end paths remain open;4.5.1 accepted, F6 deferred"
+  ],
+  "next_action": "Evidence-bound provider outcome review and ownership enforcement; verify current branch HEAD and registry lease before writing.",
+  "effects": "No main push, merge, deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task."
+}

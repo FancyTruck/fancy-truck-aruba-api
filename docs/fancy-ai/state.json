@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-11-01T01:17:50.367407+00:00",
+  "updated_at": "2026-11-02T01:22:04.494079+00:00",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
   "stage": "draft PR26 source preserved; tested combined continuation on separate main-based branch, not released",
@@ -25,7 +25,8 @@
     "failed-standalone-audit-and-case-create-update-rollback",
     "bounded-interactive-message-source-before-mime-parsing",
     "interactive-mime-single-admission-through-work-and-response-completion",
-    "separate-main-based-pr38-reconciliation-with-357-tests-and-pr26-source-preserved"
+    "separate-main-based-pr38-reconciliation-with-357-tests-and-pr26-source-preserved",
+    "uncertain-smtp-visible-in-existing-intake-and-watchdog-on-combined-source"
   ],
   "tests": {
     "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs",
@@ -34,7 +35,7 @@
     "syntax_checks": 8,
     "environment": "Node24.22.1 isolated PR26 with synthetic HTTP/IMAP tests"
   },
-  "next_action": "Continue evidence-bound uncertain-outcome review and ownership enforcement on reconciled source; authorized live release/acceptance remains separate.",
+  "next_action": "Evidence-bound provider outcome review and ownership enforcement; verify current branch HEAD and registry lease before writing.",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
@@ -136,17 +137,17 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-11-01T02:17:50.367407+01:00",
-  "run_id": "fancy-night-20261101-pr38-reconciliation",
-  "current_lot": "P00/P01/P03/P22 main-based PR38 reconciliation preserved separately; PR26 source unchanged",
+  "updated_at_rome": "2026-11-02T02:22:04.494079+01:00",
+  "run_id": "fancy-night-20261102-smtp-visibility",
+  "current_lot": "P03/P20/P22 combined-source uncertain SMTP diagnostics; PR26 source unchanged",
   "live_render_deploy": "dep-dbiia7vb9u1s73apusp0",
   "upstream_integration_tests": {
     "status": "passed on isolated main-based source branch; no remote merge or deployment",
     "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
     "pr26_source": "a450bb3ddfabf40191aa56fa0bbd2390a2476044",
-    "passed": 357,
+    "passed": 361,
     "failed": 0,
-    "syntax_checks": 8,
+    "syntax_checks": 9,
     "resolved_paths": [
       "src/mailPolling.js",
       "test/intakeIntegration.test.js",
@@ -156,9 +157,9 @@
     ],
     "policy": "10MiB inline polling; durable recoverable REVIEW allows cursor handoff; content_processed=false; missing metadata or failed persistence holds UID; interactive20MiB unchanged",
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "2fa25d288ddbe16c1014d23459efcaeefced3aa6",
-    "tree": "5d810d6c49b92d84884a8d0710e17b4c3dabb710",
-    "remote_readback": "56 changed paths and whole tree verified; main is sole parent"
+    "commit": "5368363f74cf6deb3e73e9610ef9e7f3526352f7",
+    "tree": "5f6f48a955641dcb658ceb3d26682eba461d603d",
+    "remote_readback": "whole tree and7 changed paths verified"
   },
   "source_integrity": {
     "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
@@ -171,13 +172,13 @@
     "pr26_server_blob_unchanged": "a8ba0f7587843595a4c593ce655a492a00e0cc38"
   },
   "last_lease": {
-    "run_id": "fancy-night-20261101-pr38-reconciliation",
-    "component": "Render PR38 source reconciliation",
-    "acquired_at": "2026-11-01T01:12:05.246277+00:00",
-    "expires_at": "2026-11-01T02:12:05.246277+00:00",
-    "base_head": "a450bb3ddfabf40191aa56fa0bbd2390a2476044",
+    "run_id": "fancy-night-20261102-smtp-visibility",
+    "component": "Render combined-source SMTP uncertainty diagnostics",
+    "acquired_at": "2026-11-02T01:19:31.554133+00:00",
+    "expires_at": "2026-11-02T02:19:31.554133+00:00",
+    "base_head": "d0e6c26e4140943d5cb3ccc6fd2424032fba2d60",
     "status": "released",
-    "released_at": "2026-11-01T01:17:50.367407+00:00"
+    "released_at": "2026-11-02T01:22:04.494079+00:00"
   },
   "last_verified_tests": {
     "command": "npm test; npm run check",
@@ -194,20 +195,14 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": {
-    "run_id": "fancy-night-20261102-smtp-visibility",
-    "component": "Render combined-source SMTP uncertainty diagnostics",
-    "acquired_at": "2026-11-02T01:19:31.554133+00:00",
-    "expires_at": "2026-11-02T02:19:31.554133+00:00",
-    "base_head": "d0e6c26e4140943d5cb3ccc6fd2424032fba2d60"
-  },
+  "lease": null,
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "2fa25d288ddbe16c1014d23459efcaeefced3aa6",
+    "commit": "5368363f74cf6deb3e73e9610ef9e7f3526352f7",
     "parent": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
-    "tree": "5d810d6c49b92d84884a8d0710e17b4c3dabb710",
-    "tests": 357,
-    "syntax_checks": 8,
+    "tree": "5f6f48a955641dcb658ceb3d26682eba461d603d",
+    "tests": 361,
+    "syntax_checks": 9,
     "source_only": true,
     "remote_verified": true
   }
