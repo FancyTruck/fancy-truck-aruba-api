@@ -26,3 +26,5 @@
 - `night-verification-2026-10-31.json`: real HTTP concurrency regression plus4 gate unit tests,316 branch tests/8syntax checks. Fresh-process actual-parser synthetic memory burst RSS262.5MiB baseline4 admitted vs124.9MiB gated1 admitted/3 rejected. PR38 combined suite BLOCKED by5 actual merge-tree conflicts; no new live OOM acceptance.
 
 - `night-verification-2026-11-01.json`: five PR38 conflicts resolved in a current-main-based isolated source branch,357/357 synthetic tests and8syntax checks. Four new durable-review fault/reopen/replay tests; all PR38 outcome/watchdog/attention functionality retained. PR26 source preserved; no live acceptance or deployment.
+
+- `night-verification-2026-11-02.json`: existing intake/watchdog now reports blocked generic SMTP. Four regressions fail on2fa25d2 and pass after correction; actual readonly HTTP verifies identical persisted bytes and zero provider calls.361 combined tests/9syntax checks, no live acceptance.

@@ -87,6 +87,11 @@
           "date": "2026-11-01",
           "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
           "reference": "night-verification-2026-11-01.json"
+        },
+        {
+          "date": "2026-11-02",
+          "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
+          "reference": "night-verification-2026-11-02.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -193,6 +198,11 @@
           "date": "2026-11-01",
           "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
           "reference": "night-verification-2026-11-01.json"
+        },
+        {
+          "date": "2026-11-02",
+          "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
+          "reference": "night-verification-2026-11-02.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
@@ -231,6 +241,11 @@
           "date": "2026-11-01",
           "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
           "reference": "night-verification-2026-11-01.json"
+        },
+        {
+          "date": "2026-11-02",
+          "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
+          "reference": "night-verification-2026-11-02.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -280,6 +295,11 @@
           "date": "2026-11-01",
           "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
           "reference": "night-verification-2026-11-01.json"
+        },
+        {
+          "date": "2026-11-02",
+          "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
+          "reference": "night-verification-2026-11-02.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -433,7 +453,14 @@
     {
       "id": "5.1",
       "objective": "Catalogo capacità",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-11-02",
+          "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
+          "reference": "night-verification-2026-11-02.json"
+        }
+      ]
     },
     {
       "id": "5.2",
@@ -447,6 +474,11 @@
         {
           "date": "2026-10-22",
           "kind": "Bounded live notes/activity acceptance 4.5.1 completed; does not establish full parent requirement or commercial handoff"
+        },
+        {
+          "date": "2026-11-02",
+          "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
+          "reference": "night-verification-2026-11-02.json"
         }
       ]
     },
@@ -565,6 +597,11 @@
           "date": "2026-11-01",
           "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
           "reference": "night-verification-2026-11-01.json"
+        },
+        {
+          "date": "2026-11-02",
+          "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
+          "reference": "night-verification-2026-11-02.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -606,6 +643,11 @@
           "date": "2026-11-01",
           "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
           "reference": "night-verification-2026-11-01.json"
+        },
+        {
+          "date": "2026-11-02",
+          "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
+          "reference": "night-verification-2026-11-02.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -733,6 +775,11 @@
           "date": "2026-11-01",
           "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
           "reference": "night-verification-2026-11-01.json"
+        },
+        {
+          "date": "2026-11-02",
+          "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
+          "reference": "night-verification-2026-11-02.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",

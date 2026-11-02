@@ -2,16 +2,22 @@ const escape = value => String(value ?? '').replaceAll('&','&amp;').replaceAll('
 export function intakeStatus(state, {now=Date.now(), operating=false}={}) {
   const reviews=Object.values(state.classification_reviews||{}).filter(x=>x.status==='DA_CLASSIFICARE').sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
   const uncertain=Object.values(state.mail_operations||{}).filter(x=>x.status==='STARTED');
+  // Diagnostic projection only: never clear a claim or infer provider delivery.
+  const smtp_uncertain=Object.values(state.actions||{}).filter(x=>x.status==='UNCERTAIN' && x.execution?.kind==='smtp').map(x=>({
+    action_id:x.id,execution_id:x.execution.id??null,message_id:x.execution.message_id??null,
+    started_at:x.execution.started_at??null,delivery_verified:false,
+  }));
   const cycle=state.cycles?.at(-1);
   const issues=[];
   if(reviews.length) issues.push({code:'REVIEWS_PENDING',count:reviews.length});
   if(uncertain.length) issues.push({code:'UNCERTAIN_WRITES',count:uncertain.length});
+  if(smtp_uncertain.length) issues.push({code:'SMTP_OUTCOMES_UNCERTAIN',count:smtp_uncertain.length});
   if(cycle?.status==='RUNNING' && now-Date.parse(cycle.started_at)>20*60e3) issues.push({code:'CYCLE_STALLED'});
   else if(cycle && ['INTERRUPTED','CONTROLLO NON COMPLETATO'].includes(cycle.status)) issues.push({code:'CYCLE_FAILED'});
   if(operating && (!cycle || now-Date.parse(cycle.ended_at||cycle.started_at)>90*60e3)) issues.push({code:'POLLING_OVERDUE'});
   const failures=Object.values(state.mail_outcomes||{}).filter(x=>x.status==='RETRY_PENDING');
   if(failures.length) issues.push({code:'MESSAGES_BLOCKED',count:failures.length});
-  return {ok:issues.length===0,issues,reviews,uncertain:uncertain.length,failures,last_cycle:cycle||null};
+  return {ok:issues.length===0,issues,reviews,uncertain:uncertain.length,smtp_uncertain,failures,last_cycle:cycle||null};
 }
 export function suspensionDescription(row) {
   const reasons={large_message_requires_review:'Email oltre 10 MB: conservata su Aruba, da esaminare manualmente',reply_without_matching_lead:'Risposta cliente senza pratica collegata',commercial_intent_not_established:'Contenuto da classificare: possibile richiesta cliente',previous_operation_outcome_uncertain:'Esito di una scrittura da verificare prima di riprovare',new_thread_existing_customer:'Nuova conversazione di un cliente esistente: verificare il collegamento'};
@@ -27,7 +33,7 @@ export async function syncIntakeWatchdog({state,call,login,now=Date.now(),operat
   if(activities.length>1) throw Error('Attività controllo duplicate: riconciliazione richiesta');
   if(status.ok && !activities.length) return {status:'OK',issues:[]};
   const note=status.ok ? '<p>Controlli rientrati: nessuna sospensione o interruzione rilevata. Questa attività può essere chiusa.</p>' :
-    '<p>Richieste da verificare: '+status.reviews.length+'. Scritture con esito incerto: '+status.uncertain+'.</p><p>'+status.issues.map(x=>({REVIEWS_PENDING:'Richieste sospese da esaminare',UNCERTAIN_WRITES:'Operazioni Odoo da verificare prima di riprovare',CYCLE_STALLED:'Lettura in corso da oltre 20 minuti',CYCLE_FAILED:'Ultimo controllo interrotto o incompleto',POLLING_OVERDUE:'Controllo in ritardo di oltre 90 minuti',MESSAGES_BLOCKED:'Messaggi in attesa di recupero'}[x.code])).join('; ')+'</p>'+status.reviews.slice(0,50).map(x=>'<p><b>'+escape(x.subject)+'</b><br>'+escape(x.sender)+' — '+escape(suspensionDescription(x))+'</p>').join('')+(status.reviews.length>50?'<p>Elenco limitato alle prime 50: tutte le richieste restano nel pannello revisioni.</p>':'')+'<p>Aprire Fancy AI / Revisioni per i dettagli. Nessuna autorizzazione a inviare messaggi ai clienti.</p>';
+    '<p>Richieste da verificare: '+status.reviews.length+'. Scritture con esito incerto: '+status.uncertain+'. Invii SMTP da verificare: '+status.smtp_uncertain.length+'.</p><p>'+status.issues.map(x=>({REVIEWS_PENDING:'Richieste sospese da esaminare',UNCERTAIN_WRITES:'Operazioni Odoo da verificare prima di riprovare',SMTP_OUTCOMES_UNCERTAIN:'Invii SMTP con esito incerto: verificare il tentativo prima di qualsiasi reinvio; consegna non verificata',CYCLE_STALLED:'Lettura in corso da oltre 20 minuti',CYCLE_FAILED:'Ultimo controllo interrotto o incompleto',POLLING_OVERDUE:'Controllo in ritardo di oltre 90 minuti',MESSAGES_BLOCKED:'Messaggi in attesa di recupero'}[x.code])).join('; ')+'</p>'+status.reviews.slice(0,50).map(x=>'<p><b>'+escape(x.subject)+'</b><br>'+escape(x.sender)+' — '+escape(suspensionDescription(x))+'</p>').join('')+(status.reviews.length>50?'<p>Elenco limitato alle prime 50: tutte le richieste restano nel pannello revisioni.</p>':'')+'<p>Aprire Fancy AI / Revisioni per i dettagli. Nessuna autorizzazione a inviare messaggi ai clienti.</p>';
   const context={mail_activity_quick_update:true,tracking_disable:true};
   if(activities.length) {
     if(activities[0].note!==note) await call('mail.activity','write',[[activities[0].id],{note}],{context});
