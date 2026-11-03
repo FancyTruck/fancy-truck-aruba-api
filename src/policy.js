@@ -7,6 +7,14 @@ export const EXTERNAL_ACTIONS = new Set([
   'RETURN_DEPOSIT', 'UNCERTAIN_BANK_MATCH', 'IRREVERSIBLE_ACTION',
 ]);
 
+// Bind authorization to the business action, excluding mutable lifecycle metadata.
+const approvalSnapshot = action => hash({type:action.type,target:action.target,payload:action.payload??null});
+function assertApprovalSnapshot(action) {
+  if (!action.approval_snapshot_hash || action.approval_snapshot_hash !== approvalSnapshot(action)) {
+    throw new Error('Snapshot approvazione assente o modificato: operazione bloccata, revisione richiesta');
+  }
+}
+
 export class ApprovalService {
   constructor(store, secret = process.env.APPROVAL_SECRET || process.env.API_TOKEN || '') {
     this.store = store;
@@ -27,11 +35,12 @@ export class ApprovalService {
     if (String(actor).trim().toLowerCase() !== 'pietro') throw new Error('Solo Pietro può impartire il comando specifico');
     if (String(command).trim() !== `APPROVA ${id}`) throw new Error(`Comando specifico richiesto: APPROVA ${id}`);
     const reissued = action.status === 'AWAITING_FINAL_CONFIRMATION';
+    if (reissued) assertApprovalSnapshot(action);
     const nonce = crypto.randomBytes(24).toString('hex');
     const digest = crypto.createHmac('sha256', this.secret).update(`${id}:${nonce}`).digest('hex');
     this.store.commitApproval(id, {
       status: 'AWAITING_FINAL_CONFIRMATION', actor: 'Pietro', command_approved_at: new Date().toISOString(),
-      confirmation_digest: digest,
+      confirmation_digest: digest, approval_snapshot_hash: approvalSnapshot(action),
     }, reissued ? 'ACTION_COMMAND_REISSUED' : 'ACTION_COMMAND_APPROVED');
     return { action: this.store.action(id), confirmation_token: `${nonce}.${digest}` };
   }
@@ -42,6 +51,7 @@ export class ApprovalService {
     if(action.peu_payload_hash && hash(action.payload)!==action.peu_payload_hash)throw new Error('Contenuto operazione Peu modificato');
     if (!['AWAITING_FINAL_CONFIRMATION', 'APPROVED_FOR_EXECUTION'].includes(action.status)) throw new Error(`Conferma non ammessa nello stato ${action.status}`);
     if (String(actor).trim().toLowerCase() !== 'pietro') throw new Error('Solo Pietro può dare la conferma finale');
+    assertApprovalSnapshot(action);
     const parts = String(token || '').split('.');
     if (parts.length !== 2) throw new Error('Token di conferma finale non valido');
     const [nonce, supplied] = parts;
@@ -66,6 +76,7 @@ export class ApprovalService {
   assertExecutable(id) {
     const action = this.store.action(id);
     if (!action || action.status !== 'APPROVED_FOR_EXECUTION') throw new Error('Azione bloccata: servono comando specifico e conferma finale');
+    assertApprovalSnapshot(action);
     return action;
   }
 

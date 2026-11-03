@@ -92,6 +92,11 @@
           "date": "2026-11-02",
           "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
           "reference": "night-verification-2026-11-02.json"
+        },
+        {
+          "date": "2026-11-03",
+          "kind": "Exact approval snapshot binding:12 baseline failures/1existing pass;13 corrected tests including actual HTTP;374 total tests/9syntax checks. No live acceptance.",
+          "reference": "night-verification-2026-11-03.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -300,6 +305,11 @@
           "date": "2026-11-02",
           "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
           "reference": "night-verification-2026-11-02.json"
+        },
+        {
+          "date": "2026-11-03",
+          "kind": "Exact approval snapshot binding:12 baseline failures/1existing pass;13 corrected tests including actual HTTP;374 total tests/9syntax checks. No live acceptance.",
+          "reference": "night-verification-2026-11-03.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -479,13 +489,25 @@
           "date": "2026-11-02",
           "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
           "reference": "night-verification-2026-11-02.json"
+        },
+        {
+          "date": "2026-11-03",
+          "kind": "Exact approval snapshot binding:12 baseline failures/1existing pass;13 corrected tests including actual HTTP;374 total tests/9syntax checks. No live acceptance.",
+          "reference": "night-verification-2026-11-03.json"
         }
       ]
     },
     {
       "id": "5.3",
       "objective": "Notifiche pertinenti",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-11-03",
+          "kind": "Exact approval snapshot binding:12 baseline failures/1existing pass;13 corrected tests including actual HTTP;374 total tests/9syntax checks. No live acceptance.",
+          "reference": "night-verification-2026-11-03.json"
+        }
+      ]
     },
     {
       "id": "5.4",
@@ -508,6 +530,11 @@
         {
           "date": "2026-10-26",
           "kind": "lost approval response recovery on same action, pending token rotation and readonly exact-token final replay;268 branch and297 local upstream tests; actual HTTP disconnect after commit and reopened synthetic state; not live acceptance"
+        },
+        {
+          "date": "2026-11-03",
+          "kind": "Exact approval snapshot binding:12 baseline failures/1existing pass;13 corrected tests including actual HTTP;374 total tests/9syntax checks. No live acceptance.",
+          "reference": "night-verification-2026-11-03.json"
         }
       ]
     },
@@ -602,6 +629,11 @@
           "date": "2026-11-02",
           "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
           "reference": "night-verification-2026-11-02.json"
+        },
+        {
+          "date": "2026-11-03",
+          "kind": "Exact approval snapshot binding:12 baseline failures/1existing pass;13 corrected tests including actual HTTP;374 total tests/9syntax checks. No live acceptance.",
+          "reference": "night-verification-2026-11-03.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -648,6 +680,11 @@
           "date": "2026-11-02",
           "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
           "reference": "night-verification-2026-11-02.json"
+        },
+        {
+          "date": "2026-11-03",
+          "kind": "Exact approval snapshot binding:12 baseline failures/1existing pass;13 corrected tests including actual HTTP;374 total tests/9syntax checks. No live acceptance.",
+          "reference": "night-verification-2026-11-03.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -780,6 +817,11 @@
           "date": "2026-11-02",
           "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
           "reference": "night-verification-2026-11-02.json"
+        },
+        {
+          "date": "2026-11-03",
+          "kind": "Exact approval snapshot binding:12 baseline failures/1existing pass;13 corrected tests including actual HTTP;374 total tests/9syntax checks. No live acceptance.",
+          "reference": "night-verification-2026-11-03.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
