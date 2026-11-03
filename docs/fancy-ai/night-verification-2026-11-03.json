@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-03",
+  "updated_at": "2026-11-03T01:42:51.298673+00:00",
+  "run_id": "fancy-night-20261103-approval-snapshot",
+  "modules": [
+    "P03",
+    "P04",
+    "P20",
+    "P22"
+  ],
+  "requirement_ids": [
+    "0.2",
+    "1.4.1",
+    "2.5",
+    "5.2",
+    "5.3",
+    "5.5",
+    "7.2",
+    "7.3"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "integration_parent": "5368363f74cf6deb3e73e9610ef9e7f3526352f7",
+    "integration_branch": "work/fancy-pr38-reconcile-20261101",
+    "pr26_parent": "7e23e7f33645d61f115e78f8c996b3900eaedba2",
+    "lease": "a6db750b6426e9b7fa30c37ab3544861e75986a9",
+    "integration_commit": "7c12db29bf60172a63a651eaf3d28eab36f3f84f"
+  },
+  "defect": "Generic approval token was bound to action ID but not type/target/payload. Content could change after command/final confirmation without blocking confirmation, recovery-token reissue or execution. Peu payload hash checks alone did not cover generic actions.",
+  "implementation": [
+    "Persist canonical SHA256(type,target,payload) with the existing atomic command approval+audit commit. Lifecycle timestamps/status excluded; payload object-key order does not change the snapshot.",
+    "Reject changed or missing snapshot before pending command reissue, final confirmation (including readonly lost-response replay), and assertExecutable. First PENDING_APPROVAL command binds current contents.",
+    "Legacy awaiting/approved records lacking snapshot fail closed; no digest backfill, automatic reset, replacement key, retry or new queue. A reviewed recovery path is still required. Existing Peu payload checks, SMTP uncertain claims and exact-token recovery remain in place."
+  ],
+  "runtime": "ApprovalService is already used by actual generic server approval and execute routes and Peu contract; no new workflow or endpoint. server.js unchanged.",
+  "tests": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js",
+    "passed": 374,
+    "failed": 0,
+    "syntax_checks": 9,
+    "new_test": "test/approvalSnapshot.test.js",
+    "baseline_passed": 1,
+    "baseline_failed": 12,
+    "corrected_passed": 13,
+    "environment": "Node24.22.1; isolated synthetic fixtures, local HTTP, no providers",
+    "coverage": [
+      "type/target/payload changes rejected at reissue/confirmation/execution without writes",
+      "changed approved action cannot use consumed-token replay",
+      "canonical reorder/reopen/readonly recovery succeeds for unchanged content",
+      "legacy missing snapshot blocked without backfill",
+      "failed command save rolls back digest/authorization/audit",
+      "actual HTTP rejects before SMTP construction or claim, with identical persistent bytes and zero provider calls"
+    ]
+  },
+  "source_integrity": {
+    "server_blob_unchanged": "bfdf0f7d2694b8123f175b03ef52cb0f867f603c",
+    "pr26_server_blob_unchanged": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "remote_readback": "entire fetched remote tree and all7 changed paths match local tested tree",
+    "tree": "f9437af6cb090924b3c610e0a031054ec73d26eb"
+  },
+  "live_readonly": "Fresh Git refs unchanged; Render configuration still main-only auto-deploy, previews off. No release performed.",
+  "oom": "No new profiling or live representative-load acceptance. Historical OOM cause remains unestablished.",
+  "backup": "No new download/integrity/decryption/restore. Preserve dated previous verified isolated restore evidence; retention/alarms remain open.",
+  "limits": [
+    "snapshot hashes detect changed business contents under trusted store ownership, not hostile state-file tampering",
+    "cross-process ownership and provider outcome reconciliation remain open",
+    "legacy pending approvals require explicit reviewed recovery design, not replacement keys",
+    "F0/F1/F2, handoff and four end-to-end paths remain open;4.5.1 accepted; F6 deferred"
+  ],
+  "next_action": "Design reviewed recovery for snapshot-mismatched/legacy approvals and evidence-bound uncertain-provider outcomes; enforce process ownership. Reconcile both branch HEADs and lease first.",
+  "effects": "No main push, merge, deploy/restart, production/Odoo write, hosted migration, real send, economic action or new task."
+}

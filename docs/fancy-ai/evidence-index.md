@@ -28,3 +28,5 @@
 - `night-verification-2026-11-01.json`: five PR38 conflicts resolved in a current-main-based isolated source branch,357/357 synthetic tests and8syntax checks. Four new durable-review fault/reopen/replay tests; all PR38 outcome/watchdog/attention functionality retained. PR26 source preserved; no live acceptance or deployment.
 
 - `night-verification-2026-11-02.json`: existing intake/watchdog now reports blocked generic SMTP. Four regressions fail on2fa25d2 and pass after correction; actual readonly HTTP verifies identical persisted bytes and zero provider calls.361 combined tests/9syntax checks, no live acceptance.
+
+- `night-verification-2026-11-03.json`: canonical approval snapshot checked at reissue, confirmation/replay and execution.12 new baseline failures/1existing pass;13 corrected tests,374 total and9syntax checks. Real HTTP fails before SMTP construction/claim; synthetic only, server unchanged.
