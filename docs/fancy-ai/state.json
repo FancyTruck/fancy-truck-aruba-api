@@ -195,7 +195,13 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": null,
+  "lease": {
+    "run_id": "fancy-night-20261103-approval-snapshot",
+    "component": "Render approval snapshot binding on combined branch",
+    "acquired_at": "2026-11-03T01:40:37.040708+00:00",
+    "expires_at": "2026-11-03T02:40:37.040708+00:00",
+    "base_head": "7e23e7f33645d61f115e78f8c996b3900eaedba2"
+  },
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
     "commit": "5368363f74cf6deb3e73e9610ef9e7f3526352f7",
