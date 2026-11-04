@@ -97,6 +97,11 @@
           "date": "2026-11-03",
           "kind": "Exact approval snapshot binding:12 baseline failures/1existing pass;13 corrected tests including actual HTTP;374 total tests/9syntax checks. No live acceptance.",
           "reference": "night-verification-2026-11-03.json"
+        },
+        {
+          "date": "2026-11-04",
+          "kind": "Selective cycle recovery rollback:4 baseline failures/2existing passes,6 corrected regressions;380 tests/9syntax checks. Real local startup/file failures; no live acceptance.",
+          "reference": "night-verification-2026-11-04.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -208,6 +213,11 @@
           "date": "2026-11-02",
           "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
           "reference": "night-verification-2026-11-02.json"
+        },
+        {
+          "date": "2026-11-04",
+          "kind": "Selective cycle recovery rollback:4 baseline failures/2existing passes,6 corrected regressions;380 tests/9syntax checks. Real local startup/file failures; no live acceptance.",
+          "reference": "night-verification-2026-11-04.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
@@ -251,6 +261,11 @@
           "date": "2026-11-02",
           "kind": "Uncertain SMTP diagnostic regression:4 baseline failures,4 corrected passes including readonly HTTP;361 combined tests/9syntax checks; no live/provider acceptance",
           "reference": "night-verification-2026-11-02.json"
+        },
+        {
+          "date": "2026-11-04",
+          "kind": "Selective cycle recovery rollback:4 baseline failures/2existing passes,6 corrected regressions;380 tests/9syntax checks. Real local startup/file failures; no live acceptance.",
+          "reference": "night-verification-2026-11-04.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -634,6 +649,11 @@
           "date": "2026-11-03",
           "kind": "Exact approval snapshot binding:12 baseline failures/1existing pass;13 corrected tests including actual HTTP;374 total tests/9syntax checks. No live acceptance.",
           "reference": "night-verification-2026-11-03.json"
+        },
+        {
+          "date": "2026-11-04",
+          "kind": "Selective cycle recovery rollback:4 baseline failures/2existing passes,6 corrected regressions;380 tests/9syntax checks. Real local startup/file failures; no live acceptance.",
+          "reference": "night-verification-2026-11-04.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -685,6 +705,11 @@
           "date": "2026-11-03",
           "kind": "Exact approval snapshot binding:12 baseline failures/1existing pass;13 corrected tests including actual HTTP;374 total tests/9syntax checks. No live acceptance.",
           "reference": "night-verification-2026-11-03.json"
+        },
+        {
+          "date": "2026-11-04",
+          "kind": "Selective cycle recovery rollback:4 baseline failures/2existing passes,6 corrected regressions;380 tests/9syntax checks. Real local startup/file failures; no live acceptance.",
+          "reference": "night-verification-2026-11-04.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -706,6 +731,11 @@
           "date": "2026-11-01",
           "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
           "reference": "night-verification-2026-11-01.json"
+        },
+        {
+          "date": "2026-11-04",
+          "kind": "Selective cycle recovery rollback:4 baseline failures/2existing passes,6 corrected regressions;380 tests/9syntax checks. Real local startup/file failures; no live acceptance.",
+          "reference": "night-verification-2026-11-04.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -822,6 +852,11 @@
           "date": "2026-11-03",
           "kind": "Exact approval snapshot binding:12 baseline failures/1existing pass;13 corrected tests including actual HTTP;374 total tests/9syntax checks. No live acceptance.",
           "reference": "night-verification-2026-11-03.json"
+        },
+        {
+          "date": "2026-11-04",
+          "kind": "Selective cycle recovery rollback:4 baseline failures/2existing passes,6 corrected regressions;380 tests/9syntax checks. Real local startup/file failures; no live acceptance.",
+          "reference": "night-verification-2026-11-04.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
