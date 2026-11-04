@@ -1,0 +1,63 @@
+{
+  "date": "2026-11-04",
+  "updated_at": "2026-11-04T01:12:28.910225+00:00",
+  "run_id": "fancy-night-20261104-cycle-recovery",
+  "modules": [
+    "P01",
+    "P03",
+    "P22"
+  ],
+  "requirement_ids": [
+    "0.2",
+    "1.4",
+    "1.4.1",
+    "1.5",
+    "7.2",
+    "7.3",
+    "7.4"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "integration_parent": "7c12db29bf60172a63a651eaf3d28eab36f3f84f",
+    "integration_branch": "work/fancy-pr38-reconcile-20261101",
+    "pr26_parent": "d40be9aecabcffacfd58dfa506d984b1a24576ae",
+    "lease": "80cee149d7635ff164dfade76c6c0626a29f987e"
+  },
+  "defect": "Failed reconcileInterruptedCycles replaced store.state with a whole-state clone while previously held cycle references remained falsely INTERRUPTED. Clone also serialized/copied unrelated action/mail state at startup.",
+  "implementation": "Snapshot only affected RUNNING cycle fields with shallow copies because recovery only reassigns fields. Replace audit collection for single save. On failure restore the same held cycle objects, original cycles/events arrays and unchanged state object. Unrelated collections remain referenced, without full-state clone. Success/retry keeps existing one-save recovery semantics and history limits.",
+  "runtime": "Writable server startup already invokes reconcileInterruptedCycles before listening/reconciling SMTP. server.js unchanged. Reader/readonly/restore ownership rules unchanged.",
+  "tests": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js",
+    "passed": 380,
+    "failed": 0,
+    "syntax_checks": 9,
+    "new_test": "test/cycleRecoveryRollback.test.js",
+    "baseline_passed": 2,
+    "baseline_failed": 4,
+    "corrected_passed": 6,
+    "environment": "Node24.22.1; isolated synthetic state, actual filesystem fault injection and child-process server startup; no providers",
+    "coverage": [
+      "write/rename failure restores held cycles/state/collections; exact disk bytes unchanged; retry recovers both cycles with one audit",
+      "retention-boundary failed save restores original arrays and RUNNING references",
+      "2MiB synthetic unrelated payload serialized once for save versus twice (clone+save) on baseline",
+      "completed-only recovery is readonly",
+      "actual startup persistence failure aborts; next startup recovers with no provider/SMTP connections"
+    ]
+  },
+  "source_integrity": {
+    "server_blob_unchanged": "bfdf0f7d2694b8123f175b03ef52cb0f867f603c",
+    "pr26_server_blob_unchanged": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "remote_readback": "required after source commit; exact verified pointer recorded in final registry"
+  },
+  "live_readonly": "Git refs reconciled unchanged; fresh Render configuration confirms main-only auto-deploy/previews off. No release or runtime mutation.",
+  "oom": "Removed demonstrated whole-state recovery copy/extra serialization; no new RSS profile or live load measurement. Historical OOM application cause and live acceptance remain open.",
+  "backup": "No new download/integrity/decryption/restore. Previous dated successful isolated restore evidence retained; retention/alarms remain open.",
+  "limits": [
+    "save still serializes complete JSON state; no streaming/power-loss/fsync guarantee",
+    "single-process ownership/cross-process locking and provider reconciliation remain open",
+    "snapshot mismatched/legacy approval reviewed recovery remains open",
+    "F0/F1/F2, commercial handoff/four end-to-end paths remain open;4.5.1 accepted and F6 deferred"
+  ],
+  "next_action": "Continue reviewed legacy-approval/provider outcome recovery and process ownership design; preserve exact branch sources and verify current HEAD/lease first.",
+  "effects": "No main push, remote merge, deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task."
+}

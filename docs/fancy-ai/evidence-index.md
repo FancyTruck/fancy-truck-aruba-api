@@ -30,3 +30,5 @@
 - `night-verification-2026-11-02.json`: existing intake/watchdog now reports blocked generic SMTP. Four regressions fail on2fa25d2 and pass after correction; actual readonly HTTP verifies identical persisted bytes and zero provider calls.361 combined tests/9syntax checks, no live acceptance.
 
 - `night-verification-2026-11-03.json`: canonical approval snapshot checked at reissue, confirmation/replay and execution.12 new baseline failures/1existing pass;13 corrected tests,374 total and9syntax checks. Real HTTP fails before SMTP construction/claim; synthetic only, server unchanged.
+
+- `night-verification-2026-11-04.json`: failed cycle-startup recovery restores original held references without copying whole state.4 baseline failures/2existing passes;6 corrected regressions,380 total tests/9syntax checks. Synthetic filesystem/real-startup proofs, no live OOM/restart acceptance.

@@ -161,16 +161,27 @@ export class JsonStateStore {
   reconcileInterruptedCycles() {
     const pending = this.state.cycles.filter(cycle => cycle.status === 'RUNNING');
     if (!pending.length) return 0;
-    const previous = clone(this.state);
+    // Recovery only reassigns cycle fields. Preserve their original references
+    // without duplicating unrelated mail/action state during startup.
+    const previous = pending.map(cycle => [cycle, { ...cycle }]);
+    const cycles = this.state.cycles, events = this.state.events;
     const at = new Date().toISOString();
     for (const cycle of pending) {
       cycle.status = 'INTERRUPTED';
       cycle.ended_at = at;
       cycle.errors = [...(cycle.errors || []), 'Processo riavviato prima della chiusura del ciclo'];
     }
-    this.state.events.push({id: crypto.randomUUID(), at, type: 'CYCLES_INTERRUPTED_ON_STARTUP', cycle_ids: pending.map(cycle => cycle.id)});
+    this.state.events = [...events, {id: crypto.randomUUID(), at, type: 'CYCLES_INTERRUPTED_ON_STARTUP', cycle_ids: pending.map(cycle => cycle.id)}];
     try { this.save(); }
-    catch (error) { this.state = previous; throw error; }
+    catch (error) {
+      for (const [cycle, snapshot] of previous) {
+        for (const key of Object.keys(cycle)) delete cycle[key];
+        Object.assign(cycle, snapshot);
+      }
+      this.state.cycles = cycles;
+      this.state.events = events;
+      throw error;
+    }
     return pending.length;
   }
 

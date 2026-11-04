@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "updated_at": "2026-11-03T01:42:51.298673+00:00",
+  "updated_at": "2026-11-04T01:12:28.910225+00:00",
   "baseline_commit": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
   "branch": "work/fancy-pr38-reconcile-20261101",
-  "stage": "combined source approval snapshot tested; not released",
+  "stage": "combined source recovery rollback verified; not released",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
@@ -27,28 +27,28 @@
     "interactive-mime-single-admission-through-work-and-response-completion",
     "pr38-outcomes-watchdog-and-durable-review-reconciled-with-pr26-guards",
     "generic-smtp-uncertainty-visible-in-existing-intake-diagnostics-without-retry",
-    "canonical-approval-snapshot-guard-at-reissue-confirmation-and-execution"
+    "canonical-approval-snapshot-guard-at-reissue-confirmation-and-execution",
+    "selective-cycle-startup-rollback-preserves-held-references-without-whole-state-copy"
   ],
   "tests": {
     "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js",
-    "passed": 374,
+    "passed": 380,
     "failed": 0,
     "syntax_checks": 9,
-    "new_test": "test/approvalSnapshot.test.js",
-    "baseline_passed": 1,
-    "baseline_failed": 12,
-    "corrected_passed": 13,
-    "environment": "Node24.22.1; isolated synthetic fixtures, local HTTP, no providers",
+    "new_test": "test/cycleRecoveryRollback.test.js",
+    "baseline_passed": 2,
+    "baseline_failed": 4,
+    "corrected_passed": 6,
+    "environment": "Node24.22.1; isolated synthetic state, actual filesystem fault injection and child-process server startup; no providers",
     "coverage": [
-      "type/target/payload changes rejected at reissue/confirmation/execution without writes",
-      "changed approved action cannot use consumed-token replay",
-      "canonical reorder/reopen/readonly recovery succeeds for unchanged content",
-      "legacy missing snapshot blocked without backfill",
-      "failed command save rolls back digest/authorization/audit",
-      "actual HTTP rejects before SMTP construction or claim, with identical persistent bytes and zero provider calls"
+      "write/rename failure restores held cycles/state/collections; exact disk bytes unchanged; retry recovers both cycles with one audit",
+      "retention-boundary failed save restores original arrays and RUNNING references",
+      "2MiB synthetic unrelated payload serialized once for save versus twice (clone+save) on baseline",
+      "completed-only recovery is readonly",
+      "actual startup persistence failure aborts; next startup recovers with no provider/SMTP connections"
     ]
   },
-  "next_action": "Design reviewed recovery for snapshot-mismatched/legacy approvals and evidence-bound uncertain-provider outcomes; enforce process ownership. Reconcile both branch HEADs and lease first.",
+  "next_action": "Continue reviewed legacy-approval/provider outcome recovery and process ownership design; preserve exact branch sources and verify current HEAD/lease first.",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
@@ -151,15 +151,15 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-11-03T02:42:51.298673+01:00",
-  "run_id": "fancy-night-20261103-approval-snapshot",
-  "current_lot": "P03/P04/P20/P22 bind approval to exact business snapshot",
+  "updated_at_rome": "2026-11-04T02:12:28.910225+01:00",
+  "run_id": "fancy-night-20261104-cycle-recovery",
+  "current_lot": "P01/P03/P22 selective interrupted-cycle recovery rollback",
   "live_render_deploy": "dep-dbiia7vb9u1s73apusp0",
   "upstream_integration_tests": {
     "status": "passed on isolated main-based source branch; no remote merge or deployment",
     "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
     "pr26_source": "a450bb3ddfabf40191aa56fa0bbd2390a2476044",
-    "passed": 374,
+    "passed": 380,
     "failed": 0,
     "syntax_checks": 9,
     "resolved_paths": [
@@ -191,23 +191,22 @@
   },
   "last_verified_tests": {
     "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js",
-    "passed": 374,
+    "passed": 380,
     "failed": 0,
     "syntax_checks": 9,
-    "new_test": "test/approvalSnapshot.test.js",
-    "baseline_passed": 1,
-    "baseline_failed": 12,
-    "corrected_passed": 13,
-    "environment": "Node24.22.1; isolated synthetic fixtures, local HTTP, no providers",
+    "new_test": "test/cycleRecoveryRollback.test.js",
+    "baseline_passed": 2,
+    "baseline_failed": 4,
+    "corrected_passed": 6,
+    "environment": "Node24.22.1; isolated synthetic state, actual filesystem fault injection and child-process server startup; no providers",
     "coverage": [
-      "type/target/payload changes rejected at reissue/confirmation/execution without writes",
-      "changed approved action cannot use consumed-token replay",
-      "canonical reorder/reopen/readonly recovery succeeds for unchanged content",
-      "legacy missing snapshot blocked without backfill",
-      "failed command save rolls back digest/authorization/audit",
-      "actual HTTP rejects before SMTP construction or claim, with identical persistent bytes and zero provider calls"
+      "write/rename failure restores held cycles/state/collections; exact disk bytes unchanged; retry recovers both cycles with one audit",
+      "retention-boundary failed save restores original arrays and RUNNING references",
+      "2MiB synthetic unrelated payload serialized once for save versus twice (clone+save) on baseline",
+      "completed-only recovery is readonly",
+      "actual startup persistence failure aborts; next startup recovers with no provider/SMTP connections"
     ],
-    "date": "2026-11-03"
+    "date": "2026-11-04"
   },
   "pending_development": [],
   "execution_recovery": {
