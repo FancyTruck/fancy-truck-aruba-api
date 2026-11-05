@@ -1,0 +1,74 @@
+{
+  "date": "2026-11-05",
+  "updated_at": "2026-11-05T01:43:43.504650+00:00",
+  "run_id": "fancy-night-20261105-review-snapshot",
+  "modules": [
+    "P03",
+    "P04",
+    "P20",
+    "P22"
+  ],
+  "requirement_ids": [
+    "1.4.1",
+    "2.5",
+    "5.2",
+    "5.3",
+    "5.5",
+    "7.2",
+    "7.3"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "integration_parent": "33edc2c8d3492c9566d2a7ff6d4d0978e591b5c4",
+    "integration_branch": "work/fancy-pr38-reconcile-20261101",
+    "pr26_parent": "74b03b56f40f7687c8935f1f3374ae0af2219926",
+    "lease": "f99aad1a56dee776b1f515a5ade9d854f44a0080"
+  },
+  "defect": "Native classification-review listing/form/resolve route did not bind closure to the review displayed to the operator. ID+resolution+note could close changed review metadata or changed STARTED-operation evidence. The separate Peu bridge already had its own snapshot boundary.",
+  "implementation": [
+    "Existing native GET returns snapshot_hash of canonical(review,current interrupted operation or null), no-store. Native POST requires exact current digest before any local mutation, rejecting missing/stale/cross-case snapshots.",
+    "Existing public/reviews.js forwards the digest of the displayed row. Existing auth roles/readOnly guards and store resolution semantics are preserved. Missing/stale digest asks for case reload/recheck.",
+    "No new workflow/queue/provider adapter, execution or retry. Existing Peu bridge/store API unchanged. Replaying a resolved native closure remains rejected readonly."
+  ],
+  "runtime": "Existing server classification-review GET/POST and existing public form; no new entrypoint. Corrected intake handlers/awaiting_scope_review, PR38 diagnostics, approval/SMTP/cycle guards preserved.",
+  "tests": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js",
+    "passed": 387,
+    "failed": 0,
+    "syntax_checks": 11,
+    "new_test": "test/nativeReviewSnapshot.test.js",
+    "baseline_node_passed": 2,
+    "baseline_node_failed": 5,
+    "baseline_explanation": "4 of6 HTTP subscenarios fail; the parent also fails (7 Node tests total).2 existing success/persistence scenarios pass.",
+    "corrected_node_passed": 7,
+    "environment": "Node24.22.1; real local HTTP/store with synthetic records; provider fetch forbidden",
+    "coverage": [
+      "missing/cross-case digest rejects with identical disk bytes",
+      "changed displayed review metadata rejects",
+      "unchanged review with changed STARTED operation rejects",
+      "current exact snapshot closes review/journal durably; replay readonly409",
+      "save failure rolls both back; same digest retries successfully",
+      "GET digest covers exact review+operation; no-store; reader role cannot resolve"
+    ],
+    "browser_mobile": "NOT EXECUTED; form integration source-inspected and syntax checked, no browser-policy bypass"
+  },
+  "source_integrity": {
+    "previous_combined_server_blob": "bfdf0f7d2694b8123f175b03ef52cb0f867f603c",
+    "combined_server_blob": "2d6d991630acd257d6ab46ef0a382151f48352dd",
+    "intentional_server_changes": "one import and native review GET/POST digest guard only",
+    "pr26_server_blob_unchanged": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "remote_readback": "required after commit; final registry carries verified pointer"
+  },
+  "live_readonly": "Fresh Git refs unchanged; Render configuration main-only auto-deploy/previews off. No release performed.",
+  "oom": "No new RSS/profile/live-load proof. Earlier bounded-reader/recovery-copy evidence remains dated; application OOM cause/live acceptance open.",
+  "backup": "No new download/integrity/decrypt/restore. Retain dated prior successful isolated restore evidence; retention/alarms open.",
+  "limits": [
+    "snapshot establishes freshness/case binding, not independent proof of an external Odoo outcome or manual note accuracy",
+    "no automatic provider reconciliation, retry or economic authorization",
+    "cross-process ownership and legacy/mismatched approval reviewed recovery remain open",
+    "native browser/mobile live acceptance not established",
+    "F0/F1/F2, commercial handoff/four end-to-end paths open;4.5.1 accepted; F6 deferred"
+  ],
+  "next_action": "Continue evidence-bound provider/legacy-approval reviewed recovery and process ownership; native browser/mobile requires authorized separate acceptance. Reconcile both HEADs and lease first.",
+  "effects": "No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task."
+}

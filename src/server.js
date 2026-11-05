@@ -1,3 +1,4 @@
+import { reviewSnapshot } from './reviewSnapshot.js';
 import { intakeStatus, syncIntakeWatchdog, suspensionDescription } from './intakeWatchdog.js';
 import { ensureCustomerAttention } from './customerAttention.js';
 import { matchQuotationThread } from './threadReferences.js';
@@ -1036,11 +1037,16 @@ app.get('/v1/briefing', async (_req, res) => {
 app.get('/v1/classification-reviews', (_req, res) => {
   res.set('Cache-Control', 'no-store');
   res.json({ ok: true, can_resolve: !runtime.readOnly && ['admin', 'reviewer'].includes(_req.accessRole),
-    items: Object.values(store.state.classification_reviews).filter(item => item.status === 'DA_CLASSIFICARE') });
+    items: Object.values(store.state.classification_reviews).filter(item => item.status === 'DA_CLASSIFICARE')
+      .map(item => ({ ...item, snapshot_hash: reviewSnapshot(store, item) })) });
 });
 
 app.post('/v1/classification-reviews/:id/resolve', (req, res) => {
   try {
+    const row = store.state.classification_reviews[req.params.id];
+    if (!row || typeof req.body?.snapshot_hash !== 'string' || req.body.snapshot_hash !== reviewSnapshot(store, row)) {
+      throw Error('Revisione modificata o snapshot assente: ricaricare il caso e verificare di nuovo');
+    }
     const item = store.resolveClassification(req.params.id, req.body?.resolution, req.body?.note, req.accessRole);
     res.json({ ok: true, item });
   } catch (error) { res.status(409).json({ ok: false, error: error.message }); }

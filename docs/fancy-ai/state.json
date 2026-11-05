@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "updated_at": "2026-11-04T01:12:28.910225+00:00",
+  "updated_at": "2026-11-05T01:43:43.504650+00:00",
   "baseline_commit": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
   "branch": "work/fancy-pr38-reconcile-20261101",
-  "stage": "combined source recovery rollback verified; not released",
+  "stage": "combined native review snapshot tested; not released",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
@@ -28,27 +28,31 @@
     "pr38-outcomes-watchdog-and-durable-review-reconciled-with-pr26-guards",
     "generic-smtp-uncertainty-visible-in-existing-intake-diagnostics-without-retry",
     "canonical-approval-snapshot-guard-at-reissue-confirmation-and-execution",
-    "selective-cycle-startup-rollback-preserves-held-references-without-whole-state-copy"
+    "selective-cycle-startup-rollback-preserves-held-references-without-whole-state-copy",
+    "native-review-closure-binds-displayed-case-and-current-operation-snapshot"
   ],
   "tests": {
-    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js",
-    "passed": 380,
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js",
+    "passed": 387,
     "failed": 0,
-    "syntax_checks": 9,
-    "new_test": "test/cycleRecoveryRollback.test.js",
-    "baseline_passed": 2,
-    "baseline_failed": 4,
-    "corrected_passed": 6,
-    "environment": "Node24.22.1; isolated synthetic state, actual filesystem fault injection and child-process server startup; no providers",
+    "syntax_checks": 11,
+    "new_test": "test/nativeReviewSnapshot.test.js",
+    "baseline_node_passed": 2,
+    "baseline_node_failed": 5,
+    "baseline_explanation": "4 of6 HTTP subscenarios fail; the parent also fails (7 Node tests total).2 existing success/persistence scenarios pass.",
+    "corrected_node_passed": 7,
+    "environment": "Node24.22.1; real local HTTP/store with synthetic records; provider fetch forbidden",
     "coverage": [
-      "write/rename failure restores held cycles/state/collections; exact disk bytes unchanged; retry recovers both cycles with one audit",
-      "retention-boundary failed save restores original arrays and RUNNING references",
-      "2MiB synthetic unrelated payload serialized once for save versus twice (clone+save) on baseline",
-      "completed-only recovery is readonly",
-      "actual startup persistence failure aborts; next startup recovers with no provider/SMTP connections"
-    ]
+      "missing/cross-case digest rejects with identical disk bytes",
+      "changed displayed review metadata rejects",
+      "unchanged review with changed STARTED operation rejects",
+      "current exact snapshot closes review/journal durably; replay readonly409",
+      "save failure rolls both back; same digest retries successfully",
+      "GET digest covers exact review+operation; no-store; reader role cannot resolve"
+    ],
+    "browser_mobile": "NOT EXECUTED; form integration source-inspected and syntax checked, no browser-policy bypass"
   },
-  "next_action": "Continue reviewed legacy-approval/provider outcome recovery and process ownership design; preserve exact branch sources and verify current HEAD/lease first.",
+  "next_action": "Continue evidence-bound provider/legacy-approval reviewed recovery and process ownership; native browser/mobile requires authorized separate acceptance. Reconcile both HEADs and lease first.",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
@@ -151,17 +155,17 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-11-04T02:12:28.910225+01:00",
-  "run_id": "fancy-night-20261104-cycle-recovery",
-  "current_lot": "P01/P03/P22 selective interrupted-cycle recovery rollback",
+  "updated_at_rome": "2026-11-05T02:43:43.504650+01:00",
+  "run_id": "fancy-night-20261105-review-snapshot",
+  "current_lot": "P03/P04/P20/P22 snapshot-bound native review closure",
   "live_render_deploy": "dep-dbiia7vb9u1s73apusp0",
   "upstream_integration_tests": {
     "status": "passed on isolated main-based source branch; no remote merge or deployment",
     "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
     "pr26_source": "a450bb3ddfabf40191aa56fa0bbd2390a2476044",
-    "passed": 380,
+    "passed": 387,
     "failed": 0,
-    "syntax_checks": 9,
+    "syntax_checks": 11,
     "resolved_paths": [
       "src/mailPolling.js",
       "test/intakeIntegration.test.js",
@@ -174,11 +178,12 @@
   "source_integrity": {
     "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
     "intentional_new_server_blob": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
-    "scope": "server unchanged; existing intakeWatchdog extended with readonly generic SMTP projection and issue text",
+    "scope": "one import and native review GET/POST digest guard only",
     "previous_corrected_project_guard_server_blob": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc",
     "previous_single_message_server_blob": "a11abed369707d1ab0efd38c37848223bb917de2",
     "previous_server_blob": "9ba35a907c6165a9051434d59fd7d72850fe24cc",
-    "combined_server_blob": "bfdf0f7d2694b8123f175b03ef52cb0f867f603c"
+    "combined_server_blob": "2d6d991630acd257d6ab46ef0a382151f48352dd",
+    "previous_combined_server_blob": "bfdf0f7d2694b8123f175b03ef52cb0f867f603c"
   },
   "last_lease": {
     "run_id": "fancy-night-20261031-mime-concurrency",
@@ -190,23 +195,26 @@
     "released_at": "2026-10-31T01:18:32.255836+00:00"
   },
   "last_verified_tests": {
-    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js",
-    "passed": 380,
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js",
+    "passed": 387,
     "failed": 0,
-    "syntax_checks": 9,
-    "new_test": "test/cycleRecoveryRollback.test.js",
-    "baseline_passed": 2,
-    "baseline_failed": 4,
-    "corrected_passed": 6,
-    "environment": "Node24.22.1; isolated synthetic state, actual filesystem fault injection and child-process server startup; no providers",
+    "syntax_checks": 11,
+    "new_test": "test/nativeReviewSnapshot.test.js",
+    "baseline_node_passed": 2,
+    "baseline_node_failed": 5,
+    "baseline_explanation": "4 of6 HTTP subscenarios fail; the parent also fails (7 Node tests total).2 existing success/persistence scenarios pass.",
+    "corrected_node_passed": 7,
+    "environment": "Node24.22.1; real local HTTP/store with synthetic records; provider fetch forbidden",
     "coverage": [
-      "write/rename failure restores held cycles/state/collections; exact disk bytes unchanged; retry recovers both cycles with one audit",
-      "retention-boundary failed save restores original arrays and RUNNING references",
-      "2MiB synthetic unrelated payload serialized once for save versus twice (clone+save) on baseline",
-      "completed-only recovery is readonly",
-      "actual startup persistence failure aborts; next startup recovers with no provider/SMTP connections"
+      "missing/cross-case digest rejects with identical disk bytes",
+      "changed displayed review metadata rejects",
+      "unchanged review with changed STARTED operation rejects",
+      "current exact snapshot closes review/journal durably; replay readonly409",
+      "save failure rolls both back; same digest retries successfully",
+      "GET digest covers exact review+operation; no-store; reader role cannot resolve"
     ],
-    "date": "2026-11-04"
+    "browser_mobile": "NOT EXECUTED; form integration source-inspected and syntax checked, no browser-policy bypass",
+    "date": "2026-11-05"
   },
   "pending_development": [],
   "execution_recovery": {

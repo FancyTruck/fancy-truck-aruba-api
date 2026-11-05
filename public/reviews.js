@@ -40,7 +40,7 @@ function render() {
         try {
           const response = await fetch(`/v1/classification-reviews/${encodeURIComponent(row.id)}/resolve`, {
             method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ resolution: select.value, note: note.value }),
+            body: JSON.stringify({ resolution: select.value, note: note.value, snapshot_hash: row.snapshot_hash }),
           });
           const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Chiusura non riuscita');
           await refresh();
