@@ -1,3 +1,4 @@
+import {retainCycleHistory} from './cycleRetention.js';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -41,7 +42,7 @@ export class JsonStateStore {
       this.state.events = this.state.events.slice(-2000);
     }
     if (this.state.cycles.length > 200) {
-      this.state.cycles = this.state.cycles.slice(-200);
+      this.state.cycles = retainCycleHistory(this.state.cycles, 200);
     }
     const idempotencyEntries = Object.entries(this.state.idempotency);
     if (idempotencyEntries.length > 10000) {

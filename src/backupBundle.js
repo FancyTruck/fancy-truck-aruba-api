@@ -1,3 +1,4 @@
+import {retainCycleHistory} from './cycleRetention.js';
 import fs from 'node:fs';
 import {join, dirname} from 'node:path';
 import {tmpdir} from 'node:os';
@@ -50,7 +51,7 @@ export function captureBundle({store,db,directory,canCapture=()=>false}){
  if(disk.bavail*disk.bsize<6*(page*size+BUNDLE_LIMITS.state))throw Error('Spazio temporaneo insufficiente per backup e ripristino isolato');
  const state=validateState(store.snapshot());
  // Diagnostic history is reconstructible; approvals and deduplication are not.
- state.events=state.events.slice(-100);state.cycles=state.cycles.slice(-30);
+ state.events=state.events.slice(-100);state.cycles=retainCycleHistory(state.cycles,30);
  for(const review of Object.values(state.classification_reviews))delete review.excerpt;
  const stateBytes=Buffer.from(JSON.stringify(state));
  if(stateBytes.length>BUNDLE_LIMITS.state)throw Error('Stato oltre 32 MiB');

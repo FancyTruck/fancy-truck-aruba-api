@@ -149,6 +149,11 @@
         {
           "date": "2026-10-23",
           "kind": "direct bounded Render metadata, metrics and original backup progress logs; see night-verification-2026-10-23.json"
+        },
+        {
+          "date": "2026-11-06",
+          "kind": "RUNNING-cycle retention:4 failures on exact archived prior source,4 corrected passes;391 tests/13syntax checks. Actual encrypted synthetic isolated restore, no real provider download/restore.",
+          "reference": "night-verification-2026-11-06.json"
         }
       ],
       "gap": "New original runtime logs show a different verified isolated restore; no independent object download/restore in this session; retention/alarm acceptance remains open",
@@ -218,6 +223,11 @@
           "date": "2026-11-04",
           "kind": "Selective cycle recovery rollback:4 baseline failures/2existing passes,6 corrected regressions;380 tests/9syntax checks. Real local startup/file failures; no live acceptance.",
           "reference": "night-verification-2026-11-04.json"
+        },
+        {
+          "date": "2026-11-06",
+          "kind": "RUNNING-cycle retention:4 failures on exact archived prior source,4 corrected passes;391 tests/13syntax checks. Actual encrypted synthetic isolated restore, no real provider download/restore.",
+          "reference": "night-verification-2026-11-06.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
@@ -266,6 +276,11 @@
           "date": "2026-11-04",
           "kind": "Selective cycle recovery rollback:4 baseline failures/2existing passes,6 corrected regressions;380 tests/9syntax checks. Real local startup/file failures; no live acceptance.",
           "reference": "night-verification-2026-11-04.json"
+        },
+        {
+          "date": "2026-11-06",
+          "kind": "RUNNING-cycle retention:4 failures on exact archived prior source,4 corrected passes;391 tests/13syntax checks. Actual encrypted synthetic isolated restore, no real provider download/restore.",
+          "reference": "night-verification-2026-11-06.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -679,6 +694,11 @@
           "date": "2026-11-05",
           "kind": "Native review closure snapshot:4 baseline HTTP scenario failures;7 corrected Node tests including parent.387 total/11syntax checks; browser/mobile/live NOT EXECUTED.",
           "reference": "night-verification-2026-11-05.json"
+        },
+        {
+          "date": "2026-11-06",
+          "kind": "RUNNING-cycle retention:4 failures on exact archived prior source,4 corrected passes;391 tests/13syntax checks. Actual encrypted synthetic isolated restore, no real provider download/restore.",
+          "reference": "night-verification-2026-11-06.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -740,6 +760,11 @@
           "date": "2026-11-05",
           "kind": "Native review closure snapshot:4 baseline HTTP scenario failures;7 corrected Node tests including parent.387 total/11syntax checks; browser/mobile/live NOT EXECUTED.",
           "reference": "night-verification-2026-11-05.json"
+        },
+        {
+          "date": "2026-11-06",
+          "kind": "RUNNING-cycle retention:4 failures on exact archived prior source,4 corrected passes;391 tests/13syntax checks. Actual encrypted synthetic isolated restore, no real provider download/restore.",
+          "reference": "night-verification-2026-11-06.json"
         }
       ],
       "updated_at": "2026-11-01"
@@ -892,6 +917,11 @@
           "date": "2026-11-05",
           "kind": "Native review closure snapshot:4 baseline HTTP scenario failures;7 corrected Node tests including parent.387 total/11syntax checks; browser/mobile/live NOT EXECUTED.",
           "reference": "night-verification-2026-11-05.json"
+        },
+        {
+          "date": "2026-11-06",
+          "kind": "RUNNING-cycle retention:4 failures on exact archived prior source,4 corrected passes;391 tests/13syntax checks. Actual encrypted synthetic isolated restore, no real provider download/restore.",
+          "reference": "night-verification-2026-11-06.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
