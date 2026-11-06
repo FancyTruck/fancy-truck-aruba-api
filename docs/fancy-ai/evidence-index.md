@@ -34,3 +34,5 @@
 - `night-verification-2026-11-04.json`: failed cycle-startup recovery restores original held references without copying whole state.4 baseline failures/2existing passes;6 corrected regressions,380 total tests/9syntax checks. Synthetic filesystem/real-startup proofs, no live OOM/restart acceptance.
 
 - `night-verification-2026-11-05.json`: native review closure binds displayed case/current interrupted operation;4 baseline HTTP subscenario failures,7 corrected Node tests,387 total/11syntax checks. Browser/mobile NOT EXECUTED; synthetic HTTP/store only, no providers.
+
+- `night-verification-2026-11-06.json`: old RUNNING cycles survive state/backup retention.4 baseline failures/4 corrected passes,391 total tests/13syntax checks; actual encrypted synthetic isolated restore preserves pending/cursor/SMTP uncertainty and quarantine. No new real-provider backup proof.

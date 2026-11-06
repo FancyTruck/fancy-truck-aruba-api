@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-06",
+  "updated_at": "2026-11-06T01:58:58.420491+00:00",
+  "run_id": "fancy-night-20261106-cycle-retention",
+  "modules": [
+    "P02",
+    "P03",
+    "P22"
+  ],
+  "requirement_ids": [
+    "1.3",
+    "1.4",
+    "1.4.1",
+    "1.5",
+    "7.2",
+    "7.3"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "integration_parent": "d1c2dded2ef133142948b95e68c94eb40372d6b7",
+    "integration_branch": "work/fancy-pr38-reconcile-20261101",
+    "pr26_parent": "8ed73d4fd751ce4746cc5cf6951ae24fe0ab5edc",
+    "lease": "60a945bac676a0018663c38e52a9b7a43e76f094",
+    "integration_commit": "abae32ac36081abc0530677e9913f407a75f54a6"
+  },
+  "defect": "Store compaction kept only last200 cycles; operational backup kept only last30. Either could silently discard older RUNNING cycles before owner recovery, losing recovery evidence.",
+  "implementation": "Shared retainCycleHistory retains source order, recent200/30 diagnostic window and all older RUNNING cycles. State load/save and actual backup capture use the same helper. Once owner recovery makes a cycle INTERRUPTED, ordinary history retention may remove it. No age/count assumption marks unfinished work completed.",
+  "runtime": "JsonStateStore.compact is used by actual server store load/save; captureBundle is used by actual external operational backup. No new workflow or scheduler. server.js unchanged.",
+  "tests": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js",
+    "passed": 391,
+    "failed": 0,
+    "syntax_checks": 13,
+    "new_test": "test/pendingCycleRetention.test.js",
+    "baseline_passed": 0,
+    "baseline_failed": 4,
+    "corrected_passed": 4,
+    "baseline_environment": "exact archived d1c2dde source, same finalized synthetic fixture/schema and Node dependencies",
+    "environment": "Node24.22.1; synthetic filesystem/SQLite and encrypted bundle; no providers",
+    "coverage": [
+      "old RUNNING retained alongside recent200 history after save/load, then recovered once and normal retention resumes",
+      "write and rename failures restore original collections; retry still preserves pending work",
+      "actual capture retains pending cycle outside latest30; input store/disk unchanged",
+      "sealed authenticated synthetic bundle restored by actual isolated child verifier; pending cycle, cursor and UNCERTAIN SMTP preserved; recovery quarantine blocks writes"
+    ]
+  },
+  "source_integrity": {
+    "combined_server_blob_unchanged": "2d6d991630acd257d6ab46ef0a382151f48352dd",
+    "pr26_server_blob_unchanged": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "remote_readback": "complete fetched tree and all9 changed paths equal tested local tree; server unchanged",
+    "tree": "bb777985146a44a414d8fecc3a4867d546ff78d7"
+  },
+  "live_readonly": "Fresh Git refs unchanged; Render main-only auto-deploy/previews off. No release or runtime mutation.",
+  "oom": "No new RSS/profile/live-load proof. Pending cycles are intentionally retained beyond nominal history count; no silent data loss to enforce a count cap. Existing32MiB backup state limit still fails closed.",
+  "backup": {
+    "kind": "new synthetic encrypted isolated restore test only",
+    "provider_download": "NOT EXECUTED",
+    "fixture_integrity_decryption_extract_restore": "passed in actual isolated verifier",
+    "external_credentials_present": false,
+    "restore_writes_blocked": true,
+    "live_object_or_restore": "NOT EXECUTED; retain dated previous successful provider restore evidence",
+    "retention_deletions": "none; cycle-history filtering tested locally, no provider object removal"
+  },
+  "limits": [
+    "RUNNING backlog may exceed nominal history count and needs owner recovery/review; no new hard cap discards pending work",
+    "other unresolved classifications/actions/operations untouched",
+    "cross-process ownership and provider/legacy-approval reviewed recovery remain open",
+    "no live checkpoint/restart, F0/F1/F2, commercial handoff or four-path acceptance;4.5.1 accepted; F6 deferred"
+  ],
+  "next_action": "Continue process ownership and evidence-bound provider/legacy-approval recovery; verify both current HEADs/lease first. Live load/checkpoint and real-provider restore remain separate acceptance.",
+  "effects": "No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task."
+}

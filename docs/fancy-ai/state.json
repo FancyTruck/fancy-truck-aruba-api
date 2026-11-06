@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-11-05T01:44:34.092059+00:00",
+  "updated_at": "2026-11-06T02:00:07.976140+00:00",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
   "stage": "draft PR26 source preserved; tested combined continuation on separate main-based branch, not released",
@@ -29,7 +29,8 @@
     "uncertain-smtp-visible-in-existing-intake-and-watchdog-on-combined-source",
     "snapshot-bound-approval-on-preserved-combined-source",
     "selective-cycle-recovery-rollback-on-preserved-combined-source",
-    "native-review-display-and-operation-snapshot-binding-on-combined-source"
+    "native-review-display-and-operation-snapshot-binding-on-combined-source",
+    "pending-cycle-state-and-backup-retention-on-preserved-combined-source"
   ],
   "tests": {
     "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs",
@@ -38,7 +39,7 @@
     "syntax_checks": 8,
     "environment": "Node24.22.1 isolated PR26 with synthetic HTTP/IMAP tests"
   },
-  "next_action": "Continue evidence-bound provider/legacy-approval reviewed recovery and process ownership; native browser/mobile requires authorized separate acceptance. Reconcile both HEADs and lease first.",
+  "next_action": "Continue process ownership and evidence-bound provider/legacy-approval recovery; verify both current HEADs/lease first. Live load/checkpoint and real-provider restore remain separate acceptance.",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
@@ -140,17 +141,17 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-11-05T02:44:34.092059+01:00",
-  "run_id": "fancy-night-20261105-review-snapshot",
-  "current_lot": "P03/P04/P20/P22 combined-source native review snapshot; original PR26 source unchanged",
+  "updated_at_rome": "2026-11-06T03:00:07.976140+01:00",
+  "run_id": "fancy-night-20261106-cycle-retention",
+  "current_lot": "P02/P03/P22 pending-cycle state/backup retention on combined source; PR26 source preserved",
   "live_render_deploy": "dep-dbiia7vb9u1s73apusp0",
   "upstream_integration_tests": {
     "status": "passed on isolated main-based source branch; no remote merge or deployment",
     "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
     "pr26_source": "a450bb3ddfabf40191aa56fa0bbd2390a2476044",
-    "passed": 387,
+    "passed": 391,
     "failed": 0,
-    "syntax_checks": 11,
+    "syntax_checks": 13,
     "resolved_paths": [
       "src/mailPolling.js",
       "test/intakeIntegration.test.js",
@@ -160,8 +161,8 @@
     ],
     "policy": "10MiB inline polling; durable recoverable REVIEW allows cursor handoff; content_processed=false; missing metadata or failed persistence holds UID; interactive20MiB unchanged",
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "d1c2dded2ef133142948b95e68c94eb40372d6b7",
-    "tree": "7266e686b9252637531abce322f889f7ec87af36",
+    "commit": "abae32ac36081abc0530677e9913f407a75f54a6",
+    "tree": "bb777985146a44a414d8fecc3a4867d546ff78d7",
     "remote_readback": "complete tree and9 changed paths verified"
   },
   "source_integrity": {
@@ -176,13 +177,13 @@
     "previous_combined_server_blob": "bfdf0f7d2694b8123f175b03ef52cb0f867f603c"
   },
   "last_lease": {
-    "run_id": "fancy-night-20261105-review-snapshot",
-    "component": "Render native review snapshot binding",
-    "acquired_at": "2026-11-05T01:41:03.996210+00:00",
-    "expires_at": "2026-11-05T02:41:03.996210+00:00",
-    "base_head": "74b03b56f40f7687c8935f1f3374ae0af2219926",
+    "run_id": "fancy-night-20261106-cycle-retention",
+    "component": "Render state/backup pending-cycle retention",
+    "acquired_at": "2026-11-06T01:56:14.781004+00:00",
+    "expires_at": "2026-11-06T02:56:14.781004+00:00",
+    "base_head": "8ed73d4fd751ce4746cc5cf6951ae24fe0ab5edc",
     "status": "released",
-    "released_at": "2026-11-05T01:44:34.092059+00:00"
+    "released_at": "2026-11-06T02:00:07.976140+00:00"
   },
   "last_verified_tests": {
     "command": "npm test; npm run check",
@@ -199,20 +200,14 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": {
-    "run_id": "fancy-night-20261106-cycle-retention",
-    "component": "Render state/backup pending-cycle retention",
-    "acquired_at": "2026-11-06T01:56:14.781004+00:00",
-    "expires_at": "2026-11-06T02:56:14.781004+00:00",
-    "base_head": "8ed73d4fd751ce4746cc5cf6951ae24fe0ab5edc"
-  },
+  "lease": null,
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "d1c2dded2ef133142948b95e68c94eb40372d6b7",
+    "commit": "abae32ac36081abc0530677e9913f407a75f54a6",
     "parent": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
-    "tree": "7266e686b9252637531abce322f889f7ec87af36",
-    "tests": 387,
-    "syntax_checks": 11,
+    "tree": "bb777985146a44a414d8fecc3a4867d546ff78d7",
+    "tests": 391,
+    "syntax_checks": 13,
     "source_only": true,
     "remote_verified": true
   }
