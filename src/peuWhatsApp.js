@@ -5,9 +5,9 @@ const phone=x=>typeof x==='string'?x.replace(/[ +()-]/g,''):'';
 const error=(code,status=409)=>Object.assign(new Error(code),{code,status});
 const utc=x=>typeof x==='string'&&/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(x)?Date.parse(x.replace(' ','T')+'Z'):NaN;
 export class PeuWhatsAppGateway {
- constructor({db,call,parse,assertWritable,env=process.env,now=()=>Date.now()}){
-  Object.assign(this,{db,call,parse,assertWritable,env,now});
-  db.exec('CREATE TABLE IF NOT EXISTS peu_whatsapp_replies(event_id TEXT PRIMARY KEY, payload_hash TEXT NOT NULL, status TEXT NOT NULL, mail_id INTEGER, provider_id TEXT, updated_at TEXT NOT NULL)');
+ constructor({db,call,parse,assertWritable,env=process.env,now=()=>Date.now(),readOnly=false}){
+  Object.assign(this,{db,call,parse,assertWritable,env,now,readOnly});
+  if(!readOnly)db.exec('CREATE TABLE IF NOT EXISTS peu_whatsapp_replies(event_id TEXT PRIMARY KEY, payload_hash TEXT NOT NULL, status TEXT NOT NULL, mail_id INTEGER, provider_id TEXT, updated_at TEXT NOT NULL)');
  }
  config(){
   const e=this.env,owner=e.PEU_WHATSAPP_OWNER,account=Number(e.PEU_WHATSAPP_ACCOUNT_ID),operator=Number(e.PEU_WHATSAPP_OPERATOR_ID),since=Date.parse(e.PEU_WHATSAPP_SINCE);
@@ -39,6 +39,8 @@ export class PeuWhatsAppGateway {
   const events=[];for(const row of rows)events.push(await this.source(row.id));return {events,after:events.at(-1)?.id||after};
  }
  async reply({id,event_id,text}){
+  // A replay receipt may refresh its ledger too; block before that branch.
+  if(this.readOnly)throw error('read_only',403);
   if(!Number.isSafeInteger(id)||id<=0||typeof event_id!=='string'||event_id.length>500||typeof text!=='string'||!text.trim()||text.length>4000)throw error('invalid_reply',400);
   this.config();const h=hash({id,event_id,text}),old=this.db.prepare('SELECT * FROM peu_whatsapp_replies WHERE event_id=?').get(event_id);
   if(old){if(old.payload_hash!==h)throw error('reply_content_changed');return this.receipt(old);}

@@ -3,7 +3,9 @@ import { mkdirSync, chmodSync } from 'node:fs';
 import { dirname } from 'node:path';
 export const problem = (code, status=400) => Object.assign(new Error(code), {code,status});
 export function transaction(db, fn) { db.exec('BEGIN IMMEDIATE'); try { const result=fn(); db.exec('COMMIT'); return result; } catch(e) {db.exec('ROLLBACK'); throw e;} }
-export function openMailDb(file) {
+export function openMailDb(file, {readOnly=false}={}) {
+  // Observers require an existing DB. No mkdir/chmod/schema or recovery writes.
+  if (readOnly) return new DatabaseSync(file, {readOnly:true});
   mkdirSync(dirname(file), {recursive:true,mode:0o700});
   const db=new DatabaseSync(file); chmodSync(file,0o600);
   db.exec(`PRAGMA journal_mode=WAL;

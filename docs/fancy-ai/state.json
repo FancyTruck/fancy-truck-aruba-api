@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "updated_at": "2026-11-07T01:13:02.809298+00:00",
+  "updated_at": "2026-11-07T01:19:28.384188+00:00",
   "baseline_commit": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
   "branch": "work/fancy-pr38-reconcile-20261101",
-  "stage": "combined server process ownership tested; not released",
+  "stage": "combined process ownership and readonly Peu startup tested; not released",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
@@ -31,29 +31,57 @@
     "selective-cycle-startup-rollback-preserves-held-references-without-whole-state-copy",
     "native-review-closure-binds-displayed-case-and-current-operation-snapshot",
     "unfinished-cycles-preserved-through-state-and-encrypted-backup-history-retention",
-    "exclusive-process-lifetime-server-state-ownership-before-startup-recovery"
+    "exclusive-process-lifetime-server-state-ownership-before-startup-recovery",
+    "readonly-peu-startup-ledger-preservation-and-sync-backup-block"
   ],
   "tests": {
-    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js",
-    "passed": 399,
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js",
+    "passed": 404,
     "failed": 0,
-    "syntax_checks": 14,
-    "new_test": "test/processOwnerIntegration.test.js",
-    "baseline_passed": 1,
-    "baseline_failed": 7,
-    "corrected_passed": 8,
-    "baseline_environment": "exact archived abae32ac36081abc0530677e9913f407a75f54a6 with same finalized synthetic child-process test and Node dependencies",
+    "syntax_checks": 18,
     "environment": "Node24.22.1 Linux local filesystem, actual separate server processes; fetch/SMTP providers forbidden",
-    "coverage": [
-      "second writable owner blocked before startup recovery with byte-identical state",
-      "read-only/restored observers preserve active RUNNING/EXECUTING claims",
-      "ownership retained through HTTP close; SIGKILL permits exactly-once INTERRUPTED/UNCERTAIN recovery without replay",
-      "symlink aliases share canonical path and saves preserve symlinks; hardlinked states rejected",
-      "independent state files allowed; three simultaneous starts on absent state admit one owner",
-      "invalid/symlinked owner file and dangling state symlink fail closed before recovery"
+    "new_tests": [
+      "test/processOwnerIntegration.test.js",
+      "test/readOnlyPeuStartup.test.js"
+    ],
+    "batches": [
+      {
+        "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js",
+        "passed": 399,
+        "failed": 0,
+        "syntax_checks": 14,
+        "new_test": "test/processOwnerIntegration.test.js",
+        "baseline_passed": 1,
+        "baseline_failed": 7,
+        "corrected_passed": 8,
+        "baseline_environment": "exact archived abae32ac36081abc0530677e9913f407a75f54a6 with same finalized synthetic child-process test and Node dependencies",
+        "environment": "Node24.22.1 Linux local filesystem, actual separate server processes; fetch/SMTP providers forbidden",
+        "coverage": [
+          "second writable owner blocked before startup recovery with byte-identical state",
+          "read-only/restored observers preserve active RUNNING/EXECUTING claims",
+          "ownership retained through HTTP close; SIGKILL permits exactly-once INTERRUPTED/UNCERTAIN recovery without replay",
+          "symlink aliases share canonical path and saves preserve symlinks; hardlinked states rejected",
+          "independent state files allowed; three simultaneous starts on absent state admit one owner",
+          "invalid/symlinked owner file and dangling state symlink fail closed before recovery"
+        ]
+      },
+      {
+        "new_test": "test/readOnlyPeuStartup.test.js",
+        "baseline_commit": "b01767197e1180d944d21b9f7b35c3b67d2c8a62",
+        "baseline_passed": 1,
+        "baseline_failed": 4,
+        "corrected_passed": 5,
+        "coverage": [
+          "actual readonly/restore server with Peu token preserves executing SQLite operations/effects and cached GETs",
+          "sync/commands return403 before providers; no readonly bridge DDL or scheduled backup timers",
+          "writable owner still initializes/reconciles Peu and schedules backup (callbacks intercepted, never executed)",
+          "direct readonly bridge commands/replies reject before ledger or provider access",
+          "readonly cache open never creates missing parent/database"
+        ]
+      }
     ]
   },
-  "next_action": "Continue evidence-bound provider/legacy-approval reviewed recovery on current combined branch. Verify all writers and actual Render persistent-disk locking only under separately authorized rollout/live acceptance; no automatic uncertain replay.",
+  "next_action": "Check diagnostic projection of older unfinished cycles retained outside recent history; then evidence-bound provider/legacy-approval recovery. Live disk locking/load/checkpoint remains separate authorized acceptance.",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
@@ -156,17 +184,17 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-11-07T02:13:02.809298+01:00",
+  "updated_at_rome": "2026-11-07T02:19:28.384188+01:00",
   "run_id": "fancy-night-20261107-process-owner",
-  "current_lot": "P00/P03/P22 exclusive writable server startup before recovery",
+  "current_lot": "P02/P03/P22 readonly Peu observers/restore cannot reconcile or sync active work",
   "live_render_deploy": "dep-dbiia7vb9u1s73apusp0",
   "upstream_integration_tests": {
     "status": "passed on isolated main-based source branch; no remote merge or deployment",
     "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
     "pr26_source": "a450bb3ddfabf40191aa56fa0bbd2390a2476044",
-    "passed": 399,
+    "passed": 404,
     "failed": 0,
-    "syntax_checks": 14,
+    "syntax_checks": 18,
     "resolved_paths": [
       "src/mailPolling.js",
       "test/intakeIntegration.test.js",
@@ -183,7 +211,7 @@
     "previous_corrected_project_guard_server_blob": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc",
     "previous_single_message_server_blob": "a11abed369707d1ab0efd38c37848223bb917de2",
     "previous_server_blob": "9ba35a907c6165a9051434d59fd7d72850fe24cc",
-    "combined_server_blob": "924bfa9d82ab940b5efd4bef9e3c43b7c5635272",
+    "combined_server_blob": "00b5ab69b9ee6e1f738b752d7452cd68172bb768",
     "previous_combined_server_blob": "2d6d991630acd257d6ab46ef0a382151f48352dd"
   },
   "last_lease": {
@@ -196,23 +224,50 @@
     "released_at": "2026-10-31T01:18:32.255836+00:00"
   },
   "last_verified_tests": {
-    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js",
-    "passed": 399,
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js",
+    "passed": 404,
     "failed": 0,
-    "syntax_checks": 14,
-    "new_test": "test/processOwnerIntegration.test.js",
-    "baseline_passed": 1,
-    "baseline_failed": 7,
-    "corrected_passed": 8,
-    "baseline_environment": "exact archived abae32ac36081abc0530677e9913f407a75f54a6 with same finalized synthetic child-process test and Node dependencies",
+    "syntax_checks": 18,
     "environment": "Node24.22.1 Linux local filesystem, actual separate server processes; fetch/SMTP providers forbidden",
-    "coverage": [
-      "second writable owner blocked before startup recovery with byte-identical state",
-      "read-only/restored observers preserve active RUNNING/EXECUTING claims",
-      "ownership retained through HTTP close; SIGKILL permits exactly-once INTERRUPTED/UNCERTAIN recovery without replay",
-      "symlink aliases share canonical path and saves preserve symlinks; hardlinked states rejected",
-      "independent state files allowed; three simultaneous starts on absent state admit one owner",
-      "invalid/symlinked owner file and dangling state symlink fail closed before recovery"
+    "new_tests": [
+      "test/processOwnerIntegration.test.js",
+      "test/readOnlyPeuStartup.test.js"
+    ],
+    "batches": [
+      {
+        "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js",
+        "passed": 399,
+        "failed": 0,
+        "syntax_checks": 14,
+        "new_test": "test/processOwnerIntegration.test.js",
+        "baseline_passed": 1,
+        "baseline_failed": 7,
+        "corrected_passed": 8,
+        "baseline_environment": "exact archived abae32ac36081abc0530677e9913f407a75f54a6 with same finalized synthetic child-process test and Node dependencies",
+        "environment": "Node24.22.1 Linux local filesystem, actual separate server processes; fetch/SMTP providers forbidden",
+        "coverage": [
+          "second writable owner blocked before startup recovery with byte-identical state",
+          "read-only/restored observers preserve active RUNNING/EXECUTING claims",
+          "ownership retained through HTTP close; SIGKILL permits exactly-once INTERRUPTED/UNCERTAIN recovery without replay",
+          "symlink aliases share canonical path and saves preserve symlinks; hardlinked states rejected",
+          "independent state files allowed; three simultaneous starts on absent state admit one owner",
+          "invalid/symlinked owner file and dangling state symlink fail closed before recovery"
+        ]
+      },
+      {
+        "new_test": "test/readOnlyPeuStartup.test.js",
+        "baseline_commit": "b01767197e1180d944d21b9f7b35c3b67d2c8a62",
+        "baseline_passed": 1,
+        "baseline_failed": 4,
+        "corrected_passed": 5,
+        "coverage": [
+          "actual readonly/restore server with Peu token preserves executing SQLite operations/effects and cached GETs",
+          "sync/commands return403 before providers; no readonly bridge DDL or scheduled backup timers",
+          "writable owner still initializes/reconciles Peu and schedules backup (callbacks intercepted, never executed)",
+          "direct readonly bridge commands/replies reject before ledger or provider access",
+          "readonly cache open never creates missing parent/database"
+        ]
+      }
     ],
     "date": "2026-11-07"
   },

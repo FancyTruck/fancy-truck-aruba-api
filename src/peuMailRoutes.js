@@ -2,8 +2,8 @@ import {ArubaService} from './peuMailService.js';
 import {openMailDb,problem} from './peuMailDb.js';
 import {join,dirname} from 'node:path';
 // Deliberately no SMTP, Odoo writes, approval or execution routes.
-export function mountPeuMail(app,{withImap,parse,stateFile}) {
-  const db=openMailDb(join(dirname(stateFile),'peu-aruba.sqlite'));
+export function mountPeuMail(app,{withImap,parse,stateFile,readOnly=false}) {
+  const db=openMailDb(join(dirname(stateFile),'peu-aruba.sqlite'),{readOnly});
   const service=new ArubaService({db,withImap,parse,accounts:['pietro']});
   let syncing=null;
   const wrap=fn=>async(req,res)=>{

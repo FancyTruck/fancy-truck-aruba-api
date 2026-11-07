@@ -38,3 +38,5 @@
 - `night-verification-2026-11-06.json`: old RUNNING cycles survive state/backup retention.4 baseline failures/4 corrected passes,391 total tests/13syntax checks; actual encrypted synthetic isolated restore preserves pending/cursor/SMTP uncertainty and quarantine. No new real-provider backup proof.
 
 - `night-verification-2026-11-07.json`: actual child-process ownership/SIGKILL tests;7 baseline failures,8 corrected tests,399 total/14syntax checks. SQLite local filesystem exclusion, canonical state/lock safety, readonly/restore and no uncertain replay. No Render disk/distributed-lock/live-checkpoint acceptance or real-provider backup proof.
+
+- Same Nov7 report, second batch: readonly Peu/restore regressions reproduce4 failures on b017671;5 corrected tests and404 total/18syntax pass. Cache reads preserved, no observer ledger/schema recovery, sync/provider or scheduled backup effect; writable callbacks only instrumented, not run.

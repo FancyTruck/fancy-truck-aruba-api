@@ -958,6 +958,7 @@ app.get('/v1/diagnostics', requireToken, (_req, res) => {
     backup: {
       required_format: process.env.PEU_ACCESS_TOKEN ? 2 : 1,
       enabled: process.env.EXTERNAL_BACKUP_ENABLED === 'true',
+      scheduled: process.env.EXTERNAL_BACKUP_ENABLED === 'true' && !runtime.readOnly,
       last_verified_at: state.integrations['backup:external']?.last_success_at || null,
       status: process.env.EXTERNAL_BACKUP_ENABLED !== 'true' ? 'DISABLED' :
         (!state.integrations['backup:external']?.last_success_at ||
@@ -987,12 +988,15 @@ app.get('/ready', (_req, res) => {
 });
 
 app.use('/v1', requireToken);
+// Include Peu cache sync: readonly/restore must be enforced before mounting it.
+app.use('/v1', readOnlyMiddleware(runtime));
 let peuDb;
 if (process.env.PEU_ACCESS_TOKEN) {
   const {mountPeuMail}=await import('./peuMailRoutes.js');
-  peuDb=mountPeuMail(app,{withImap,parse:simpleParser,stateFile:runtime.stateFile});
+  peuDb=mountPeuMail(app,{withImap,parse:simpleParser,stateFile:runtime.stateFile,readOnly:runtime.readOnly});
 }
 function verifiedExternalBackup(){
+ assertWritable(runtime);
  if(backupInFlight)return backupInFlight;
  backupInFlight=runExternalBackup({store,env:process.env,db:peuDb,canCapture:()=>activeApiRequests===0})
  .then(result=>{
@@ -1005,21 +1009,20 @@ function verifiedExternalBackup(){
  return backupInFlight;
 }
 async function scheduledBackup(){
- if(operationalCycleRunning||backupInFlight)return;
+ if(runtime.readOnly||operationalCycleRunning||backupInFlight)return;
  try{await verifiedExternalBackup();}
  catch(error){
    store.integration('backup:external',{status:'ERROR',error:'Backup completo non verificato: controllare registro, spazio e accesso al bucket'});
    console.error(JSON.stringify({event:'external_backup_alarm',code:'BACKUP_NOT_VERIFIED',...backupFailureDetails(error)}));
  }
 }
-app.use('/v1', readOnlyMiddleware(runtime));
 if (peuDb) {
   const {PeuWhatsAppGateway,mountPeuWhatsApp}=await import('./peuWhatsApp.js');
-  mountPeuWhatsApp(app,new PeuWhatsAppGateway({db:peuDb,call:odooCall,parse:simpleParser,assertWritable:()=>assertWritable(runtime)}));
+  mountPeuWhatsApp(app,new PeuWhatsAppGateway({db:peuDb,call:odooCall,parse:simpleParser,assertWritable:()=>assertWritable(runtime),readOnly:runtime.readOnly}));
   const {makePeuContract,mountPeuContract}=await import('./peuContract.js');
   const {jsonRequest}=await import('./peuCommon.js');
   const upstream=(path,options={})=>jsonRequest(fetch,`http://127.0.0.1:${port||server.address().port}${path}`,{...options,headers:{'Content-Type':'application/json',Authorization:`Bearer ${peuInternalToken}`}});
-  mountPeuContract(app,makePeuContract({db:peuDb,approvals,upstream,odooRead:(model,domain,options)=>odooCall(model,'search_read',[domain],options),assertWritable:()=>assertWritable(runtime),
+  mountPeuContract(app,makePeuContract({db:peuDb,approvals,upstream,readOnly:runtime.readOnly,odooRead:(model,domain,options)=>odooCall(model,'search_read',[domain],options),assertWritable:()=>assertWritable(runtime),
     verify:async(capability,response,marker)=>{
       const model=capability==='crm.create'?'crm.lead':'sale.order';
       const id=response.id||response.lead?.id||response.order?.id;
@@ -1478,10 +1481,10 @@ const server = app.listen(port, runtime.host, (error) => {
   // Backup runs independently of business hours and never starts a CRM/mail
   // cycle. Retry a busy/failed capture hourly; a new format is verified today
   // even if the older JSON-only backup already succeeded.
-  if(process.env.EXTERNAL_BACKUP_ENABLED==='true'){
+  if(process.env.EXTERNAL_BACKUP_ENABLED==='true' && !runtime.readOnly){
     setTimeout(scheduledBackup,5000);
     setInterval(scheduledBackup,60*60*1000);
-  }else if(peuDb){
+  }else if(peuDb && !runtime.readOnly){
     console.error(JSON.stringify({event:'external_backup_alarm',code:'BACKUP_DISABLED'}));
   }
   if (runtime.startupChecks) {

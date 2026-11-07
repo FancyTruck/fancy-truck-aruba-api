@@ -1,9 +1,10 @@
 {
   "date": "2026-11-07",
-  "updated_at": "2026-11-07T01:13:02.809298+00:00",
+  "updated_at": "2026-11-07T01:19:28.384188+00:00",
   "run_id": "fancy-night-20261107-process-owner",
   "modules": [
     "P00",
+    "P02",
     "P03",
     "P22"
   ],
@@ -13,7 +14,8 @@
     "1.4.1",
     "1.5",
     "7.2",
-    "7.3"
+    "7.3",
+    "1.3"
   ],
   "baseline": {
     "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
@@ -24,33 +26,61 @@
   },
   "defect": "Every writable server previously reconciled RUNNING cycles and EXECUTING SMTP at startup even when a first server on the same state file was still active. Concurrent writable instances could quarantine active work and overwrite snapshots. Seven of eight finalized real-server tests fail on exact previous source.",
   "implementation": "Acquire lifetime SQLite BEGIN EXCLUSIVE ownership on canonical STATE_FILE.owner.sqlite before writable runtime initialization/recovery; timeout0 fails closed. Reload authoritative state and reapply restore guard after acquisition. Strong connection retained until process exit, including after HTTP close; no expiry, PID-based takeover or stale-file deletion. Empty sidecar is a mutex, contains no business rows/schema. Existing node:sqlite dependency only; no service/infrastructure provisioned. Canonicalize symlinks for saves; reject hardlinked/dangling state and aliased lock files.",
-  "runtime": "Actual src/server.js startup invokes src/processOwner.js before cycle/SMTP recovery, Peu initialization, providers or HTTP listener. Readonly/already-quarantined starts do not acquire. Standalone JsonStateStore writers are not newly wrapped.",
+  "runtime": "Actual src/server.js startup invokes src/processOwner.js before cycle/SMTP recovery, Peu initialization, providers or HTTP listener. Readonly/already-quarantined starts do not acquire. Standalone JsonStateStore writers are not newly wrapped. Readonly/restore runtime is also propagated to Peu SQLite constructors and guarded routes; readonly observers do not run Peu effect recovery or backup schedule.",
   "tests": {
-    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js",
-    "passed": 399,
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js",
+    "passed": 404,
     "failed": 0,
-    "syntax_checks": 14,
-    "new_test": "test/processOwnerIntegration.test.js",
-    "baseline_passed": 1,
-    "baseline_failed": 7,
-    "corrected_passed": 8,
-    "baseline_environment": "exact archived abae32ac36081abc0530677e9913f407a75f54a6 with same finalized synthetic child-process test and Node dependencies",
+    "syntax_checks": 18,
     "environment": "Node24.22.1 Linux local filesystem, actual separate server processes; fetch/SMTP providers forbidden",
-    "coverage": [
-      "second writable owner blocked before startup recovery with byte-identical state",
-      "read-only/restored observers preserve active RUNNING/EXECUTING claims",
-      "ownership retained through HTTP close; SIGKILL permits exactly-once INTERRUPTED/UNCERTAIN recovery without replay",
-      "symlink aliases share canonical path and saves preserve symlinks; hardlinked states rejected",
-      "independent state files allowed; three simultaneous starts on absent state admit one owner",
-      "invalid/symlinked owner file and dangling state symlink fail closed before recovery"
+    "new_tests": [
+      "test/processOwnerIntegration.test.js",
+      "test/readOnlyPeuStartup.test.js"
+    ],
+    "batches": [
+      {
+        "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js",
+        "passed": 399,
+        "failed": 0,
+        "syntax_checks": 14,
+        "new_test": "test/processOwnerIntegration.test.js",
+        "baseline_passed": 1,
+        "baseline_failed": 7,
+        "corrected_passed": 8,
+        "baseline_environment": "exact archived abae32ac36081abc0530677e9913f407a75f54a6 with same finalized synthetic child-process test and Node dependencies",
+        "environment": "Node24.22.1 Linux local filesystem, actual separate server processes; fetch/SMTP providers forbidden",
+        "coverage": [
+          "second writable owner blocked before startup recovery with byte-identical state",
+          "read-only/restored observers preserve active RUNNING/EXECUTING claims",
+          "ownership retained through HTTP close; SIGKILL permits exactly-once INTERRUPTED/UNCERTAIN recovery without replay",
+          "symlink aliases share canonical path and saves preserve symlinks; hardlinked states rejected",
+          "independent state files allowed; three simultaneous starts on absent state admit one owner",
+          "invalid/symlinked owner file and dangling state symlink fail closed before recovery"
+        ]
+      },
+      {
+        "new_test": "test/readOnlyPeuStartup.test.js",
+        "baseline_commit": "b01767197e1180d944d21b9f7b35c3b67d2c8a62",
+        "baseline_passed": 1,
+        "baseline_failed": 4,
+        "corrected_passed": 5,
+        "coverage": [
+          "actual readonly/restore server with Peu token preserves executing SQLite operations/effects and cached GETs",
+          "sync/commands return403 before providers; no readonly bridge DDL or scheduled backup timers",
+          "writable owner still initializes/reconciles Peu and schedules backup (callbacks intercepted, never executed)",
+          "direct readonly bridge commands/replies reject before ledger or provider access",
+          "readonly cache open never creates missing parent/database"
+        ]
+      }
     ]
   },
   "source_integrity": {
     "previous_combined_server_blob": "2d6d991630acd257d6ab46ef0a382151f48352dd",
-    "combined_server_blob": "924bfa9d82ab940b5efd4bef9e3c43b7c5635272",
+    "combined_server_blob": "00b5ab69b9ee6e1f738b752d7452cd68172bb768",
     "pr26_server_blob_unchanged": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
-    "scope": "one import plus exclusive startup/reload guard; corrected intake/awaiting_scope_review and other PR26/PR38 protections retained",
-    "remote_readback": "required after source commit; final registry will carry verified pointer"
+    "scope": "one import plus exclusive startup/reload guard; corrected intake/awaiting_scope_review and other PR26/PR38 protections retained; subsequent actual Peu initialization/middleware/backup readonly guards",
+    "remote_readback": "required after source commit; final registry will carry verified pointer",
+    "owner_batch_server_blob": "924bfa9d82ab940b5efd4bef9e3c43b7c5635272"
   },
   "design_verification": {
     "references": [
@@ -65,14 +95,33 @@
   "backup": {
     "provider_download_integrity_decryption_restore": "NOT EXECUTED this run; preserve previous dated successful provider evidence and Nov6 synthetic restore separately",
     "sidecar": "Ownership file is not business state and is excluded from explicit operational bundle capture/restore; restored guard remains read-only. Do not restore mutex ownership.",
-    "deletions": "none on provider or production"
+    "deletions": "none on provider or production",
+    "readonly_scheduling": "Configured backup stays visible but scheduled=false for readonly/restore. Tests intercepted timers on writable owner; no upload/download/capture callback executed."
   },
   "limits": [
     "Local process/file exclusion tested; actual Render disk semantics and cross-host/distributed filesystems not certified",
     "Every writer must use same canonical path and ownership protocol. Old servers, standalone scripts, different physical state copies or deleting/replacing ownership file bypass this protocol; coordinated rollout remains required",
     "No provider/legacy approval reviewed recovery or automatic SMTP retry implemented",
-    "No live restart/checkpoint, F0/F1/F2, handoff or four-path acceptance;4.5.1 accepted and COLLAUDO/project records untouched; F6 deferred"
+    "No live restart/checkpoint, F0/F1/F2, handoff or four-path acceptance;4.5.1 accepted and COLLAUDO/project records untouched; F6 deferred",
+    "Readonly Peu requires an existing initialized cache/ledger; missing DB fails closed without creating it. SQLite may manage WAL/shared-memory read-lock bookkeeping; no claim of zero filesystem housekeeping. Business rows, schema and JSON state remain unchanged in observer tests."
   ],
-  "next_action": "Continue evidence-bound provider/legacy-approval reviewed recovery on current combined branch. Verify all writers and actual Render persistent-disk locking only under separately authorized rollout/live acceptance; no automatic uncertain replay.",
-  "effects": "No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task."
+  "next_action": "Check diagnostic projection of older unfinished cycles retained outside recent history; then evidence-bound provider/legacy-approval recovery. Live disk locking/load/checkpoint remains separate authorized acceptance.",
+  "effects": "No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task.",
+  "readonly_defect": "With PEU_ACCESS_TOKEN, readonly/restored startup still initialized bridge schemas and changed executing SQLite effects/operations to unknown. Mail sync mounted before readonly middleware and backup timers ignored readonly. Four of5 finalized tests fail on b017671.",
+  "readonly_implementation": "Pass readonly to actual DB/mail/contract/WhatsApp bridges. Open existing SQLite readOnly:true without mkdir/chmod/DDL/recovery; reject command/reply before replay writes. Move runtime middleware before cache sync, disable readonly backup scheduling and guard direct backup entry; diagnostics exposes configured enabled separately from scheduled. Writable owner keeps existing startup recovery; cache GETs remain available.",
+  "source_batches": [
+    {
+      "commit": "b01767197e1180d944d21b9f7b35c3b67d2c8a62",
+      "tree": "49f16ac4811812b76b79eb77ece3e9921fc32939",
+      "changed_paths_verified": 8,
+      "scope": "process ownership",
+      "tests": 399,
+      "syntax_checks": 14
+    },
+    {
+      "parent": "b01767197e1180d944d21b9f7b35c3b67d2c8a62",
+      "scope": "readonly Peu/restore guards",
+      "remote_readback": "required after commit"
+    }
+  ]
 }
