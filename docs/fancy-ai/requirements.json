@@ -102,9 +102,14 @@
           "date": "2026-11-04",
           "kind": "Selective cycle recovery rollback:4 baseline failures/2existing passes,6 corrected regressions;380 tests/9syntax checks. Real local startup/file failures; no live acceptance.",
           "reference": "night-verification-2026-11-04.json"
+        },
+        {
+          "date": "2026-11-07",
+          "kind": "Isolated real-server process ownership and SIGKILL recovery:7 baseline failures reproduced,8 corrected tests,399 total/14 syntax checks. Local filesystem only; no live acceptance.",
+          "reference": "night-verification-2026-11-07.json"
         }
       ],
-      "updated_at": "2026-11-01"
+      "updated_at": "2026-11-07"
     },
     {
       "id": "0.3",
@@ -228,10 +233,15 @@
           "date": "2026-11-06",
           "kind": "RUNNING-cycle retention:4 failures on exact archived prior source,4 corrected passes;391 tests/13syntax checks. Actual encrypted synthetic isolated restore, no real provider download/restore.",
           "reference": "night-verification-2026-11-06.json"
+        },
+        {
+          "date": "2026-11-07",
+          "kind": "Isolated real-server process ownership and SIGKILL recovery:7 baseline failures reproduced,8 corrected tests,399 total/14 syntax checks. Local filesystem only; no live acceptance.",
+          "reference": "night-verification-2026-11-07.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-01"
+      "updated_at": "2026-11-07"
     },
     {
       "id": "1.5",
@@ -281,9 +291,14 @@
           "date": "2026-11-06",
           "kind": "RUNNING-cycle retention:4 failures on exact archived prior source,4 corrected passes;391 tests/13syntax checks. Actual encrypted synthetic isolated restore, no real provider download/restore.",
           "reference": "night-verification-2026-11-06.json"
+        },
+        {
+          "date": "2026-11-07",
+          "kind": "Isolated real-server process ownership and SIGKILL recovery:7 baseline failures reproduced,8 corrected tests,399 total/14 syntax checks. Local filesystem only; no live acceptance.",
+          "reference": "night-verification-2026-11-07.json"
         }
       ],
-      "updated_at": "2026-11-01"
+      "updated_at": "2026-11-07"
     },
     {
       "id": "2.1",
@@ -699,9 +714,14 @@
           "date": "2026-11-06",
           "kind": "RUNNING-cycle retention:4 failures on exact archived prior source,4 corrected passes;391 tests/13syntax checks. Actual encrypted synthetic isolated restore, no real provider download/restore.",
           "reference": "night-verification-2026-11-06.json"
+        },
+        {
+          "date": "2026-11-07",
+          "kind": "Isolated real-server process ownership and SIGKILL recovery:7 baseline failures reproduced,8 corrected tests,399 total/14 syntax checks. Local filesystem only; no live acceptance.",
+          "reference": "night-verification-2026-11-07.json"
         }
       ],
-      "updated_at": "2026-11-01"
+      "updated_at": "2026-11-07"
     },
     {
       "id": "7.3",
@@ -765,9 +785,14 @@
           "date": "2026-11-06",
           "kind": "RUNNING-cycle retention:4 failures on exact archived prior source,4 corrected passes;391 tests/13syntax checks. Actual encrypted synthetic isolated restore, no real provider download/restore.",
           "reference": "night-verification-2026-11-06.json"
+        },
+        {
+          "date": "2026-11-07",
+          "kind": "Isolated real-server process ownership and SIGKILL recovery:7 baseline failures reproduced,8 corrected tests,399 total/14 syntax checks. Local filesystem only; no live acceptance.",
+          "reference": "night-verification-2026-11-07.json"
         }
       ],
-      "updated_at": "2026-11-01"
+      "updated_at": "2026-11-07"
     },
     {
       "id": "7.4",
@@ -922,10 +947,15 @@
           "date": "2026-11-06",
           "kind": "RUNNING-cycle retention:4 failures on exact archived prior source,4 corrected passes;391 tests/13syntax checks. Actual encrypted synthetic isolated restore, no real provider download/restore.",
           "reference": "night-verification-2026-11-06.json"
+        },
+        {
+          "date": "2026-11-07",
+          "kind": "Isolated real-server process ownership and SIGKILL recovery:7 baseline failures reproduced,8 corrected tests,399 total/14 syntax checks. Local filesystem only; no live acceptance.",
+          "reference": "night-verification-2026-11-07.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-01"
+      "updated_at": "2026-11-07"
     },
     {
       "id": "2.1.1",

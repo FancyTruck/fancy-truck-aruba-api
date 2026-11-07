@@ -1,0 +1,78 @@
+{
+  "date": "2026-11-07",
+  "updated_at": "2026-11-07T01:13:02.809298+00:00",
+  "run_id": "fancy-night-20261107-process-owner",
+  "modules": [
+    "P00",
+    "P03",
+    "P22"
+  ],
+  "requirement_ids": [
+    "0.2",
+    "1.4",
+    "1.4.1",
+    "1.5",
+    "7.2",
+    "7.3"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "integration_parent": "abae32ac36081abc0530677e9913f407a75f54a6",
+    "integration_branch": "work/fancy-pr38-reconcile-20261101",
+    "pr26_parent": "65fc092705ccc6811917c3194be46d7ff91411a8",
+    "lease": "b35030349bb2805b683a919640f2a42c07412e6f"
+  },
+  "defect": "Every writable server previously reconciled RUNNING cycles and EXECUTING SMTP at startup even when a first server on the same state file was still active. Concurrent writable instances could quarantine active work and overwrite snapshots. Seven of eight finalized real-server tests fail on exact previous source.",
+  "implementation": "Acquire lifetime SQLite BEGIN EXCLUSIVE ownership on canonical STATE_FILE.owner.sqlite before writable runtime initialization/recovery; timeout0 fails closed. Reload authoritative state and reapply restore guard after acquisition. Strong connection retained until process exit, including after HTTP close; no expiry, PID-based takeover or stale-file deletion. Empty sidecar is a mutex, contains no business rows/schema. Existing node:sqlite dependency only; no service/infrastructure provisioned. Canonicalize symlinks for saves; reject hardlinked/dangling state and aliased lock files.",
+  "runtime": "Actual src/server.js startup invokes src/processOwner.js before cycle/SMTP recovery, Peu initialization, providers or HTTP listener. Readonly/already-quarantined starts do not acquire. Standalone JsonStateStore writers are not newly wrapped.",
+  "tests": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js",
+    "passed": 399,
+    "failed": 0,
+    "syntax_checks": 14,
+    "new_test": "test/processOwnerIntegration.test.js",
+    "baseline_passed": 1,
+    "baseline_failed": 7,
+    "corrected_passed": 8,
+    "baseline_environment": "exact archived abae32ac36081abc0530677e9913f407a75f54a6 with same finalized synthetic child-process test and Node dependencies",
+    "environment": "Node24.22.1 Linux local filesystem, actual separate server processes; fetch/SMTP providers forbidden",
+    "coverage": [
+      "second writable owner blocked before startup recovery with byte-identical state",
+      "read-only/restored observers preserve active RUNNING/EXECUTING claims",
+      "ownership retained through HTTP close; SIGKILL permits exactly-once INTERRUPTED/UNCERTAIN recovery without replay",
+      "symlink aliases share canonical path and saves preserve symlinks; hardlinked states rejected",
+      "independent state files allowed; three simultaneous starts on absent state admit one owner",
+      "invalid/symlinked owner file and dangling state symlink fail closed before recovery"
+    ]
+  },
+  "source_integrity": {
+    "previous_combined_server_blob": "2d6d991630acd257d6ab46ef0a382151f48352dd",
+    "combined_server_blob": "924bfa9d82ab940b5efd4bef9e3c43b7c5635272",
+    "pr26_server_blob_unchanged": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "scope": "one import plus exclusive startup/reload guard; corrected intake/awaiting_scope_review and other PR26/PR38 protections retained",
+    "remote_readback": "required after source commit; final registry will carry verified pointer"
+  },
+  "design_verification": {
+    "references": [
+      "https://www.sqlite.org/lockingv3.html",
+      "https://www.sqlite.org/lang_transaction.html"
+    ],
+    "attempt": "Initial Linux abstract-socket design could not acquire EPERM in this environment; all6 initial positive tests failed. Removed entirely; no success attributed. SQLite replacement tested on actual local filesystem with real processes.",
+    "lock_lifetime": "Hold dedicated connection with BEGIN EXCLUSIVE; never COMMIT/ROLLBACK/close while process may run handlers. OS releases process locks at exit/SIGKILL. Never unlink/replace sidecar while any writer can run."
+  },
+  "live_readonly": "Fresh refs match checkpoints; Render metadata confirms main-only auto-deploy, previews disabled, one instance,1GiB persistent disk. No fresh deploy/log/memory query or runtime mutation.",
+  "oom": "No new memory profile, representative live-load proof or historical-cause attribution. Existing limits retained.",
+  "backup": {
+    "provider_download_integrity_decryption_restore": "NOT EXECUTED this run; preserve previous dated successful provider evidence and Nov6 synthetic restore separately",
+    "sidecar": "Ownership file is not business state and is excluded from explicit operational bundle capture/restore; restored guard remains read-only. Do not restore mutex ownership.",
+    "deletions": "none on provider or production"
+  },
+  "limits": [
+    "Local process/file exclusion tested; actual Render disk semantics and cross-host/distributed filesystems not certified",
+    "Every writer must use same canonical path and ownership protocol. Old servers, standalone scripts, different physical state copies or deleting/replacing ownership file bypass this protocol; coordinated rollout remains required",
+    "No provider/legacy approval reviewed recovery or automatic SMTP retry implemented",
+    "No live restart/checkpoint, F0/F1/F2, handoff or four-path acceptance;4.5.1 accepted and COLLAUDO/project records untouched; F6 deferred"
+  ],
+  "next_action": "Continue evidence-bound provider/legacy-approval reviewed recovery on current combined branch. Verify all writers and actual Render persistent-disk locking only under separately authorized rollout/live acceptance; no automatic uncertain replay.",
+  "effects": "No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task."
+}

@@ -1,4 +1,5 @@
 import { reviewSnapshot } from './reviewSnapshot.js';
+import { acquireProcessOwner } from './processOwner.js';
 import { intakeStatus, syncIntakeWatchdog, suspensionDescription } from './intakeWatchdog.js';
 import { ensureCustomerAttention } from './customerAttention.js';
 import { matchQuotationThread } from './threadReferences.js';
@@ -59,8 +60,16 @@ const port = Number(process.env.PORT || 3000);
 const apiToken = process.env.API_TOKEN || '';
 const initialRuntime = runtimeConfig();
 const startedAt = Date.now();
-const store = new JsonStateStore(initialRuntime.stateFile);
-const runtime = applyRecoveryGuard(initialRuntime,store.state);
+let store = new JsonStateStore(initialRuntime.stateFile);
+let runtime = applyRecoveryGuard(initialRuntime,store.state);
+// Claim before any recovery, provider setup or writable runtime initialization.
+// Already read-only/quarantined runtimes do not claim. Reload after exclusion: the first
+// read was only for quarantine detection and may predate the previous exit.
+const processOwner = runtime.readOnly ? null : await acquireProcessOwner(initialRuntime.stateFile);
+if (processOwner) {
+  store = new JsonStateStore(processOwner.stateFile);
+  runtime = applyRecoveryGuard(Object.freeze({...initialRuntime,stateFile:processOwner.stateFile}),store.state);
+}
 // Only the owning server reconciles its previous process, never backup readers
 // or quarantined restores. No interrupted effect is automatically retried.
 if (!runtime.readOnly) {
