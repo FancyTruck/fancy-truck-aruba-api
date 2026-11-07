@@ -112,6 +112,11 @@
           "date": "2026-11-07",
           "kind": "Readonly/restore Peu runtime:4 failures reproduced on b017671,5 corrected tests,404 total/18 syntax. Existing cache reads preserved; sync, ledger/schema recovery and scheduled backup writes blocked. Synthetic local only.",
           "reference": "night-verification-2026-11-07.json"
+        },
+        {
+          "date": "2026-11-07",
+          "kind": "All unfinished-cycle diagnostic projection:4 baseline failures on75e23c7,4 corrected tests,408 total/19syntax. Existing HTTP health/intake and synthetic watchdog show old backlog without recovery/retry; not live acceptance.",
+          "reference": "night-verification-2026-11-07.json"
         }
       ],
       "updated_at": "2026-11-07"
@@ -254,6 +259,11 @@
           "date": "2026-11-07",
           "kind": "Readonly/restore Peu runtime:4 failures reproduced on b017671,5 corrected tests,404 total/18 syntax. Existing cache reads preserved; sync, ledger/schema recovery and scheduled backup writes blocked. Synthetic local only.",
           "reference": "night-verification-2026-11-07.json"
+        },
+        {
+          "date": "2026-11-07",
+          "kind": "All unfinished-cycle diagnostic projection:4 baseline failures on75e23c7,4 corrected tests,408 total/19syntax. Existing HTTP health/intake and synthetic watchdog show old backlog without recovery/retry; not live acceptance.",
+          "reference": "night-verification-2026-11-07.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
@@ -316,6 +326,11 @@
         {
           "date": "2026-11-07",
           "kind": "Readonly/restore Peu runtime:4 failures reproduced on b017671,5 corrected tests,404 total/18 syntax. Existing cache reads preserved; sync, ledger/schema recovery and scheduled backup writes blocked. Synthetic local only.",
+          "reference": "night-verification-2026-11-07.json"
+        },
+        {
+          "date": "2026-11-07",
+          "kind": "All unfinished-cycle diagnostic projection:4 baseline failures on75e23c7,4 corrected tests,408 total/19syntax. Existing HTTP health/intake and synthetic watchdog show old backlog without recovery/retry; not live acceptance.",
           "reference": "night-verification-2026-11-07.json"
         }
       ],
@@ -745,6 +760,11 @@
           "date": "2026-11-07",
           "kind": "Readonly/restore Peu runtime:4 failures reproduced on b017671,5 corrected tests,404 total/18 syntax. Existing cache reads preserved; sync, ledger/schema recovery and scheduled backup writes blocked. Synthetic local only.",
           "reference": "night-verification-2026-11-07.json"
+        },
+        {
+          "date": "2026-11-07",
+          "kind": "All unfinished-cycle diagnostic projection:4 baseline failures on75e23c7,4 corrected tests,408 total/19syntax. Existing HTTP health/intake and synthetic watchdog show old backlog without recovery/retry; not live acceptance.",
+          "reference": "night-verification-2026-11-07.json"
         }
       ],
       "updated_at": "2026-11-07"
@@ -820,6 +840,11 @@
         {
           "date": "2026-11-07",
           "kind": "Readonly/restore Peu runtime:4 failures reproduced on b017671,5 corrected tests,404 total/18 syntax. Existing cache reads preserved; sync, ledger/schema recovery and scheduled backup writes blocked. Synthetic local only.",
+          "reference": "night-verification-2026-11-07.json"
+        },
+        {
+          "date": "2026-11-07",
+          "kind": "All unfinished-cycle diagnostic projection:4 baseline failures on75e23c7,4 corrected tests,408 total/19syntax. Existing HTTP health/intake and synthetic watchdog show old backlog without recovery/retry; not live acceptance.",
           "reference": "night-verification-2026-11-07.json"
         }
       ],
@@ -987,6 +1012,11 @@
         {
           "date": "2026-11-07",
           "kind": "Readonly/restore Peu runtime:4 failures reproduced on b017671,5 corrected tests,404 total/18 syntax. Existing cache reads preserved; sync, ledger/schema recovery and scheduled backup writes blocked. Synthetic local only.",
+          "reference": "night-verification-2026-11-07.json"
+        },
+        {
+          "date": "2026-11-07",
+          "kind": "All unfinished-cycle diagnostic projection:4 baseline failures on75e23c7,4 corrected tests,408 total/19syntax. Existing HTTP health/intake and synthetic watchdog show old backlog without recovery/retry; not live acceptance.",
           "reference": "night-verification-2026-11-07.json"
         }
       ],

@@ -1,6 +1,6 @@
 {
   "date": "2026-11-07",
-  "updated_at": "2026-11-07T01:19:28.384188+00:00",
+  "updated_at": "2026-11-07T01:22:57.339149+00:00",
   "run_id": "fancy-night-20261107-process-owner",
   "modules": [
     "P00",
@@ -26,16 +26,17 @@
   },
   "defect": "Every writable server previously reconciled RUNNING cycles and EXECUTING SMTP at startup even when a first server on the same state file was still active. Concurrent writable instances could quarantine active work and overwrite snapshots. Seven of eight finalized real-server tests fail on exact previous source.",
   "implementation": "Acquire lifetime SQLite BEGIN EXCLUSIVE ownership on canonical STATE_FILE.owner.sqlite before writable runtime initialization/recovery; timeout0 fails closed. Reload authoritative state and reapply restore guard after acquisition. Strong connection retained until process exit, including after HTTP close; no expiry, PID-based takeover or stale-file deletion. Empty sidecar is a mutex, contains no business rows/schema. Existing node:sqlite dependency only; no service/infrastructure provisioned. Canonicalize symlinks for saves; reject hardlinked/dangling state and aliased lock files.",
-  "runtime": "Actual src/server.js startup invokes src/processOwner.js before cycle/SMTP recovery, Peu initialization, providers or HTTP listener. Readonly/already-quarantined starts do not acquire. Standalone JsonStateStore writers are not newly wrapped. Readonly/restore runtime is also propagated to Peu SQLite constructors and guarded routes; readonly observers do not run Peu effect recovery or backup schedule.",
+  "runtime": "Actual src/server.js startup invokes src/processOwner.js before cycle/SMTP recovery, Peu initialization, providers or HTTP listener. Readonly/already-quarantined starts do not acquire. Standalone JsonStateStore writers are not newly wrapped. Readonly/restore runtime is also propagated to Peu SQLite constructors and guarded routes; readonly observers do not run Peu effect recovery or backup schedule. automationHealth and intakeStatus projections used by actual diagnostics and existing watchdog now inspect all unfinished cycles, not only last history row.",
   "tests": {
-    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js",
-    "passed": 404,
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js; node --check src/automationHealth.js",
+    "passed": 408,
     "failed": 0,
-    "syntax_checks": 18,
+    "syntax_checks": 19,
     "environment": "Node24.22.1 Linux local filesystem, actual separate server processes; fetch/SMTP providers forbidden",
     "new_tests": [
       "test/processOwnerIntegration.test.js",
-      "test/readOnlyPeuStartup.test.js"
+      "test/readOnlyPeuStartup.test.js",
+      "test/pendingCycleDiagnostics.test.js"
     ],
     "batches": [
       {
@@ -71,16 +72,30 @@
           "direct readonly bridge commands/replies reject before ledger or provider access",
           "readonly cache open never creates missing parent/database"
         ]
+      },
+      {
+        "new_test": "test/pendingCycleDiagnostics.test.js",
+        "baseline_commit": "75e23c70b9c378da7aea4a5ca55284b1e90c80f3",
+        "baseline_passed": 0,
+        "baseline_failed": 4,
+        "corrected_passed": 4,
+        "coverage": [
+          "all retained RUNNING cycles affect automation health, including older than latest200 completed rows",
+          "fresh unfinished work reports RUNNING, not OK; old/invalid work reports stalled",
+          "intake watchdog counts older stalled/invalid pending work and does not falsely clear activity (synthetic adapter)",
+          "actual readonly HTTP diagnostics/intake expose counts without file mutation/recovery/provider access"
+        ]
       }
     ]
   },
   "source_integrity": {
     "previous_combined_server_blob": "2d6d991630acd257d6ab46ef0a382151f48352dd",
-    "combined_server_blob": "00b5ab69b9ee6e1f738b752d7452cd68172bb768",
+    "combined_server_blob": "b292c47106b4e6dd723e962acbd22d880f2cd8de",
     "pr26_server_blob_unchanged": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
-    "scope": "one import plus exclusive startup/reload guard; corrected intake/awaiting_scope_review and other PR26/PR38 protections retained; subsequent actual Peu initialization/middleware/backup readonly guards",
+    "scope": "one import plus exclusive startup/reload guard; corrected intake/awaiting_scope_review and other PR26/PR38 protections retained; subsequent actual Peu initialization/middleware/backup readonly guards; two scalar pending/stalled counts in existing diagnostics",
     "remote_readback": "required after source commit; final registry will carry verified pointer",
-    "owner_batch_server_blob": "924bfa9d82ab940b5efd4bef9e3c43b7c5635272"
+    "owner_batch_server_blob": "924bfa9d82ab940b5efd4bef9e3c43b7c5635272",
+    "readonly_batch_server_blob": "00b5ab69b9ee6e1f738b752d7452cd68172bb768"
   },
   "design_verification": {
     "references": [
@@ -105,7 +120,7 @@
     "No live restart/checkpoint, F0/F1/F2, handoff or four-path acceptance;4.5.1 accepted and COLLAUDO/project records untouched; F6 deferred",
     "Readonly Peu requires an existing initialized cache/ledger; missing DB fails closed without creating it. SQLite may manage WAL/shared-memory read-lock bookkeeping; no claim of zero filesystem housekeeping. Business rows, schema and JSON state remain unchanged in observer tests."
   ],
-  "next_action": "Check diagnostic projection of older unfinished cycles retained outside recent history; then evidence-bound provider/legacy-approval recovery. Live disk locking/load/checkpoint remains separate authorized acceptance.",
+  "next_action": "Evidence-bound provider/legacy-approval reviewed recovery using existing review/action ledger, with no uncertain retry. Reconcile all remote HEADs and lease first. Actual Render disk locking, all-writer adoption, live load/checkpoint and browser/mobile/four-path acceptance require separate authorized evidence.",
   "effects": "No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task.",
   "readonly_defect": "With PEU_ACCESS_TOKEN, readonly/restored startup still initialized bridge schemas and changed executing SQLite effects/operations to unknown. Mail sync mounted before readonly middleware and backup timers ignored readonly. Four of5 finalized tests fail on b017671.",
   "readonly_implementation": "Pass readonly to actual DB/mail/contract/WhatsApp bridges. Open existing SQLite readOnly:true without mkdir/chmod/DDL/recovery; reject command/reply before replay writes. Move runtime middleware before cache sync, disable readonly backup scheduling and guard direct backup entry; diagnostics exposes configured enabled separately from scheduled. Writable owner keeps existing startup recovery; cache GETs remain available.",
@@ -121,7 +136,19 @@
     {
       "parent": "b01767197e1180d944d21b9f7b35c3b67d2c8a62",
       "scope": "readonly Peu/restore guards",
-      "remote_readback": "required after commit"
+      "remote_readback": "complete remote tree and11 changed paths verified",
+      "commit": "75e23c70b9c378da7aea4a5ca55284b1e90c80f3",
+      "tree": "1a91362cac052e5defe36d5bd157783421bdd9d7",
+      "changed_paths_verified": 11,
+      "tests": 404,
+      "syntax_checks": 18
+    },
+    {
+      "parent": "75e23c70b9c378da7aea4a5ca55284b1e90c80f3",
+      "scope": "all-pending-cycle health/watchdog projection",
+      "remote_readback": "required after source commit; final registry carries verified pointer"
     }
-  ]
+  ],
+  "pending_diagnostics_defect": "Health/watchdog examined only last cycle; a fresh completed row could mask older retained RUNNING work and falsely report OK or clear the existing watchdog activity. All4 finalized tests fail on exact75e23c7.",
+  "pending_diagnostics_implementation": "Project all retained RUNNING cycles without mutation. Report running/stalled counts; preserve original2h health and20min watchdog thresholds, treat invalid starts as stalled. Latest diagnostic row remains visible and does not imply unfinished work completed. Expose counts on existing admin diagnostics/intake routes; no new polling, retry or activity path."
 }

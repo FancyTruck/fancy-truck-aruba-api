@@ -967,6 +967,8 @@ app.get('/v1/diagnostics', requireToken, (_req, res) => {
           ? 'MISSING_OR_STALE' : state.integrations['backup:external'].status,
     },
     automation_stale: stale,
+    automation_running_cycles: health.running_cycles,
+    automation_stalled_cycles: health.stalled_cycles,
     operating_window: '08:00-19:59 Europe/Rome',
     state_file: store.filePath,
     last_cycle: lastCycle,
