@@ -200,7 +200,13 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": null,
+  "lease": {
+    "run_id": "fancy-night-20261107-process-owner",
+    "component": "Render writable server startup ownership",
+    "acquired_at": "2026-11-07T01:07:04.079059+00:00",
+    "expires_at": "2026-11-07T02:07:04.079059+00:00",
+    "base_head": "65fc092705ccc6811917c3194be46d7ff91411a8"
+  },
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
     "commit": "abae32ac36081abc0530677e9913f407a75f54a6",
