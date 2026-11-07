@@ -36,3 +36,9 @@
 - `night-verification-2026-11-05.json`: native review closure binds displayed case/current interrupted operation;4 baseline HTTP subscenario failures,7 corrected Node tests,387 total/11syntax checks. Browser/mobile NOT EXECUTED; synthetic HTTP/store only, no providers.
 
 - `night-verification-2026-11-06.json`: old RUNNING cycles survive state/backup retention.4 baseline failures/4 corrected passes,391 total tests/13syntax checks; actual encrypted synthetic isolated restore preserves pending/cursor/SMTP uncertainty and quarantine. No new real-provider backup proof.
+
+- `night-verification-2026-11-07.json`: actual child-process ownership/SIGKILL tests;7 baseline failures,8 corrected tests,399 total/14syntax checks. SQLite local filesystem exclusion, canonical state/lock safety, readonly/restore and no uncertain replay. No Render disk/distributed-lock/live-checkpoint acceptance or real-provider backup proof.
+
+- Same Nov7 report, second batch: readonly Peu/restore regressions reproduce4 failures on b017671;5 corrected tests and404 total/18syntax pass. Cache reads preserved, no observer ledger/schema recovery, sync/provider or scheduled backup effect; writable callbacks only instrumented, not run.
+
+- Same Nov7 report, third batch:4 failures reproduced on75e23c7;4 corrected pending-diagnostic tests,408 total/19syntax. Older pending history cannot be hidden by a completed latest row; actual readonly HTTP and synthetic watchdog. No live checkpoint or side effect.
