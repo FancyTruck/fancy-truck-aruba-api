@@ -1,17 +1,24 @@
 import {ArubaService} from './peuMailService.js';
 import {openMailDb,problem} from './peuMailDb.js';
 import {join,dirname} from 'node:path';
+import {createMailReadGate} from './mailReadGate.js';
 // Deliberately no SMTP, Odoo writes, approval or execution routes.
-export function mountPeuMail(app,{withImap,parse,stateFile,readOnly=false}) {
+export function mountPeuMail(app,{withImap,parse,stateFile,readOnly=false,mailReadGate=createMailReadGate()}) {
   const db=openMailDb(join(dirname(stateFile),'peu-aruba.sqlite'),{readOnly});
   const service=new ArubaService({db,withImap,parse,accounts:['pietro']});
   let syncing=null;
-  const wrap=fn=>async(req,res)=>{
+  const wrap=(fn,{mime=false}={})=>async(req,res)=>{
     res.set('Cache-Control','no-store');
+    let workDone;
     try {
       if(req.params.account!=='pietro')throw problem('account_not_authorized',403);
+      if(mime){
+        workDone=mailReadGate.claim(res);
+        if(!workDone)return res.set('Retry-After','1').status(429).json({error:'mail_read_busy'});
+      }
       res.json(await fn(req));
     }catch(e){res.status(e.status||502).json({error:e.code&&/^[a-z_]+$/.test(e.code)?e.code:'aruba_operation_failed'});}
+    finally{workDone?.();}
   };
   const folder=req=>{const value=req.body?.folder||req.query.folder;if(value!=='INBOX')throw problem('folder_not_authorized',403);return value;};
   app.get('/v1/peu/aruba/:account/folders',wrap(async()=>({folders:(await service.folders('pietro')).folders.filter(f=>f.path==='INBOX')})));
@@ -29,6 +36,6 @@ export function mountPeuMail(app,{withImap,parse,stateFile,readOnly=false}) {
     const uid=Number(req.query.uid),index=Number(req.query.index);
     if(!Number.isSafeInteger(uid)||uid<1||!Number.isSafeInteger(index)||index<0)throw problem('invalid_attachment');
     return service.attachment('pietro',folder(req),String(req.query.validity),uid,index);
-  }));
+  },{mime:true}));
   return db;
 }

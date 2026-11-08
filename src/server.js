@@ -995,7 +995,7 @@ app.use('/v1', readOnlyMiddleware(runtime));
 let peuDb;
 if (process.env.PEU_ACCESS_TOKEN) {
   const {mountPeuMail}=await import('./peuMailRoutes.js');
-  peuDb=mountPeuMail(app,{withImap,parse:simpleParser,stateFile:runtime.stateFile,readOnly:runtime.readOnly});
+  peuDb=mountPeuMail(app,{withImap,parse:simpleParser,stateFile:runtime.stateFile,readOnly:runtime.readOnly,mailReadGate:interactiveMailReadGate});
 }
 function verifiedExternalBackup(){
  assertWritable(runtime);
