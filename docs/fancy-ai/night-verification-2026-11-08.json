@@ -1,0 +1,66 @@
+{
+  "date": "2026-11-08",
+  "updated_at": "2026-11-08T01:20:39.388899+00:00",
+  "run_id": "fancy-night-20261108-attachment-admission",
+  "modules": [
+    "P00",
+    "P01",
+    "P03",
+    "P22"
+  ],
+  "requirement_ids": [
+    "0.2",
+    "1.4",
+    "1.5",
+    "7.2",
+    "7.4"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "source": "17bec5d5313b3986c489770ff7de15802e854c11",
+    "registry": "427bfe3178a854c3ad64a6263e943ef6a5a50cc1",
+    "lease": "915cb941b33adcc22023f1a10f86fff42b198a87"
+  },
+  "defect": "Peu attachment HTTP route performed bounded MIME download/parsing without the existing generic-message admission gate, allowing parallel buffers and parser work. Actual regression returns200 instead of429 on prior source.",
+  "implementation": "Pass the existing interactiveMailReadGate from actual server into mountPeuMail; attachment wrapper claims it after account check and releases work completion in finally. Existing gate holds until both work and response finish/close; rejected requests return429 mail_read_busy and Retry-After1 without IMAP. Standalone mount receives a default local gate. No new workflow, queue or provider retry.",
+  "runtime": "src/server.js wires the same gate into Peu attachment and existing generic message routes. Cached message/thread reads remain ungated; sync/polling are outside this interactive-only gate.",
+  "tests": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js; node --check src/automationHealth.js",
+    "passed": 409,
+    "failed": 0,
+    "syntax_checks": 19,
+    "new_test": "test/attachmentAdmission.test.js",
+    "baseline_commit": "17bec5d5313b3986c489770ff7de15802e854c11",
+    "baseline_passed": 0,
+    "baseline_failed": 1,
+    "corrected_passed": 1,
+    "environment": "Actual local HTTP server, real MIME parser, synthetic SQLite cache and stubbed IMAP; no real providers",
+    "coverage": [
+      "attachment excludes attachment and generic message reads before another IMAP connection",
+      "generic message excludes attachment using same process gate",
+      "aborted attachment holds admission until pending work completes",
+      "source failure releases admission after response; subsequent request succeeds",
+      "bounded source range, decoded synthetic attachment, readonly lock/logout cleanup and unchanged cursors"
+    ]
+  },
+  "source_integrity": {
+    "previous_combined_server_blob": "b292c47106b4e6dd723e962acbd22d880f2cd8de",
+    "combined_server_blob": "72a808517ac2dde88e5bf8cce160fc8b17aa9598",
+    "scope": "one argument wires shared gate; existing corrected intake and readonly/restore/process-owner safeguards retained",
+    "original_pr26_server_blob": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "remote_readback": "Complete tree and all8 changed paths verified against tested local files"
+  },
+  "live_readonly": "Fresh Git refs match checkpoint. Render metadata with explicit confirmed workspace: main-only autoDeploy, previews off, one instance; no deploy/metrics/log query or runtime mutation.",
+  "oom": "Specific concurrent interactive attachment allocation risk reduced in sandbox. No new RSS/heap/external/arrayBuffer measurements or representative load; historical OOM application cause and live acceptance remain open.",
+  "backup": "No real-provider download/integrity/decryption/restore or retention deletion. Existing synthetic backup tests ran as part of suite; historical dated real-provider evidence is preserved separately.",
+  "limits": [
+    "Only interactive message/attachment admission per process; not a total memory cap, sync/polling limiter or cross-host semaphore",
+    "Provider/legacy approval reviewed recovery, actual Render disk locking and all-writer adoption remain open",
+    "No live checkpoint, browser/mobile, four-path or F0/F1/F2 acceptance;4.5.1 accepted and COLLAUDO/project case untouched;F6 deferred"
+  ],
+  "next_action": "Continue evidence-bound provider/legacy approval reviewed recovery on current combined source; reconcile both HEADs and canonical lease first. Live continuity/load/disk-lock and mobile acceptance remain separate authorization/evidence.",
+  "effects": "No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task.",
+  "verified_source_commit": "e1956ee7cf1c481372c39519f268863986a13522",
+  "verified_source_tree": "85736740d63ab560134e8361fdbf4a94396722fa",
+  "completed_at": "2026-11-08T01:21:31.485586+00:00"
+}

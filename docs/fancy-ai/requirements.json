@@ -117,9 +117,14 @@
           "date": "2026-11-07",
           "kind": "All unfinished-cycle diagnostic projection:4 baseline failures on75e23c7,4 corrected tests,408 total/19syntax. Existing HTTP health/intake and synthetic watchdog show old backlog without recovery/retry; not live acceptance.",
           "reference": "night-verification-2026-11-07.json"
+        },
+        {
+          "date": "2026-11-08",
+          "kind": "Actual HTTP/stubbed IMAP attachment/message shared admission: prior17bec5d fails, corrected regression and409 total tests/19syntax pass. No live OOM/cause acceptance.",
+          "reference": "night-verification-2026-11-08.json"
         }
       ],
-      "updated_at": "2026-11-07"
+      "updated_at": "2026-11-08"
     },
     {
       "id": "0.3",
@@ -264,10 +269,15 @@
           "date": "2026-11-07",
           "kind": "All unfinished-cycle diagnostic projection:4 baseline failures on75e23c7,4 corrected tests,408 total/19syntax. Existing HTTP health/intake and synthetic watchdog show old backlog without recovery/retry; not live acceptance.",
           "reference": "night-verification-2026-11-07.json"
+        },
+        {
+          "date": "2026-11-08",
+          "kind": "Actual HTTP/stubbed IMAP attachment/message shared admission: prior17bec5d fails, corrected regression and409 total tests/19syntax pass. No live OOM/cause acceptance.",
+          "reference": "night-verification-2026-11-08.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-07"
+      "updated_at": "2026-11-08"
     },
     {
       "id": "1.5",
@@ -332,9 +342,14 @@
           "date": "2026-11-07",
           "kind": "All unfinished-cycle diagnostic projection:4 baseline failures on75e23c7,4 corrected tests,408 total/19syntax. Existing HTTP health/intake and synthetic watchdog show old backlog without recovery/retry; not live acceptance.",
           "reference": "night-verification-2026-11-07.json"
+        },
+        {
+          "date": "2026-11-08",
+          "kind": "Actual HTTP/stubbed IMAP attachment/message shared admission: prior17bec5d fails, corrected regression and409 total tests/19syntax pass. No live OOM/cause acceptance.",
+          "reference": "night-verification-2026-11-08.json"
         }
       ],
-      "updated_at": "2026-11-07"
+      "updated_at": "2026-11-08"
     },
     {
       "id": "2.1",
@@ -765,9 +780,14 @@
           "date": "2026-11-07",
           "kind": "All unfinished-cycle diagnostic projection:4 baseline failures on75e23c7,4 corrected tests,408 total/19syntax. Existing HTTP health/intake and synthetic watchdog show old backlog without recovery/retry; not live acceptance.",
           "reference": "night-verification-2026-11-07.json"
+        },
+        {
+          "date": "2026-11-08",
+          "kind": "Actual HTTP/stubbed IMAP attachment/message shared admission: prior17bec5d fails, corrected regression and409 total tests/19syntax pass. No live OOM/cause acceptance.",
+          "reference": "night-verification-2026-11-08.json"
         }
       ],
-      "updated_at": "2026-11-07"
+      "updated_at": "2026-11-08"
     },
     {
       "id": "7.3",
@@ -872,9 +892,14 @@
           "date": "2026-11-04",
           "kind": "Selective cycle recovery rollback:4 baseline failures/2existing passes,6 corrected regressions;380 tests/9syntax checks. Real local startup/file failures; no live acceptance.",
           "reference": "night-verification-2026-11-04.json"
+        },
+        {
+          "date": "2026-11-08",
+          "kind": "Actual HTTP/stubbed IMAP attachment/message shared admission: prior17bec5d fails, corrected regression and409 total tests/19syntax pass. No live OOM/cause acceptance.",
+          "reference": "night-verification-2026-11-08.json"
         }
       ],
-      "updated_at": "2026-11-01"
+      "updated_at": "2026-11-08"
     },
     {
       "id": "7.5",
