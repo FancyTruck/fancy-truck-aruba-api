@@ -1,5 +1,6 @@
 import {problem,transaction} from './peuMailDb.js';
 import {readFolder,reconcileSent} from './peuMailSync.js';
+import {MAX_POLL_SOURCE_BYTES} from './mailPolling.js';
 // Project legacy cache rows inside SQLite BEFORE crossing into JS. Older rows
 // may contain base64 attachment bodies; stripping them after JSON.parse is too late.
 const publicPayload = `CASE WHEN length(payload)>16777216 THEN
@@ -51,9 +52,11 @@ export class ArubaService {
  async attachment(account,folder,validity,uid,index){this.account(account);const r=this.db.prepare('SELECT uid FROM mail_messages WHERE account=? AND folder=? AND validity=? AND uid=? AND deleted=0').get(account,folder,validity,uid);if(!r)throw problem('message_not_found',404);
    return this.withImap(account,async client=>{const lock=await client.getMailboxLock(folder,{readOnly:true});try{
      if(String(client.mailbox.uidValidity)!==validity)throw problem('uidvalidity_changed_retry',409);
-     const meta=await client.fetchOne(uid,{size:true},{uid:true});if(!meta)throw problem('message_not_found',404);if(meta.size>20*1024*1024)throw problem('attachment_requires_large_message_download',413);
-     const raw=await client.fetchOne(uid,{source:{start:0,maxLength:20*1024*1024+1}},{uid:true});if(!raw?.source)throw problem('message_not_found',404);
-     if(raw.source.length>20*1024*1024)throw problem('attachment_requires_large_message_download',413);
+     const meta=await client.fetchOne(uid,{size:true},{uid:true});if(!meta)throw problem('message_not_found',404);
+     if(!Number.isSafeInteger(meta.size)||meta.size<0)throw problem('message_size_unavailable',502);
+     if(meta.size>MAX_POLL_SOURCE_BYTES)throw problem('attachment_requires_large_message_download',413);
+     const raw=await client.fetchOne(uid,{source:{start:0,maxLength:MAX_POLL_SOURCE_BYTES+1}},{uid:true});if(!raw?.source)throw problem('message_not_found',404);
+     if(Buffer.byteLength(raw.source)>MAX_POLL_SOURCE_BYTES)throw problem('attachment_requires_large_message_download',413);
      const parsed=await this.parse(raw.source),a=parsed.attachments?.[index];if(!a)throw problem('attachment_not_found',404);
      return {index,filename:a.filename||null,contentType:a.contentType,size:a.size,content:a.content.toString('base64')};
    }finally{lock.release();}});

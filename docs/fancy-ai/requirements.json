@@ -274,10 +274,15 @@
           "date": "2026-11-08",
           "kind": "Actual HTTP/stubbed IMAP attachment/message shared admission: prior17bec5d fails, corrected regression and409 total tests/19syntax pass. No live OOM/cause acceptance.",
           "reference": "night-verification-2026-11-08.json"
+        },
+        {
+          "date": "2026-11-09",
+          "kind": "Attachment size validation before download/parser in actual source:3/5 new regressions fail on exact previous commit,5/5 pass after correction; actual HTTP with stubbed IMAP and real parser;414/414 whole tests and20syntax checks. No live/OOM-cause or parent acceptance.",
+          "reference": "night-verification-2026-11-09.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-08"
+      "updated_at": "2026-11-09"
     },
     {
       "id": "1.5",
@@ -347,9 +352,14 @@
           "date": "2026-11-08",
           "kind": "Actual HTTP/stubbed IMAP attachment/message shared admission: prior17bec5d fails, corrected regression and409 total tests/19syntax pass. No live OOM/cause acceptance.",
           "reference": "night-verification-2026-11-08.json"
+        },
+        {
+          "date": "2026-11-09",
+          "kind": "Attachment size validation before download/parser in actual source:3/5 new regressions fail on exact previous commit,5/5 pass after correction; actual HTTP with stubbed IMAP and real parser;414/414 whole tests and20syntax checks. No live/OOM-cause or parent acceptance.",
+          "reference": "night-verification-2026-11-09.json"
         }
       ],
-      "updated_at": "2026-11-08"
+      "updated_at": "2026-11-09"
     },
     {
       "id": "2.1",
@@ -785,9 +795,14 @@
           "date": "2026-11-08",
           "kind": "Actual HTTP/stubbed IMAP attachment/message shared admission: prior17bec5d fails, corrected regression and409 total tests/19syntax pass. No live OOM/cause acceptance.",
           "reference": "night-verification-2026-11-08.json"
+        },
+        {
+          "date": "2026-11-09",
+          "kind": "Attachment size validation before download/parser in actual source:3/5 new regressions fail on exact previous commit,5/5 pass after correction; actual HTTP with stubbed IMAP and real parser;414/414 whole tests and20syntax checks. No live/OOM-cause or parent acceptance.",
+          "reference": "night-verification-2026-11-09.json"
         }
       ],
-      "updated_at": "2026-11-08"
+      "updated_at": "2026-11-09"
     },
     {
       "id": "7.3",
@@ -897,9 +912,14 @@
           "date": "2026-11-08",
           "kind": "Actual HTTP/stubbed IMAP attachment/message shared admission: prior17bec5d fails, corrected regression and409 total tests/19syntax pass. No live OOM/cause acceptance.",
           "reference": "night-verification-2026-11-08.json"
+        },
+        {
+          "date": "2026-11-09",
+          "kind": "Attachment size validation before download/parser in actual source:3/5 new regressions fail on exact previous commit,5/5 pass after correction; actual HTTP with stubbed IMAP and real parser;414/414 whole tests and20syntax checks. No live/OOM-cause or parent acceptance.",
+          "reference": "night-verification-2026-11-09.json"
         }
       ],
-      "updated_at": "2026-11-08"
+      "updated_at": "2026-11-09"
     },
     {
       "id": "7.5",
