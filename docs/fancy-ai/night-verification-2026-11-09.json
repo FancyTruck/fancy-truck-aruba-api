@@ -1,0 +1,70 @@
+{
+  "date": "2026-11-09",
+  "updated_at": "2026-11-09T01:11:40.914010+00:00",
+  "run_id": "fancy-night-20261109-attachment-boundaries",
+  "modules": [
+    "P00",
+    "P01",
+    "P22"
+  ],
+  "requirement_ids": [
+    "1.4",
+    "1.5",
+    "7.2",
+    "7.4"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "source": "e1956ee7cf1c481372c39519f268863986a13522",
+    "registry": "a905cee8f0156d544e2e68337bcb0259d7a3b587",
+    "lease": "3c76e5451ca21b62077a374ed9b9823dac056ea6"
+  },
+  "defect": "Peu attachment accepted absent/invalid declared size before fetching/parsing and checked string characters instead of source bytes. Finalized regressions fail on exact archived preceding source (3 failures,2 preexisting passes); actual HTTP returned200 instead of502. Multibyte string fixture demonstrates byte-count guard; it is not a claim that the real IMAP provider returns strings.",
+  "implementation": "Existing ArubaService.attachment now requires safe nonnegative integer metadata size before source fetch, returning502 message_size_unavailable for unverifiable size; preserves404 absent message and413 oversize. Reuses existing MAX_POLL_SOURCE_BYTES20MiB, bounded range+1, Buffer.byteLength before parser. No retry, cursor change, new workflow or dependency.",
+  "runtime": "Existing actual server -> mountPeuMail attachment route -> ArubaService.attachment. Shared interactive gate from prior batch, cached reads and generic message route preserved; src/server.js unchanged.",
+  "tests": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js; node --check src/automationHealth.js; node --check src/peuMailService.js",
+    "passed": 414,
+    "failed": 0,
+    "syntax_checks": 20,
+    "new_test": "test/attachmentBoundaries.test.js",
+    "new_tests": 5,
+    "baseline_commit": "e1956ee7cf1c481372c39519f268863986a13522",
+    "baseline_command": "node --test test/attachmentBoundaries.test.js",
+    "baseline_passed": 2,
+    "baseline_failed": 3,
+    "corrected_passed": 5,
+    "targeted_command": "node --test test/attachmentBoundaries.test.js test/attachmentAdmission.test.js test/peuMailMemory.test.js test/mailMessage.test.js",
+    "targeted_passed": 19,
+    "environment": "Node24.22.1; actual local HTTP/server and MIME parser, synthetic SQLite state, stubbed IMAP; no real providers",
+    "coverage": [
+      "invalid declared size rejected before source fetch or parse; readonly lock released",
+      "known oversize refused before download; exact20MiB boundary accepted",
+      "lying size cannot bypass returned byte limit, including multibyte string source",
+      "actual HTTP502 message_size_unavailable/no-store with zero downloads; subsequent valid request succeeds through existing gate with lock/logout cleanup and unchanged cursors"
+    ]
+  },
+  "source_integrity": {
+    "combined_server_blob": "72a808517ac2dde88e5bf8cce160fc8b17aa9598",
+    "original_pr26_server_blob": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "scope": "only attachment service source changes; original/corrected intake, shared gate, startup/readonly/restore and prior guards unchanged; remote readback required"
+  },
+  "live_readonly": "Fresh Git refs and PR26 draft/open/unmerged reconciled. Explicit-workspace Render service metadata confirms main-only autoDeploy and previews off; no deploy/log/metrics query, no new runtime commit or health assertion. No applicable AGENTS or GitHub workflows found; render.yaml inspected unchanged.",
+  "oom": "Missing metadata now stops attachment before download/parser; byte overflow stops parser. No new representative RSS/heap/external/arrayBuffer profile or load/OOM-cause proof. Historical OOM root cause and live acceptance open.",
+  "backup": "No new provider download/integrity/decryption/restore or retention deletion. Existing synthetic backup tests included in suite; dated historical real-provider restore evidence preserved, not rerun.",
+  "limits": [
+    "Source-only synthetic/local HTTP evidence; no live checkpoint/restart or Render disk/all-writer verification",
+    "Interactive range/admission only; not a total service or polling/sync memory cap",
+    "Provider/legacy approval reviewed recovery and browser/mobile/four-path/F0/F1/F2 acceptance remain open;4.5.1 accepted, COLLAUDO and project case untouched;F6 deferred"
+  ],
+  "next_action": "Continue evidence-bound provider/legacy approval reviewed recovery on latest combined source; reconcile both remote HEADs and canonical lease first. Live continuity/load/disk-lock and mobile acceptance remain separate authorization/evidence.",
+  "effects": "No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task.",
+  "remote_readback": {
+    "source_commit": "d4c16bb1b09434362f80555cb55c3f3891a028dd",
+    "source_tree": "370ddd61741c12dd045323647b5b4be48ed5ccd1",
+    "changed_paths_verified": 7,
+    "whole_tree_matches_tested_index": true,
+    "combined_server_blob": "72a808517ac2dde88e5bf8cce160fc8b17aa9598",
+    "original_pr26_server_blob": "a8ba0f7587843595a4c593ce655a492a00e0cc38"
+  }
+}

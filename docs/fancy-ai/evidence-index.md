@@ -44,3 +44,5 @@
 - Same Nov7 report, third batch:4 failures reproduced on75e23c7;4 corrected pending-diagnostic tests,408 total/19syntax. Older pending history cannot be hidden by a completed latest row; actual readonly HTTP and synthetic watchdog. No live checkpoint or side effect.
 
 - `night-verification-2026-11-08.json`: real local HTTP + MIME parser + synthetic SQLite/stubbed IMAP shared attachment/message admission;1 baseline failure,409 total/19syntax pass. Abort/error cleanup, no provider or live OOM acceptance.
+
+- `night-verification-2026-11-09.json`: attachment metadata/byte-limit gap reproduced on exact e1956ee (3/5 failures);5/5 after fix, actual HTTP/stubbed IMAP/real MIME,414/414 suite and20syntax checks. No provider/runtime mutation, live acceptance or new OOM/load/backup proof.
