@@ -81,10 +81,8 @@ export class ApprovalService {
   }
 
   executed(id, result) {
-    const action = this.assertExecutable(id);
-    this.store.updateAction(id, { status: 'EXECUTED', executed_at: new Date().toISOString(), result });
-    this.store.audit('ACTION_EXECUTED', { action_id: id, action_type: action.type, target: action.target });
-    return this.store.action(id);
+    this.assertExecutable(id);
+    return this.store.commitExecutionReceipt(id, result);
   }
 }
 

@@ -1,0 +1,62 @@
+{
+  "date": "2026-11-10",
+  "updated_at": "2026-11-10T01:50:04.470691+00:00",
+  "run_id": "fancy-night-20261110-execution-receipt",
+  "modules": [
+    "P03",
+    "P22"
+  ],
+  "requirement_ids": [
+    "0.2",
+    "1.4",
+    "1.4.1",
+    "2.5",
+    "7.2",
+    "7.3"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "source": "d4c16bb1b09434362f80555cb55c3f3891a028dd",
+    "registry": "7c670b7e22fa7c3b2bd96068a161e6aac86babf7",
+    "lease": "93bd8186a9daa2922c1e4a8ecd7c406aa795d5e6"
+  },
+  "defect": "ApprovalService.executed used separate updateAction and audit saves after an effect. Save failure left held in-memory action EXECUTED despite prior durable APPROVED state; success required two saves and could split result/audit.",
+  "implementation": "Dedicated commitExecutionReceipt saves observed result and ACTION_EXECUTED audit together with selective rollback of held action and prior events on failure. ApprovalService retains assertExecutable snapshot guard and delegates to the store. No retry/reconciliation/authorization added.",
+  "runtime": "Actual makePeuContract effect path calls approvals.executed after synthetic SMTP acceptance or verified upstream response; on receipt failure existing SQLite effect ledger remains unknown and blocks retry. Simulated workflow also uses method; generic SMTP route is separate and unchanged.",
+  "tests": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js; node --check src/automationHealth.js; node --check src/peuMailService.js",
+    "passed": 418,
+    "failed": 0,
+    "syntax_checks": 20,
+    "new_test": "test/executionReceipt.test.js",
+    "new_tests": 4,
+    "baseline_commit": "d4c16bb1b09434362f80555cb55c3f3891a028dd",
+    "baseline_command": "node --test test/executionReceipt.test.js",
+    "baseline_passed": 0,
+    "baseline_failed": 4,
+    "corrected_passed": 4,
+    "targeted_command": "node --test test/executionReceipt.test.js test/peuContract.test.js",
+    "targeted_passed": 23,
+    "environment": "Node24 isolated real JSON store/filesystem and actual Peu contract with synthetic SMTP adapter; no providers",
+    "coverage": [
+      "write/rename failure restores held action/events and byte-identical prior state",
+      "one save persists successful result and audit",
+      "post-effect receipt failure leaves Peu effect unknown, blocks different-key retry after contract reconstruction with exactly one simulated send"
+    ]
+  },
+  "source_integrity": {
+    "original_pr26_server_blob": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "combined_server_blob": "72a808517ac2dde88e5bf8cce160fc8b17aa9598",
+    "scope": "src/store.js and src/policy.js only; server/intake/awaiting_scope_review and previous guards unchanged"
+  },
+  "reconciliation": "Fresh refs/PR26 draft/unmerged, canonical lease free before reservation; state/handoff/requirements and render.yaml read. No applicable AGENTS or GitHub workflows found. No Render runtime/metrics/deploy query in this run.",
+  "oom": "No new load/profile or historical OOM-cause proof. Prior reductions and live acceptance limits unchanged.",
+  "backup": "No new provider download/integrity/decrypt/restore or deletion; existing dated restore evidence retained separately. Existing isolated backup tests included in suite.",
+  "limits": [
+    "Local JSON save boundary, not filesystem fsync/power-loss or distributed transaction across JSON and SQLite",
+    "A restored APPROVED state after receipt failure is not authorization to resend; existing Peu unknown ledger blocks that path; cross-entrypoint/all-writer coordination remains open",
+    "No live checkpoint/provider reconciliation or F0/F1/F2/four-path acceptance;4.5.1 and project case unchanged, activity74 untouched;F6 deferred"
+  ],
+  "next_action": "Evidence-bound provider/legacy approval reviewed recovery; cross-entrypoint effect ownership and real disk/runtime continuity remain open. Reconcile both HEADs and canonical lease before writing.",
+  "effects": "No main push/merge/deploy/restart, production/Odoo mutation, real send, hosted migration, fiscal/payment/refund/purchase or new task."
+}

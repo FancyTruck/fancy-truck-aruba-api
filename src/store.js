@@ -341,6 +341,26 @@ export class JsonStateStore {
     return pending.length;
   }
 
+  // Record an already-observed result and its audit in one local save. A failed
+  // receipt is NOT permission to repeat the effect; the caller's uncertain
+  // effect ledger must remain blocked for provider reconciliation.
+  commitExecutionReceipt(id, result) {
+    const action = this.action(id);
+    if (!action || action.status !== 'APPROVED_FOR_EXECUTION') throw new Error('Azione non eseguibile');
+    const previous = clone(action), events = this.state.events;
+    Object.assign(action, {status:'EXECUTED', executed_at:new Date().toISOString(), result});
+    this.state.events = [...events, {id:crypto.randomUUID(), at:new Date().toISOString(),
+      type:'ACTION_EXECUTED', action_id:id, action_type:action.type, target:action.target}];
+    try { this.save(); }
+    catch (error) {
+      for (const key of Object.keys(action)) delete action[key];
+      Object.assign(action, previous);
+      this.state.events = events;
+      throw error;
+    }
+    return action;
+  }
+
   // Pre-execution authorization only. Persist the transition and its audit
   // together; never use this rollback to retry an uncertain external effect.
   commitApproval(id, patch, eventType) {
