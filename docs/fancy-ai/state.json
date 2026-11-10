@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "updated_at": "2026-11-09T01:13:39.147869+00:00",
+  "updated_at": "2026-11-10T01:51:16.464134+00:00",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
-  "stage": "PR26 source preserved; combined attachment size validation tested, not released",
+  "stage": "PR26 source preserved; combined post-effect execution receipt tested, not released",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
@@ -35,7 +35,8 @@
     "readonly-peu-startup-ledger-preservation-and-sync-backup-block",
     "all-retained-pending-cycles-visible-in-existing-health-watchdog-projections",
     "peu-attachment-and-generic-message-share-process-mime-admission",
-    "attachment-source-safe-integer-metadata-and-byte-limit-before-mime-parser"
+    "attachment-source-safe-integer-metadata-and-byte-limit-before-mime-parser",
+    "atomic-post-effect-execution-receipt-and-audit-with-peu-unknown-ledger-preserved"
   ],
   "tests": {
     "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs",
@@ -44,7 +45,7 @@
     "syntax_checks": 8,
     "environment": "Node24.22.1 isolated PR26 with synthetic HTTP/IMAP tests"
   },
-  "next_action": "Continue evidence-bound provider/legacy approval reviewed recovery on latest combined source; reconcile both remote HEADs and canonical lease first. Live continuity/load/disk-lock and mobile acceptance remain separate authorization/evidence.",
+  "next_action": "Evidence-bound provider/legacy approval reviewed recovery; cross-entrypoint effect ownership and real disk/runtime continuity remain open. Reconcile both HEADs and canonical lease before writing.",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
@@ -146,15 +147,15 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-11-09T02:13:39.147869+01:00",
-  "run_id": "fancy-night-20261109-attachment-boundaries",
-  "current_lot": "P01/P22 attachment metadata and byte-limit validation; registry only",
+  "updated_at_rome": "2026-11-10T02:51:16.464134+01:00",
+  "run_id": "fancy-night-20261110-execution-receipt",
+  "current_lot": "P03/P22 execution receipt and unknown ledger regression; registry only",
   "live_render_deploy": "dep-dbiia7vb9u1s73apusp0",
   "upstream_integration_tests": {
     "status": "passed on isolated main-based source branch; no remote merge or deployment",
     "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
     "pr26_source": "a450bb3ddfabf40191aa56fa0bbd2390a2476044",
-    "passed": 414,
+    "passed": 418,
     "failed": 0,
     "syntax_checks": 20,
     "resolved_paths": [
@@ -166,10 +167,10 @@
     ],
     "policy": "10MiB inline polling; durable recoverable REVIEW allows cursor handoff; content_processed=false; missing metadata or failed persistence holds UID; interactive20MiB unchanged",
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "d4c16bb1b09434362f80555cb55c3f3891a028dd",
-    "tree": "370ddd61741c12dd045323647b5b4be48ed5ccd1",
-    "remote_readback": "whole tree and7 changed paths verified",
-    "date": "2026-11-09"
+    "commit": "4a89f2520c773b75c35d40b2d6f5919f1fb94af4",
+    "tree": "8d9c387354f2d6389c25f9a4a82a9089bd67b46e",
+    "remote_readback": "whole tree and8 changed paths verified",
+    "date": "2026-11-10"
   },
   "source_integrity": {
     "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
@@ -184,13 +185,13 @@
     "combined_server_scope": "unchanged server; attachment service validates declared size and returned byte count before parsing; corrected intake and prior guards retained"
   },
   "last_lease": {
-    "run_id": "fancy-night-20261109-attachment-boundaries",
-    "component": "Render interactive attachment source validation",
-    "acquired_at": "2026-11-09T01:09:03.992163+00:00",
-    "expires_at": "2026-11-09T02:09:03.992163+00:00",
-    "base_head": "a905cee8f0156d544e2e68337bcb0259d7a3b587",
+    "run_id": "fancy-night-20261110-execution-receipt",
+    "component": "Render Peu execution receipt persistence",
+    "acquired_at": "2026-11-10T01:47:47.989Z",
+    "expires_at": "2026-11-10T02:47:47.989Z",
+    "base_head": "7c670b7e22fa7c3b2bd96068a161e6aac86babf7",
     "status": "released",
-    "released_at": "2026-11-09T01:13:39.147869+00:00"
+    "released_at": "2026-11-10T01:51:16.464134+00:00"
   },
   "last_verified_tests": {
     "command": "npm test; npm run check",
@@ -207,22 +208,16 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": {
-    "run_id": "fancy-night-20261110-execution-receipt",
-    "component": "Render Peu execution receipt persistence",
-    "acquired_at": "2026-11-10T01:47:47.989Z",
-    "expires_at": "2026-11-10T02:47:47.989Z",
-    "base_head": "7c670b7e22fa7c3b2bd96068a161e6aac86babf7"
-  },
+  "lease": null,
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "d4c16bb1b09434362f80555cb55c3f3891a028dd",
+    "commit": "4a89f2520c773b75c35d40b2d6f5919f1fb94af4",
     "parent": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
-    "tree": "370ddd61741c12dd045323647b5b4be48ed5ccd1",
-    "tests": 414,
+    "tree": "8d9c387354f2d6389c25f9a4a82a9089bd67b46e",
+    "tests": 418,
     "syntax_checks": 20,
     "source_only": true,
     "remote_verified": true
   },
-  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-09.json"
+  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-10.json"
 }

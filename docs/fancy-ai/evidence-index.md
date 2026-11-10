@@ -46,3 +46,5 @@
 - `night-verification-2026-11-08.json`: real local HTTP + MIME parser + synthetic SQLite/stubbed IMAP shared attachment/message admission;1 baseline failure,409 total/19syntax pass. Abort/error cleanup, no provider or live OOM acceptance.
 
 - `night-verification-2026-11-09.json`: attachment metadata/byte-limit gap reproduced on exact e1956ee (3/5 failures);5/5 after fix, actual HTTP/stubbed IMAP/real MIME,414/414 suite and20syntax checks. No provider/runtime mutation, live acceptance or new OOM/load/backup proof.
+
+- `night-verification-2026-11-10.json`: execution result/audit atomic save and fault rollback;4 baseline failures,4 corrected passes,23 targeted/418 whole tests and20syntax checks. Actual Peu contract with synthetic SMTP preserves unknown retry barrier; no provider/live acceptance.

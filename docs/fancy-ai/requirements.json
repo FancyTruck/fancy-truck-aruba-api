@@ -122,9 +122,14 @@
           "date": "2026-11-08",
           "kind": "Actual HTTP/stubbed IMAP attachment/message shared admission: prior17bec5d fails, corrected regression and409 total tests/19syntax pass. No live OOM/cause acceptance.",
           "reference": "night-verification-2026-11-08.json"
+        },
+        {
+          "date": "2026-11-10",
+          "kind": "Post-effect execution receipt and audit one-save rollback:4/4 baseline regressions fail,4/4 corrected pass;23 targeted and418 whole tests,20syntax checks. Actual Peu contract/stub SMTP retains unknown retry barrier. Local source-only, no live acceptance.",
+          "reference": "night-verification-2026-11-10.json"
         }
       ],
-      "updated_at": "2026-11-08"
+      "updated_at": "2026-11-10"
     },
     {
       "id": "0.3",
@@ -279,10 +284,15 @@
           "date": "2026-11-09",
           "kind": "Attachment size validation before download/parser in actual source:3/5 new regressions fail on exact previous commit,5/5 pass after correction; actual HTTP with stubbed IMAP and real parser;414/414 whole tests and20syntax checks. No live/OOM-cause or parent acceptance.",
           "reference": "night-verification-2026-11-09.json"
+        },
+        {
+          "date": "2026-11-10",
+          "kind": "Post-effect execution receipt and audit one-save rollback:4/4 baseline regressions fail,4/4 corrected pass;23 targeted and418 whole tests,20syntax checks. Actual Peu contract/stub SMTP retains unknown retry barrier. Local source-only, no live acceptance.",
+          "reference": "night-verification-2026-11-10.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-09"
+      "updated_at": "2026-11-10"
     },
     {
       "id": "1.5",
@@ -421,9 +431,14 @@
           "date": "2026-11-05",
           "kind": "Native review closure snapshot:4 baseline HTTP scenario failures;7 corrected Node tests including parent.387 total/11syntax checks; browser/mobile/live NOT EXECUTED.",
           "reference": "night-verification-2026-11-05.json"
+        },
+        {
+          "date": "2026-11-10",
+          "kind": "Post-effect execution receipt and audit one-save rollback:4/4 baseline regressions fail,4/4 corrected pass;23 targeted and418 whole tests,20syntax checks. Actual Peu contract/stub SMTP retains unknown retry barrier. Local source-only, no live acceptance.",
+          "reference": "night-verification-2026-11-10.json"
         }
       ],
-      "updated_at": "2026-11-01"
+      "updated_at": "2026-11-10"
     },
     {
       "id": "2.6",
@@ -800,9 +815,14 @@
           "date": "2026-11-09",
           "kind": "Attachment size validation before download/parser in actual source:3/5 new regressions fail on exact previous commit,5/5 pass after correction; actual HTTP with stubbed IMAP and real parser;414/414 whole tests and20syntax checks. No live/OOM-cause or parent acceptance.",
           "reference": "night-verification-2026-11-09.json"
+        },
+        {
+          "date": "2026-11-10",
+          "kind": "Post-effect execution receipt and audit one-save rollback:4/4 baseline regressions fail,4/4 corrected pass;23 targeted and418 whole tests,20syntax checks. Actual Peu contract/stub SMTP retains unknown retry barrier. Local source-only, no live acceptance.",
+          "reference": "night-verification-2026-11-10.json"
         }
       ],
-      "updated_at": "2026-11-09"
+      "updated_at": "2026-11-10"
     },
     {
       "id": "7.3",
@@ -881,9 +901,14 @@
           "date": "2026-11-07",
           "kind": "All unfinished-cycle diagnostic projection:4 baseline failures on75e23c7,4 corrected tests,408 total/19syntax. Existing HTTP health/intake and synthetic watchdog show old backlog without recovery/retry; not live acceptance.",
           "reference": "night-verification-2026-11-07.json"
+        },
+        {
+          "date": "2026-11-10",
+          "kind": "Post-effect execution receipt and audit one-save rollback:4/4 baseline regressions fail,4/4 corrected pass;23 targeted and418 whole tests,20syntax checks. Actual Peu contract/stub SMTP retains unknown retry barrier. Local source-only, no live acceptance.",
+          "reference": "night-verification-2026-11-10.json"
         }
       ],
-      "updated_at": "2026-11-07"
+      "updated_at": "2026-11-10"
     },
     {
       "id": "7.4",
@@ -1063,10 +1088,15 @@
           "date": "2026-11-07",
           "kind": "All unfinished-cycle diagnostic projection:4 baseline failures on75e23c7,4 corrected tests,408 total/19syntax. Existing HTTP health/intake and synthetic watchdog show old backlog without recovery/retry; not live acceptance.",
           "reference": "night-verification-2026-11-07.json"
+        },
+        {
+          "date": "2026-11-10",
+          "kind": "Post-effect execution receipt and audit one-save rollback:4/4 baseline regressions fail,4/4 corrected pass;23 targeted and418 whole tests,20syntax checks. Actual Peu contract/stub SMTP retains unknown retry barrier. Local source-only, no live acceptance.",
+          "reference": "night-verification-2026-11-10.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-07"
+      "updated_at": "2026-11-10"
     },
     {
       "id": "2.1.1",
