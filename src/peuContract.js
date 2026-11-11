@@ -49,7 +49,7 @@ export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritabl
      let result;
      if(c==='mail.send'){
        const sent=await smtp({...action.payload,messageId:`<peu-${action.id}@fancytruck.it>`});
-       if(!sent.accepted?.length||sent.rejected?.length)throw problem('smtp_outcome_unverified',502);
+       if(!Array.isArray(sent?.accepted)||!sent.accepted.length||sent.rejected?.length||sent.pending?.length)throw problem('smtp_outcome_unverified',502);
        result={ok:true,status:'accepted_by_smtp',delivery_verified:false,message_id:sent.messageId,accepted:sent.accepted};
      }else{
        const payload=action.payload;
@@ -57,6 +57,7 @@ export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritabl
        const response=await upstream(defs[payload.capability].path,{method:'POST',body:JSON.stringify({...payload.parameters,idempotency_key:'peu-'+action.id})});
        if(response.ok!==true)throw problem('upstream_outcome_unverified',502);
        result=await verify(payload.capability,response,'peu-'+action.id);
+       if(result?.ok!==true)throw problem('upstream_outcome_unverified',502);
      }
      approvals.executed(action.id,result);
      save('peu_effects',action.id,'succeeded',result);return result;

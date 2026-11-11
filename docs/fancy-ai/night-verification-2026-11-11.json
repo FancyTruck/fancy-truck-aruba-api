@@ -1,0 +1,63 @@
+{
+  "oom": "No new load/profile or historical OOM-cause proof. Prior reductions and live acceptance limits unchanged.",
+  "backup": "No new provider download/integrity/decrypt/restore or deletion; existing dated restore evidence retained separately. Existing isolated backup tests included in suite.",
+  "effects": "No main push/merge/deploy/restart, production/Odoo mutation, real send, hosted migration, fiscal/payment/refund/purchase or new task.",
+  "source_integrity": {
+    "original_pr26_server_blob": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "combined_server_blob": "72a808517ac2dde88e5bf8cce160fc8b17aa9598",
+    "scope": "src/peuContract.js verification guards only; original and combined server unchanged"
+  },
+  "date": "2026-11-11",
+  "updated_at": "2026-11-11T01:20:18.216364+00:00",
+  "run_id": "fancy-night-20261111-effect-verification",
+  "modules": [
+    "P03",
+    "P22"
+  ],
+  "requirement_ids": [
+    "0.2",
+    "1.4",
+    "1.4.1",
+    "2.5",
+    "7.2",
+    "7.3"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "registry": "97cf96698c16fb205b403d805bc6a3bacff81e44",
+    "source": "4a89f2520c773b75c35d40b2d6f5919f1fb94af4",
+    "lease": "91c6544ac4307561543b26803673d3f94e96c0a3"
+  },
+  "tests": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js; node --check src/automationHealth.js; node --check src/peuMailService.js",
+    "passed": 422,
+    "failed": 0,
+    "syntax_checks": 20,
+    "new_test": "test/effectVerification.test.js",
+    "new_tests": 4,
+    "baseline_commit": "4a89f2520c773b75c35d40b2d6f5919f1fb94af4",
+    "baseline_command": "node --test test/effectVerification.test.js",
+    "baseline_passed": 1,
+    "baseline_failed": 3,
+    "corrected_passed": 4,
+    "targeted_command": "node --test test/effectVerification.test.js test/executionReceipt.test.js test/peuContract.test.js",
+    "targeted_passed": 27,
+    "environment": "Node24 isolated real JSON store/filesystem and actual Peu contract with synthetic SMTP adapter; no providers",
+    "coverage": [
+      "negative and absent management verification never produce EXECUTED or successful receipt",
+      "pending SMTP recipient keeps uncertain effect blocked",
+      "different-key retry after JSON-store and contract reconstruction never repeats effect",
+      "positive verification persists once and replays without new effect"
+    ]
+  },
+  "defect": "Peu operation.execute accepted a negative or missing verification result and marked the action EXECUTED. Peu mail.send did not check pending SMTP recipients, unlike the existing generic SMTP route.",
+  "implementation": "Require verify result.ok===true before execution receipt; reject SMTP pending recipients and require accepted to be a nonempty array. Existing catch retains unknown effect ledger and rejects another key, no automatic reconciliation/retry.",
+  "runtime": "Actual makePeuContract operation.execute/mail.send effect paths. No new endpoint or workflow; generic SMTP route and post-effect atomic receipt unchanged.",
+  "reconciliation": "Fresh main/combined/PR26 refs match prior checkpoint; draft/unmerged and lease free before reservation. Read canonical state, handoff, requirements, render.yaml; no applicable AGENTS or GitHub workflows found. No fresh Render runtime/metrics or Odoo query.",
+  "limits": [
+    "Actual contract and JSON/SQLite stores with stubbed SMTP/upstream/verification; no real provider call or live acceptance",
+    "Positive adapter verification does not prove business completeness or delivery; JSON/SQLite distributed transaction and cross-entrypoint coordination remain open",
+    "No OOM/load/backup provider test;4.5.1/project-case acceptance retained, activity74 untouched;F0/F1/F2/four paths open,F6 deferred"
+  ],
+  "next_action": "Continue evidence-bound provider/legacy approval reviewed recovery and effect-owner coordination; reconcile both HEADs and canonical lease. Live continuity, all-writer/disk and mobile acceptance remain open."
+}
