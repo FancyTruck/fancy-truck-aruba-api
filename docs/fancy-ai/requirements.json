@@ -127,9 +127,14 @@
           "date": "2026-11-10",
           "kind": "Post-effect execution receipt and audit one-save rollback:4/4 baseline regressions fail,4/4 corrected pass;23 targeted and418 whole tests,20syntax checks. Actual Peu contract/stub SMTP retains unknown retry barrier. Local source-only, no live acceptance.",
           "reference": "night-verification-2026-11-10.json"
+        },
+        {
+          "date": "2026-11-11",
+          "kind": "Peu rejects negative/missing verification and pending SMTP before receipt;3 of4 baseline scenarios fail,4 corrected pass.27 targeted/422 whole tests,20syntax checks; actual contract/stubbed providers, no live acceptance.",
+          "reference": "night-verification-2026-11-11.json"
         }
       ],
-      "updated_at": "2026-11-10"
+      "updated_at": "2026-11-11"
     },
     {
       "id": "0.3",
@@ -289,10 +294,15 @@
           "date": "2026-11-10",
           "kind": "Post-effect execution receipt and audit one-save rollback:4/4 baseline regressions fail,4/4 corrected pass;23 targeted and418 whole tests,20syntax checks. Actual Peu contract/stub SMTP retains unknown retry barrier. Local source-only, no live acceptance.",
           "reference": "night-verification-2026-11-10.json"
+        },
+        {
+          "date": "2026-11-11",
+          "kind": "Peu rejects negative/missing verification and pending SMTP before receipt;3 of4 baseline scenarios fail,4 corrected pass.27 targeted/422 whole tests,20syntax checks; actual contract/stubbed providers, no live acceptance.",
+          "reference": "night-verification-2026-11-11.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-10"
+      "updated_at": "2026-11-11"
     },
     {
       "id": "1.5",
@@ -436,9 +446,14 @@
           "date": "2026-11-10",
           "kind": "Post-effect execution receipt and audit one-save rollback:4/4 baseline regressions fail,4/4 corrected pass;23 targeted and418 whole tests,20syntax checks. Actual Peu contract/stub SMTP retains unknown retry barrier. Local source-only, no live acceptance.",
           "reference": "night-verification-2026-11-10.json"
+        },
+        {
+          "date": "2026-11-11",
+          "kind": "Peu rejects negative/missing verification and pending SMTP before receipt;3 of4 baseline scenarios fail,4 corrected pass.27 targeted/422 whole tests,20syntax checks; actual contract/stubbed providers, no live acceptance.",
+          "reference": "night-verification-2026-11-11.json"
         }
       ],
-      "updated_at": "2026-11-10"
+      "updated_at": "2026-11-11"
     },
     {
       "id": "2.6",
@@ -820,9 +835,14 @@
           "date": "2026-11-10",
           "kind": "Post-effect execution receipt and audit one-save rollback:4/4 baseline regressions fail,4/4 corrected pass;23 targeted and418 whole tests,20syntax checks. Actual Peu contract/stub SMTP retains unknown retry barrier. Local source-only, no live acceptance.",
           "reference": "night-verification-2026-11-10.json"
+        },
+        {
+          "date": "2026-11-11",
+          "kind": "Peu rejects negative/missing verification and pending SMTP before receipt;3 of4 baseline scenarios fail,4 corrected pass.27 targeted/422 whole tests,20syntax checks; actual contract/stubbed providers, no live acceptance.",
+          "reference": "night-verification-2026-11-11.json"
         }
       ],
-      "updated_at": "2026-11-10"
+      "updated_at": "2026-11-11"
     },
     {
       "id": "7.3",
@@ -906,9 +926,14 @@
           "date": "2026-11-10",
           "kind": "Post-effect execution receipt and audit one-save rollback:4/4 baseline regressions fail,4/4 corrected pass;23 targeted and418 whole tests,20syntax checks. Actual Peu contract/stub SMTP retains unknown retry barrier. Local source-only, no live acceptance.",
           "reference": "night-verification-2026-11-10.json"
+        },
+        {
+          "date": "2026-11-11",
+          "kind": "Peu rejects negative/missing verification and pending SMTP before receipt;3 of4 baseline scenarios fail,4 corrected pass.27 targeted/422 whole tests,20syntax checks; actual contract/stubbed providers, no live acceptance.",
+          "reference": "night-verification-2026-11-11.json"
         }
       ],
-      "updated_at": "2026-11-10"
+      "updated_at": "2026-11-11"
     },
     {
       "id": "7.4",
@@ -1093,10 +1118,15 @@
           "date": "2026-11-10",
           "kind": "Post-effect execution receipt and audit one-save rollback:4/4 baseline regressions fail,4/4 corrected pass;23 targeted and418 whole tests,20syntax checks. Actual Peu contract/stub SMTP retains unknown retry barrier. Local source-only, no live acceptance.",
           "reference": "night-verification-2026-11-10.json"
+        },
+        {
+          "date": "2026-11-11",
+          "kind": "Peu rejects negative/missing verification and pending SMTP before receipt;3 of4 baseline scenarios fail,4 corrected pass.27 targeted/422 whole tests,20syntax checks; actual contract/stubbed providers, no live acceptance.",
+          "reference": "night-verification-2026-11-11.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-10"
+      "updated_at": "2026-11-11"
     },
     {
       "id": "2.1.1",

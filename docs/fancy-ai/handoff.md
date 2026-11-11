@@ -358,3 +358,15 @@ Finalized4 tests fail on exact archived d4c16bb and pass after correction. Cover
 Source-only; original PR26 repaired server and combined server unchanged. No new OOM/load, provider backup download/decrypt/restore/deletion or live checkpoint proof; prior dated evidence preserved.4.5.1/project-case acceptance unchanged, activity74 untouched;F0/F1/F2/four paths open,F6 deferred. No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task. Next evidence-bound provider/legacy approval reviewed recovery and effect-owner coordination; reconcile HEADs/lease before writing.
 
 Verified remote source 4a89f2520c773b75c35d40b2d6f5919f1fb94af4, tree8d9c387354f2d6389c25f9a4a82a9089bd67b46e, all8 changed paths match tested files; original PR26 servera8ba0f7 and combined server72a8085 unchanged. Canonical lease released by this docs-only checkpoint.
+
+
+## Explicit positive effect verification — 2026-11-11
+Reconciled main e0c775f, registry97cf9669, combined4a89f252; reserved canonical lease91c6544. Read state/handoff/requirements/render.yaml; no applicable AGENTS/GitHub workflows found. No fresh Render runtime observation.
+
+Actual Peu operation.execute could mark EXECUTED after negative/missing verification; mail.send ignored pending SMTP recipients. Existing effect path now requires result.ok===true, nonempty accepted array and no pending recipients before receipt. Failure uses existing unknown ledger and blocks another key after JSON-store/contract reconstruction; no retry or provider reconciliation added. Positive verification still commits receipt once and replays. Generic SMTP/server.js and prior atomic receipt preserved.
+
+Four finalized contract tests copied into exact archived4a89f252:3 fail,1 passes. Corrected4/4, targeted27/27, whole422/422 and20syntax checks pass. Actual contract/JSON/SQLite with synthetic SMTP/upstream/verify; no actual send/Odoo call. Commands in night-verification-2026-11-11.json. This does not prove adapter business completeness, delivery, distributed transaction or cross-entrypoint coordination.
+
+No new OOM/load, provider backup download/integrity/decrypt/restore/deletion or live checkpoint proof; dated evidence preserved.4.5.1/project case unchanged, activity74 untouched,F0/F1/F2/four paths open,F6 deferred. No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task. Next evidence-bound provider/legacy approval recovery and effect-owner coordination; reconcile both HEADs/lease before writing.
+
+Remote source 4eec980936714d586d95c0ed16ed964c1f79f8a5, treead3e8479360741bc778a8bc17fb42316077d86a0: complete tree/all7 changed paths verified against tested files; original PR26 servera8ba0f7 and combined72a8085 unchanged. This docs-only checkpoint releases canonical lease.
