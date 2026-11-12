@@ -209,7 +209,13 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": null,
+  "lease": {
+    "run_id": "fancy-night-20261112-peu-diagnostics",
+    "component": "Render readonly Peu effect diagnostics",
+    "acquired_at": "2026-11-12T01:16:30.528Z",
+    "expires_at": "2026-11-12T02:16:30.529Z",
+    "base_head": "247990085fba76884394db5ad669480cde9dfe5d"
+  },
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
     "commit": "4eec980936714d586d95c0ed16ed964c1f79f8a5",
