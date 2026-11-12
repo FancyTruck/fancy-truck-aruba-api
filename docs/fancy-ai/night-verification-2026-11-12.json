@@ -1,0 +1,72 @@
+{
+  "oom": "No new load/profile or historical OOM-cause proof. Prior reductions and live acceptance limits unchanged.",
+  "backup": "No new provider download/integrity/decrypt/restore or deletion; existing dated restore evidence retained separately. Existing isolated backup tests included in suite.",
+  "effects": "No main push/merge/deploy/restart, production/Odoo mutation, real send, hosted migration, fiscal/payment/refund/purchase or new task.",
+  "date": "2026-11-12",
+  "updated_at": "2026-11-12T01:18:45.564854+00:00",
+  "run_id": "fancy-night-20261112-peu-diagnostics",
+  "modules": [
+    "P03",
+    "P22"
+  ],
+  "requirement_ids": [
+    "0.2",
+    "1.4",
+    "1.4.1",
+    "2.5",
+    "7.2",
+    "7.3"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "registry": "247990085fba76884394db5ad669480cde9dfe5d",
+    "source": "4eec980936714d586d95c0ed16ed964c1f79f8a5",
+    "lease": "234fddca25163864f505c6fed6620472e4b65d6a"
+  },
+  "tests": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js; node --check src/automationHealth.js; node --check src/peuMailService.js; node --check src/peuEffectDiagnostics.js",
+    "passed": 425,
+    "failed": 0,
+    "syntax_checks": 21,
+    "new_test": "test/peuEffectDiagnostics.test.js",
+    "new_tests": 3,
+    "baseline_commit": "4eec980936714d586d95c0ed16ed964c1f79f8a5",
+    "baseline_command": "node --test --test-name-pattern='actual readonly' test/peuEffectDiagnostics.test.js",
+    "baseline_passed": 0,
+    "baseline_failed": 1,
+    "corrected_passed": 3,
+    "targeted_command": "node --test test/peuEffectDiagnostics.test.js",
+    "targeted_passed": 3,
+    "environment": "Node24 isolated actual readonly HTTP server, SQLite synthetic ledgers, outbound fetch blocked",
+    "coverage": [
+      "unknown/executing effects and requests counted separately in one SQLite statement",
+      "missing/unreadable ledger yields unavailable, never zero or schema repair",
+      "actual admin endpoint exposes no keys/digests/bodies; Peu token denied; SQLite bytes unchanged and no providers"
+    ]
+  },
+  "defect": "Existing admin diagnostics did not expose the separate Peu effect/request ledgers, leaving their interrupted/unknown state invisible in this diagnostic response.",
+  "implementation": "Readonly aggregate projection with one SQL statement, independent effects/requests counts, REVIEW_REQUIRED/IN_PROGRESS/NO_UNRESOLVED_ENTRIES. Missing DB NOT_AVAILABLE, query/schema failure UNAVAILABLE with null counts. No record bodies, identifiers, write or retry.",
+  "runtime": "src/server.js existing GET /v1/diagnostics calls helper with existing peuDb; existing admin authorization unchanged. No new endpoint, scheduler or watchdog write. Liveness/automation_status remain separate and unchanged.",
+  "reconciliation": "Fresh refs/PR26 draft-unmerged and lease free before reservation; state/handoff/requirements/render.yaml read, no applicable AGENTS or GitHub workflows found. No Render metrics/runtime or Odoo query this run.",
+  "source_integrity": {
+    "original_pr26_server_blob": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "previous_combined_server_blob": "72a808517ac2dde88e5bf8cce160fc8b17aa9598",
+    "combined_server_blob": "717c7c75167ec9c86650030353dd96f3cbf36f99",
+    "scope": "one helper import and one field in existing admin diagnostics; corrected intake/awaiting_scope_review and all prior safeguards preserved"
+  },
+  "limits": [
+    "Projection only, not provider reconciliation/retry permission or global functional acceptance",
+    "Requests are not proof of external effects; active executing work is distinguished from unknown outcomes",
+    "Unavailable schema does not prove absence of pending work; query cost scans status columns without loading results; no new indexes/migrations",
+    "No new OOM/load or provider backup proof;4.5.1/project case unchanged, activity74 untouched;F0/F1/F2/four paths open,F6 deferred"
+  ],
+  "next_action": "Continue evidence-bound provider/legacy approval reviewed recovery and effect-owner coordination; reconcile HEADs/lease. Actual Render disk/all-writer/live continuity and mobile acceptance remain open.",
+  "remote_readback": {
+    "commit": "4f526bf229da7d32f53d9478ce34cce4cc6d8c64",
+    "tree": "8b83e733350e34a2139f077950038da9c542e791",
+    "changed_paths_verified": 8,
+    "whole_tree_verified": true,
+    "combined_server_blob": "717c7c75167ec9c86650030353dd96f3cbf36f99",
+    "original_pr26_server_unchanged": true
+  }
+}

@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "updated_at": "2026-11-11T01:21:21.905932+00:00",
+  "updated_at": "2026-11-12T01:19:54.981854+00:00",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
-  "stage": "PR26 source preserved; combined effect verification guards tested, not released",
+  "stage": "PR26 source preserved; combined readonly Peu ledger diagnostics tested, not released",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
@@ -37,7 +37,8 @@
     "peu-attachment-and-generic-message-share-process-mime-admission",
     "attachment-source-safe-integer-metadata-and-byte-limit-before-mime-parser",
     "atomic-post-effect-execution-receipt-and-audit-with-peu-unknown-ledger-preserved",
-    "peu-effect-explicit-positive-verification-and-no-pending-smtp-before-receipt"
+    "peu-effect-explicit-positive-verification-and-no-pending-smtp-before-receipt",
+    "admin-readonly-peu-effect-request-ledger-counts-with-explicit-unavailability"
   ],
   "tests": {
     "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs",
@@ -46,7 +47,7 @@
     "syntax_checks": 8,
     "environment": "Node24.22.1 isolated PR26 with synthetic HTTP/IMAP tests"
   },
-  "next_action": "Continue evidence-bound provider/legacy approval reviewed recovery and effect-owner coordination; reconcile both HEADs and canonical lease. Live continuity, all-writer/disk and mobile acceptance remain open.",
+  "next_action": "Continue evidence-bound provider/legacy approval reviewed recovery and effect-owner coordination; reconcile HEADs/lease. Actual Render disk/all-writer/live continuity and mobile acceptance remain open.",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
@@ -148,17 +149,17 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-11-11T02:21:21.905932+01:00",
-  "run_id": "fancy-night-20261111-effect-verification",
-  "current_lot": "P03/P22 effect verification guards; registry only",
+  "updated_at_rome": "2026-11-12T02:19:54.981854+01:00",
+  "run_id": "fancy-night-20261112-peu-diagnostics",
+  "current_lot": "P03/P22 admin-only Peu ledger visibility; registry only",
   "live_render_deploy": "dep-dbiia7vb9u1s73apusp0",
   "upstream_integration_tests": {
     "status": "passed on isolated main-based source branch; no remote merge or deployment",
     "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
     "pr26_source": "a450bb3ddfabf40191aa56fa0bbd2390a2476044",
-    "passed": 422,
+    "passed": 425,
     "failed": 0,
-    "syntax_checks": 20,
+    "syntax_checks": 21,
     "resolved_paths": [
       "src/mailPolling.js",
       "test/intakeIntegration.test.js",
@@ -168,10 +169,10 @@
     ],
     "policy": "10MiB inline polling; durable recoverable REVIEW allows cursor handoff; content_processed=false; missing metadata or failed persistence holds UID; interactive20MiB unchanged",
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "4eec980936714d586d95c0ed16ed964c1f79f8a5",
-    "tree": "ad3e8479360741bc778a8bc17fb42316077d86a0",
-    "remote_readback": "whole tree and7 changed paths verified",
-    "date": "2026-11-11"
+    "commit": "4f526bf229da7d32f53d9478ce34cce4cc6d8c64",
+    "tree": "8b83e733350e34a2139f077950038da9c542e791",
+    "remote_readback": "whole tree and8 changed paths verified",
+    "date": "2026-11-12"
   },
   "source_integrity": {
     "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
@@ -180,19 +181,19 @@
     "previous_corrected_project_guard_server_blob": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc",
     "previous_single_message_server_blob": "a11abed369707d1ab0efd38c37848223bb917de2",
     "previous_server_blob": "9ba35a907c6165a9051434d59fd7d72850fe24cc",
-    "combined_server_blob": "72a808517ac2dde88e5bf8cce160fc8b17aa9598",
+    "combined_server_blob": "717c7c75167ec9c86650030353dd96f3cbf36f99",
     "pr26_server_blob_unchanged": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
-    "previous_combined_server_blob": "b292c47106b4e6dd723e962acbd22d880f2cd8de",
-    "combined_server_scope": "unchanged server; attachment service validates declared size and returned byte count before parsing; corrected intake and prior guards retained"
+    "previous_combined_server_blob": "72a808517ac2dde88e5bf8cce160fc8b17aa9598",
+    "combined_server_scope": "one helper import and one field in existing admin diagnostics; corrected intake/awaiting_scope_review and all prior safeguards preserved"
   },
   "last_lease": {
-    "run_id": "fancy-night-20261111-effect-verification",
-    "component": "Render Peu effect result validation",
-    "acquired_at": "2026-11-11T01:18:02.793Z",
-    "expires_at": "2026-11-11T02:18:02.793Z",
-    "base_head": "97cf96698c16fb205b403d805bc6a3bacff81e44",
+    "run_id": "fancy-night-20261112-peu-diagnostics",
+    "component": "Render readonly Peu effect diagnostics",
+    "acquired_at": "2026-11-12T01:16:30.528Z",
+    "expires_at": "2026-11-12T02:16:30.529Z",
+    "base_head": "247990085fba76884394db5ad669480cde9dfe5d",
     "status": "released",
-    "released_at": "2026-11-11T01:21:21.905932+00:00"
+    "released_at": "2026-11-12T01:19:54.981854+00:00"
   },
   "last_verified_tests": {
     "command": "npm test; npm run check",
@@ -209,22 +210,16 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": {
-    "run_id": "fancy-night-20261112-peu-diagnostics",
-    "component": "Render readonly Peu effect diagnostics",
-    "acquired_at": "2026-11-12T01:16:30.528Z",
-    "expires_at": "2026-11-12T02:16:30.529Z",
-    "base_head": "247990085fba76884394db5ad669480cde9dfe5d"
-  },
+  "lease": null,
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "4eec980936714d586d95c0ed16ed964c1f79f8a5",
+    "commit": "4f526bf229da7d32f53d9478ce34cce4cc6d8c64",
     "parent": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
-    "tree": "ad3e8479360741bc778a8bc17fb42316077d86a0",
-    "tests": 422,
-    "syntax_checks": 20,
+    "tree": "8b83e733350e34a2139f077950038da9c542e791",
+    "tests": 425,
+    "syntax_checks": 21,
     "source_only": true,
     "remote_verified": true
   },
-  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-11.json"
+  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-12.json"
 }

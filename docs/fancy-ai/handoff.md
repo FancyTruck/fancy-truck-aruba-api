@@ -370,3 +370,15 @@ Four finalized contract tests copied into exact archived4a89f252:3 fail,1 passes
 No new OOM/load, provider backup download/integrity/decrypt/restore/deletion or live checkpoint proof; dated evidence preserved.4.5.1/project case unchanged, activity74 untouched,F0/F1/F2/four paths open,F6 deferred. No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task. Next evidence-bound provider/legacy approval recovery and effect-owner coordination; reconcile both HEADs/lease before writing.
 
 Remote source 4eec980936714d586d95c0ed16ed964c1f79f8a5, treead3e8479360741bc778a8bc17fb42316077d86a0: complete tree/all7 changed paths verified against tested files; original PR26 servera8ba0f7 and combined72a8085 unchanged. This docs-only checkpoint releases canonical lease.
+
+
+## Readonly Peu ledger diagnostics — 2026-11-12
+Reconciled main e0c775f, registry24799008, source4eec9809; reserved canonical lease234fddc. State/handoff/requirements/render.yaml inspected; no applicable AGENTS/GitHub workflows found. No fresh Render runtime/metrics observation.
+
+Existing admin GET /v1/diagnostics now includes peu_effect_ledger from the existing SQLite DB: distinct unknown/executing counts for effects and requests, one consistent SELECT, no IDs/digests/result bodies. REVIEW_REQUIRED, IN_PROGRESS and NO_UNRESOLVED_ENTRIES describe only these ledger statuses, not overall health. Missing DB is NOT_AVAILABLE; query/schema failure UNAVAILABLE with null counts, no repair/DDL. Requests are not proof of external effects. No watchdog write, new endpoint, retry or provider reconciliation.
+
+Actual readonly HTTP regression fails on exact archived4eec9809 (field absent). All3 corrected tests and whole425/425 plus21syntax checks pass. Admin access succeeds, Peu token denied; raw DB bytes unchanged and outbound fetch blocked/zero calls. Counts/status/absence tests use real SQLite synthetic rows. No new memory profile or performance/index claim. Commands in night-verification-2026-11-12.json.
+
+Combined server change only helper import and diagnostic field; repaired intake/awaiting_scope_review and prior guards preserved. Original PR26 server unchanged. No new OOM/live checkpoint, provider backup download/integrity/decrypt/restore/deletion; prior dated evidence retained.4.5.1/project case unchanged, activity74 untouched;F0/F1/F2/four paths open,F6 deferred. No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task. Next evidence-bound provider/legacy approval recovery and effect-owner coordination; reconcile both HEADs/lease before writing.
+
+Remote source 4f526bf229da7d32f53d9478ce34cce4cc6d8c64, tree8b83e733350e34a2139f077950038da9c542e791: whole tree/all8 paths match tested files; combined server717c7c7 has only diagnostic import/field delta, corrected intake retained; original PR26 servera8ba0f7 unchanged. Canonical lease released in this docs-only checkpoint.
