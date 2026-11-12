@@ -1,6 +1,7 @@
 import { reviewSnapshot } from './reviewSnapshot.js';
 import { acquireProcessOwner } from './processOwner.js';
 import { intakeStatus, syncIntakeWatchdog, suspensionDescription } from './intakeWatchdog.js';
+import { peuEffectDiagnostics } from './peuEffectDiagnostics.js';
 import { ensureCustomerAttention } from './customerAttention.js';
 import { matchQuotationThread } from './threadReferences.js';
 import { linkThreadMessage } from './threadLinking.js';
@@ -955,6 +956,7 @@ app.get('/v1/diagnostics', requireToken, (_req, res) => {
     environment: runtime.environment,
     read_only: runtime.readOnly,
     recovery_required: Boolean(runtime.recoveryRequired),
+    peu_effect_ledger: peuEffectDiagnostics(peuDb),
     backup: {
       required_format: process.env.PEU_ACCESS_TOKEN ? 2 : 1,
       enabled: process.env.EXTERNAL_BACKUP_ENABLED === 'true',

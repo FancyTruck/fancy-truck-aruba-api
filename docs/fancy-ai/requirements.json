@@ -132,9 +132,14 @@
           "date": "2026-11-11",
           "kind": "Peu rejects negative/missing verification and pending SMTP before receipt;3 of4 baseline scenarios fail,4 corrected pass.27 targeted/422 whole tests,20syntax checks; actual contract/stubbed providers, no live acceptance.",
           "reference": "night-verification-2026-11-11.json"
+        },
+        {
+          "date": "2026-11-12",
+          "kind": "Admin-only readonly Peu effect/request ledger counts and explicit unavailable state; actual HTTP regression fails on exact prior source,3 corrected tests/425 whole tests and21syntax checks pass. SQLite unchanged, zero providers. No live acceptance.",
+          "reference": "night-verification-2026-11-12.json"
         }
       ],
-      "updated_at": "2026-11-11"
+      "updated_at": "2026-11-12"
     },
     {
       "id": "0.3",
@@ -299,10 +304,15 @@
           "date": "2026-11-11",
           "kind": "Peu rejects negative/missing verification and pending SMTP before receipt;3 of4 baseline scenarios fail,4 corrected pass.27 targeted/422 whole tests,20syntax checks; actual contract/stubbed providers, no live acceptance.",
           "reference": "night-verification-2026-11-11.json"
+        },
+        {
+          "date": "2026-11-12",
+          "kind": "Admin-only readonly Peu effect/request ledger counts and explicit unavailable state; actual HTTP regression fails on exact prior source,3 corrected tests/425 whole tests and21syntax checks pass. SQLite unchanged, zero providers. No live acceptance.",
+          "reference": "night-verification-2026-11-12.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-11"
+      "updated_at": "2026-11-12"
     },
     {
       "id": "1.5",
@@ -451,9 +461,14 @@
           "date": "2026-11-11",
           "kind": "Peu rejects negative/missing verification and pending SMTP before receipt;3 of4 baseline scenarios fail,4 corrected pass.27 targeted/422 whole tests,20syntax checks; actual contract/stubbed providers, no live acceptance.",
           "reference": "night-verification-2026-11-11.json"
+        },
+        {
+          "date": "2026-11-12",
+          "kind": "Admin-only readonly Peu effect/request ledger counts and explicit unavailable state; actual HTTP regression fails on exact prior source,3 corrected tests/425 whole tests and21syntax checks pass. SQLite unchanged, zero providers. No live acceptance.",
+          "reference": "night-verification-2026-11-12.json"
         }
       ],
-      "updated_at": "2026-11-11"
+      "updated_at": "2026-11-12"
     },
     {
       "id": "2.6",
@@ -840,9 +855,14 @@
           "date": "2026-11-11",
           "kind": "Peu rejects negative/missing verification and pending SMTP before receipt;3 of4 baseline scenarios fail,4 corrected pass.27 targeted/422 whole tests,20syntax checks; actual contract/stubbed providers, no live acceptance.",
           "reference": "night-verification-2026-11-11.json"
+        },
+        {
+          "date": "2026-11-12",
+          "kind": "Admin-only readonly Peu effect/request ledger counts and explicit unavailable state; actual HTTP regression fails on exact prior source,3 corrected tests/425 whole tests and21syntax checks pass. SQLite unchanged, zero providers. No live acceptance.",
+          "reference": "night-verification-2026-11-12.json"
         }
       ],
-      "updated_at": "2026-11-11"
+      "updated_at": "2026-11-12"
     },
     {
       "id": "7.3",
@@ -931,9 +951,14 @@
           "date": "2026-11-11",
           "kind": "Peu rejects negative/missing verification and pending SMTP before receipt;3 of4 baseline scenarios fail,4 corrected pass.27 targeted/422 whole tests,20syntax checks; actual contract/stubbed providers, no live acceptance.",
           "reference": "night-verification-2026-11-11.json"
+        },
+        {
+          "date": "2026-11-12",
+          "kind": "Admin-only readonly Peu effect/request ledger counts and explicit unavailable state; actual HTTP regression fails on exact prior source,3 corrected tests/425 whole tests and21syntax checks pass. SQLite unchanged, zero providers. No live acceptance.",
+          "reference": "night-verification-2026-11-12.json"
         }
       ],
-      "updated_at": "2026-11-11"
+      "updated_at": "2026-11-12"
     },
     {
       "id": "7.4",
@@ -1123,10 +1148,15 @@
           "date": "2026-11-11",
           "kind": "Peu rejects negative/missing verification and pending SMTP before receipt;3 of4 baseline scenarios fail,4 corrected pass.27 targeted/422 whole tests,20syntax checks; actual contract/stubbed providers, no live acceptance.",
           "reference": "night-verification-2026-11-11.json"
+        },
+        {
+          "date": "2026-11-12",
+          "kind": "Admin-only readonly Peu effect/request ledger counts and explicit unavailable state; actual HTTP regression fails on exact prior source,3 corrected tests/425 whole tests and21syntax checks pass. SQLite unchanged, zero providers. No live acceptance.",
+          "reference": "night-verification-2026-11-12.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-11"
+      "updated_at": "2026-11-12"
     },
     {
       "id": "2.1.1",

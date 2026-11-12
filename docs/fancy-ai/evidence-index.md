@@ -50,3 +50,5 @@
 - `night-verification-2026-11-10.json`: execution result/audit atomic save and fault rollback;4 baseline failures,4 corrected passes,23 targeted/418 whole tests and20syntax checks. Actual Peu contract with synthetic SMTP preserves unknown retry barrier; no provider/live acceptance.
 
 - `night-verification-2026-11-11.json`: explicit positive Peu verification and no pending SMTP before receipt;3 baseline failures/1pass,4 corrected passes,27 targeted/422 whole tests,20syntax checks. Synthetic providers; unknown replay barrier preserved; no live acceptance.
+
+- `night-verification-2026-11-12.json`: admin readonly Peu ledger diagnostics, actual HTTP baseline fails,3 corrected/425 whole tests,21syntax checks. Real SQLite unchanged, zero providers; distinct requests/effects and explicit unavailable state; no live acceptance.
