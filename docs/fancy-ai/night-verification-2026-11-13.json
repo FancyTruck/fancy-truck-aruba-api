@@ -1,0 +1,68 @@
+{
+  "backup": "No new provider download/integrity/decrypt/restore or deletion; existing dated restore evidence retained separately. Existing isolated backup tests included in suite.",
+  "effects": "No main push/merge/deploy/restart, production/Odoo mutation, real send, hosted migration, fiscal/payment/refund/purchase or new task.",
+  "date": "2026-11-13",
+  "updated_at": "2026-11-13T01:41:49.582303+00:00",
+  "run_id": "fancy-night-20261113-cache-projection",
+  "modules": [
+    "P01",
+    "P22"
+  ],
+  "requirement_ids": [
+    "1.4",
+    "1.5",
+    "7.2",
+    "7.4"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "registry": "35f14cbb0a9793a8f0cdef21f947f4e8364de139",
+    "source": "4f526bf229da7d32f53d9478ce34cce4cc6d8c64",
+    "lease": "658cb867a2956b41ddd11129ac25ccb0244e4566"
+  },
+  "tests": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js; node --check src/automationHealth.js; node --check src/peuMailService.js; node --check src/peuEffectDiagnostics.js",
+    "passed": 428,
+    "failed": 0,
+    "syntax_checks": 21,
+    "new_test": "test/cacheProjectionBudget.test.js",
+    "new_tests": 3,
+    "baseline_commit": "4f526bf229da7d32f53d9478ce34cce4cc6d8c64",
+    "baseline_command": "node --test test/cacheProjectionBudget.test.js",
+    "baseline_passed": 1,
+    "baseline_failed": 2,
+    "corrected_passed": 3,
+    "targeted_command": "node --test test/cacheProjectionBudget.test.js test/peuMailMemory.test.js",
+    "targeted_passed": 10,
+    "environment": "Node24 isolated SQLite and actual readonly HTTP server; synthetic cached payloads; outbound fetch blocked",
+    "coverage": [
+      "multibyte references/from/to/attachment filenames bounded inside SQLite before JSON.parse",
+      "normal metadata/text survives despite large excluded attachment body",
+      "100-row message/thread HTTP lists signal incomplete metadata, SQLite bytes/rows/cursor unchanged, zero provider fetches"
+    ]
+  },
+  "defect": "Cached mail projection stripped attachment bodies and capped text but forwarded arbitrarily large metadata from each legacy row into JSON.parse and retained up to100 rows. Synthetic baseline HTTP response exceeded100*128KiB.",
+  "implementation": "Wrap existing projected JSON in SQLite byte-length guard (CAST AS BLOB),128KiB per public payload. Oversize becomes explicit requires_bounded_metadata_review/metadata_truncated with empty text/attachments; original cache row remains unchanged. Limit applies to projected metadata, so large stripped attachment bodies alone do not hide normal content.",
+  "runtime": "Existing ArubaService.messages and thread consumed by existing Peu readonly HTTP routes. No download, new queue, cursor update or workflow.",
+  "reconciliation": "Fresh main/PR26/combined refs match checkpoint, PR26 draft/unmerged, lease free before reservation. State/handoff/requirements/render.yaml read; no applicable AGENTS/GitHub workflows found. No fresh Render/Odoo query.",
+  "source_integrity": {
+    "original_pr26_server_blob": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "combined_server_blob": "717c7c75167ec9c86650030353dd96f3cbf36f99",
+    "scope": "src/peuMailService.js public SQL projection only; both server versions unchanged, corrected intake preserved"
+  },
+  "oom": "Specific cached projected-payload accumulation risk reproduced and bounded before JS parsing. No new RSS/heap/external/arrayBuffer profile, representative load or historical OOM-cause proof.",
+  "limits": [
+    "128KiB bounds each public JSON payload only, not row identity/flags, entire HTTP response, SQLite working memory or total service memory",
+    "SQLite may construct a larger transient projection to measure it; no CPU/performance/index claim or live load test",
+    "Metadata review marker indicates incomplete response; no new persistent business-review queue or automatic recovery",
+    "No live checkpoint/F0/F1/F2/four-path acceptance;4.5.1/project case unchanged, activity74 untouched,F6 deferred"
+  ],
+  "next_action": "Continue evidence-bound provider/legacy approval reviewed recovery and effect-owner coordination; reconcile HEADs/lease. Live memory/continuity/all-writer/disk/mobile acceptance remain open.",
+  "remote_readback": {
+    "commit": "9e16508808b496d57d1cdc77e6c9e9119be2e85e",
+    "tree": "e13d1410914316f854a9a56d3f7850582c5c803d",
+    "changed_paths_verified": 7,
+    "whole_tree_verified": true,
+    "servers_unchanged": true
+  }
+}
