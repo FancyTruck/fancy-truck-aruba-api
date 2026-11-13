@@ -52,3 +52,5 @@
 - `night-verification-2026-11-11.json`: explicit positive Peu verification and no pending SMTP before receipt;3 baseline failures/1pass,4 corrected passes,27 targeted/422 whole tests,20syntax checks. Synthetic providers; unknown replay barrier preserved; no live acceptance.
 
 - `night-verification-2026-11-12.json`: admin readonly Peu ledger diagnostics, actual HTTP baseline fails,3 corrected/425 whole tests,21syntax checks. Real SQLite unchanged, zero providers; distinct requests/effects and explicit unavailable state; no live acceptance.
+
+- `night-verification-2026-11-13.json`: cached public metadata budget before JS parse;2 baseline failures/1pass,3 corrected/10 targeted/428 whole tests,21syntax checks. Actual readonly100-row HTTP fixture/cache preserved, zero providers; no live OOM proof.

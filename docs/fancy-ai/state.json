@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "updated_at": "2026-11-12T01:18:45.564854+00:00",
+  "updated_at": "2026-11-13T01:41:49.582303+00:00",
   "baseline_commit": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
   "branch": "work/fancy-pr38-reconcile-20261101",
-  "stage": "combined readonly Peu effect ledger diagnostics tested; not released",
+  "stage": "combined cached public payload budget tested; not released",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
@@ -38,30 +38,31 @@
     "attachment-source-safe-integer-metadata-and-byte-limit-before-mime-parser",
     "atomic-post-effect-execution-receipt-and-audit-with-peu-unknown-ledger-preserved",
     "peu-effect-explicit-positive-verification-and-no-pending-smtp-before-receipt",
-    "admin-readonly-peu-effect-request-ledger-counts-with-explicit-unavailability"
+    "admin-readonly-peu-effect-request-ledger-counts-with-explicit-unavailability",
+    "sqlite-public-mail-payload-byte-budget-before-js-parse-with-incomplete-metadata-marker"
   ],
   "tests": {
     "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js; node --check src/automationHealth.js; node --check src/peuMailService.js; node --check src/peuEffectDiagnostics.js",
-    "passed": 425,
+    "passed": 428,
     "failed": 0,
     "syntax_checks": 21,
-    "new_test": "test/peuEffectDiagnostics.test.js",
+    "new_test": "test/cacheProjectionBudget.test.js",
     "new_tests": 3,
-    "baseline_commit": "4eec980936714d586d95c0ed16ed964c1f79f8a5",
-    "baseline_command": "node --test --test-name-pattern='actual readonly' test/peuEffectDiagnostics.test.js",
-    "baseline_passed": 0,
-    "baseline_failed": 1,
+    "baseline_commit": "4f526bf229da7d32f53d9478ce34cce4cc6d8c64",
+    "baseline_command": "node --test test/cacheProjectionBudget.test.js",
+    "baseline_passed": 1,
+    "baseline_failed": 2,
     "corrected_passed": 3,
-    "targeted_command": "node --test test/peuEffectDiagnostics.test.js",
-    "targeted_passed": 3,
-    "environment": "Node24 isolated actual readonly HTTP server, SQLite synthetic ledgers, outbound fetch blocked",
+    "targeted_command": "node --test test/cacheProjectionBudget.test.js test/peuMailMemory.test.js",
+    "targeted_passed": 10,
+    "environment": "Node24 isolated SQLite and actual readonly HTTP server; synthetic cached payloads; outbound fetch blocked",
     "coverage": [
-      "unknown/executing effects and requests counted separately in one SQLite statement",
-      "missing/unreadable ledger yields unavailable, never zero or schema repair",
-      "actual admin endpoint exposes no keys/digests/bodies; Peu token denied; SQLite bytes unchanged and no providers"
+      "multibyte references/from/to/attachment filenames bounded inside SQLite before JSON.parse",
+      "normal metadata/text survives despite large excluded attachment body",
+      "100-row message/thread HTTP lists signal incomplete metadata, SQLite bytes/rows/cursor unchanged, zero provider fetches"
     ]
   },
-  "next_action": "Continue evidence-bound provider/legacy approval reviewed recovery and effect-owner coordination; reconcile HEADs/lease. Actual Render disk/all-writer/live continuity and mobile acceptance remain open.",
+  "next_action": "Continue evidence-bound provider/legacy approval reviewed recovery and effect-owner coordination; reconcile HEADs/lease. Live memory/continuity/all-writer/disk/mobile acceptance remain open.",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
@@ -164,9 +165,9 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-11-12T02:18:45.564854+01:00",
-  "run_id": "fancy-night-20261112-peu-diagnostics",
-  "current_lot": "P03/P22 admin-only Peu ledger visibility",
+  "updated_at_rome": "2026-11-13T02:41:49.582303+01:00",
+  "run_id": "fancy-night-20261113-cache-projection",
+  "current_lot": "P01/P22 SQLite public metadata budget",
   "live_render_deploy": "dep-dbiia7vb9u1s73apusp0",
   "upstream_integration_tests": {
     "status": "passed on isolated main-based source branch; no remote merge or deployment",
@@ -230,6 +231,6 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-12.json",
+  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-13.json",
   "lease_authority": "Canonical docs/fancy-ai/state.json on PR26; source branch state is not the global lease authority"
 }

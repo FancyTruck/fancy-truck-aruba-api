@@ -3,7 +3,7 @@ import {readFolder,reconcileSent} from './peuMailSync.js';
 import {MAX_POLL_SOURCE_BYTES} from './mailPolling.js';
 // Project legacy cache rows inside SQLite BEFORE crossing into JS. Older rows
 // may contain base64 attachment bodies; stripping them after JSON.parse is too late.
-const publicPayload = `CASE WHEN length(payload)>16777216 THEN
+const projectedPayload = `CASE WHEN length(payload)>16777216 THEN
  json_object('text','','attachments',json('[]'),'content_status','requires_large_message_download')
  ELSE json_object(
  'content_status',json_extract(payload,'$.content_status'),
@@ -19,7 +19,14 @@ const publicPayload = `CASE WHEN length(payload)>16777216 THEN
  'attachments',json(coalesce((SELECT json_group_array(json_object(
  'index',key,'filename',json_extract(value,'$.filename'),
  'contentType',json_extract(value,'$.contentType'),'size',json_extract(value,'$.size')))
- FROM json_each(payload,'$.attachments')),'[]'))) END AS payload`;
+ FROM json_each(payload,'$.attachments')),'[]'))) END`;
+// A row can have oversized metadata even after attachment bodies/text are
+// stripped. Bound the final UTF-8 JSON inside SQLite, before JS parses/retains
+// up to 100 rows. Preserve the stored source and report incomplete coverage.
+const publicPayload = `CASE WHEN length(CAST((${projectedPayload}) AS BLOB))>131072
+ THEN json_object('text','','attachments',json('[]'),
+ 'content_status','requires_bounded_metadata_review','metadata_truncated',json('true'))
+ ELSE (${projectedPayload}) END AS payload`;
 function publicMessage(row){return {...row,payload:JSON.parse(row.payload)};}
 // Runs inside Fancy using its existing authenticated clients and approval service.
 export class ArubaService {
