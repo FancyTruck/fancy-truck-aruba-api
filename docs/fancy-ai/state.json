@@ -210,7 +210,13 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": null,
+  "lease": {
+    "run_id": "fancy-night-20261113-cache-projection",
+    "component": "Render bounded public mail cache projection",
+    "acquired_at": "2026-11-13T01:39:34.454Z",
+    "expires_at": "2026-11-13T02:39:34.455Z",
+    "base_head": "35f14cbb0a9793a8f0cdef21f947f4e8364de139"
+  },
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
     "commit": "4f526bf229da7d32f53d9478ce34cce4cc6d8c64",
