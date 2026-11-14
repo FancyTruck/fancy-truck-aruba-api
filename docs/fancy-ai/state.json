@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "updated_at": "2026-11-13T01:42:53.699167+00:00",
+  "updated_at": "2026-11-14T01:54:03.895159+00:00",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
-  "stage": "PR26 source preserved; combined public cache payload budget tested, not released",
+  "stage": "PR26 source preserved; combined Peu IMAP identity guards tested, not released",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
@@ -39,7 +39,8 @@
     "atomic-post-effect-execution-receipt-and-audit-with-peu-unknown-ledger-preserved",
     "peu-effect-explicit-positive-verification-and-no-pending-smtp-before-receipt",
     "admin-readonly-peu-effect-request-ledger-counts-with-explicit-unavailability",
-    "sqlite-public-mail-payload-byte-budget-before-js-parse-with-incomplete-metadata-marker"
+    "sqlite-public-mail-payload-byte-budget-before-js-parse-with-incomplete-metadata-marker",
+    "peu-source-uid-identity-and-nonnegative-size-before-cache-cursor-commit"
   ],
   "tests": {
     "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs",
@@ -48,7 +49,7 @@
     "syntax_checks": 8,
     "environment": "Node24.22.1 isolated PR26 with synthetic HTTP/IMAP tests"
   },
-  "next_action": "Continue evidence-bound provider/legacy approval reviewed recovery and effect-owner coordination; reconcile HEADs/lease. Live memory/continuity/all-writer/disk/mobile acceptance remain open.",
+  "next_action": "Continue evidence-bound provider/legacy approval reviewed recovery and effect-owner coordination; assess remaining sync search/flags memory risks. Reconcile HEADs/lease; live memory/continuity/disk/mobile acceptance remains separate.",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
@@ -150,17 +151,17 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-11-13T02:42:53.699167+01:00",
-  "run_id": "fancy-night-20261113-cache-projection",
-  "current_lot": "P01/P22 SQLite public metadata budget; registry only",
+  "updated_at_rome": "2026-11-14T02:54:03.895159+01:00",
+  "run_id": "fancy-night-20261114-imap-identity",
+  "current_lot": "P01/P03/P22 source UID and size guard; registry only",
   "live_render_deploy": "dep-dbiia7vb9u1s73apusp0",
   "upstream_integration_tests": {
     "status": "passed on isolated main-based source branch; no remote merge or deployment",
     "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
     "pr26_source": "a450bb3ddfabf40191aa56fa0bbd2390a2476044",
-    "passed": 428,
+    "passed": 431,
     "failed": 0,
-    "syntax_checks": 21,
+    "syntax_checks": 22,
     "resolved_paths": [
       "src/mailPolling.js",
       "test/intakeIntegration.test.js",
@@ -170,10 +171,10 @@
     ],
     "policy": "10MiB inline polling; durable recoverable REVIEW allows cursor handoff; content_processed=false; missing metadata or failed persistence holds UID; interactive20MiB unchanged",
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "9e16508808b496d57d1cdc77e6c9e9119be2e85e",
-    "tree": "e13d1410914316f854a9a56d3f7850582c5c803d",
+    "commit": "9c9b14ca70b86d398284ce22f0da98a5190b5f51",
+    "tree": "f0ffbb3b2ca8fa72eb9c0217b394d3d190e116f2",
     "remote_readback": "whole tree and7 changed paths verified",
-    "date": "2026-11-13"
+    "date": "2026-11-14"
   },
   "source_integrity": {
     "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
@@ -188,13 +189,13 @@
     "combined_server_scope": "one helper import and one field in existing admin diagnostics; corrected intake/awaiting_scope_review and all prior safeguards preserved"
   },
   "last_lease": {
-    "run_id": "fancy-night-20261113-cache-projection",
-    "component": "Render bounded public mail cache projection",
-    "acquired_at": "2026-11-13T01:39:34.454Z",
-    "expires_at": "2026-11-13T02:39:34.455Z",
-    "base_head": "35f14cbb0a9793a8f0cdef21f947f4e8364de139",
+    "run_id": "fancy-night-20261114-imap-identity",
+    "component": "Render Peu IMAP cursor identity validation",
+    "acquired_at": "2026-11-14T01:51:13.481Z",
+    "expires_at": "2026-11-14T02:51:13.481Z",
+    "base_head": "dc25fab228c7f9838dcc0d7ec61fd08b0ad1e1de",
     "status": "released",
-    "released_at": "2026-11-13T01:42:53.699167+00:00"
+    "released_at": "2026-11-14T01:54:03.895159+00:00"
   },
   "last_verified_tests": {
     "command": "npm test; npm run check",
@@ -211,22 +212,16 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": {
-    "run_id": "fancy-night-20261114-imap-identity",
-    "component": "Render Peu IMAP cursor identity validation",
-    "acquired_at": "2026-11-14T01:51:13.481Z",
-    "expires_at": "2026-11-14T02:51:13.481Z",
-    "base_head": "dc25fab228c7f9838dcc0d7ec61fd08b0ad1e1de"
-  },
+  "lease": null,
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "9e16508808b496d57d1cdc77e6c9e9119be2e85e",
+    "commit": "9c9b14ca70b86d398284ce22f0da98a5190b5f51",
     "parent": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
-    "tree": "e13d1410914316f854a9a56d3f7850582c5c803d",
-    "tests": 428,
-    "syntax_checks": 21,
+    "tree": "f0ffbb3b2ca8fa72eb9c0217b394d3d190e116f2",
+    "tests": 431,
+    "syntax_checks": 22,
     "source_only": true,
     "remote_verified": true
   },
-  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-13.json"
+  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-14.json"
 }

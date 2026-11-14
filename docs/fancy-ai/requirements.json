@@ -314,10 +314,15 @@
           "date": "2026-11-13",
           "kind": "SQLite public cached payload capped128KiB before JS parse;2/3 baseline scenarios fail,3 corrected/10 targeted/428 whole tests and21syntax checks pass. Real readonly HTTP100-row fixture, cache/cursor preserved; no OOM-cause/live acceptance.",
           "reference": "night-verification-2026-11-13.json"
+        },
+        {
+          "date": "2026-11-14",
+          "kind": "Peu source UID mismatch and negative size fail closed;3 baseline regressions fail,3 corrected/10 targeted/431 whole tests and22syntax checks pass. Actual Aruba sync/SQLite with synthetic IMAP preserves cursor/cache before corrected retry; no live acceptance.",
+          "reference": "night-verification-2026-11-14.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-13"
+      "updated_at": "2026-11-14"
     },
     {
       "id": "1.5",
@@ -397,9 +402,14 @@
           "date": "2026-11-13",
           "kind": "SQLite public cached payload capped128KiB before JS parse;2/3 baseline scenarios fail,3 corrected/10 targeted/428 whole tests and21syntax checks pass. Real readonly HTTP100-row fixture, cache/cursor preserved; no OOM-cause/live acceptance.",
           "reference": "night-verification-2026-11-13.json"
+        },
+        {
+          "date": "2026-11-14",
+          "kind": "Peu source UID mismatch and negative size fail closed;3 baseline regressions fail,3 corrected/10 targeted/431 whole tests and22syntax checks pass. Actual Aruba sync/SQLite with synthetic IMAP preserves cursor/cache before corrected retry; no live acceptance.",
+          "reference": "night-verification-2026-11-14.json"
         }
       ],
-      "updated_at": "2026-11-13"
+      "updated_at": "2026-11-14"
     },
     {
       "id": "2.1",
@@ -476,9 +486,14 @@
           "date": "2026-11-12",
           "kind": "Admin-only readonly Peu effect/request ledger counts and explicit unavailable state; actual HTTP regression fails on exact prior source,3 corrected tests/425 whole tests and21syntax checks pass. SQLite unchanged, zero providers. No live acceptance.",
           "reference": "night-verification-2026-11-12.json"
+        },
+        {
+          "date": "2026-11-14",
+          "kind": "Peu source UID mismatch and negative size fail closed;3 baseline regressions fail,3 corrected/10 targeted/431 whole tests and22syntax checks pass. Actual Aruba sync/SQLite with synthetic IMAP preserves cursor/cache before corrected retry; no live acceptance.",
+          "reference": "night-verification-2026-11-14.json"
         }
       ],
-      "updated_at": "2026-11-12"
+      "updated_at": "2026-11-14"
     },
     {
       "id": "2.6",
@@ -875,9 +890,14 @@
           "date": "2026-11-13",
           "kind": "SQLite public cached payload capped128KiB before JS parse;2/3 baseline scenarios fail,3 corrected/10 targeted/428 whole tests and21syntax checks pass. Real readonly HTTP100-row fixture, cache/cursor preserved; no OOM-cause/live acceptance.",
           "reference": "night-verification-2026-11-13.json"
+        },
+        {
+          "date": "2026-11-14",
+          "kind": "Peu source UID mismatch and negative size fail closed;3 baseline regressions fail,3 corrected/10 targeted/431 whole tests and22syntax checks pass. Actual Aruba sync/SQLite with synthetic IMAP preserves cursor/cache before corrected retry; no live acceptance.",
+          "reference": "night-verification-2026-11-14.json"
         }
       ],
-      "updated_at": "2026-11-13"
+      "updated_at": "2026-11-14"
     },
     {
       "id": "7.3",
@@ -971,9 +991,14 @@
           "date": "2026-11-12",
           "kind": "Admin-only readonly Peu effect/request ledger counts and explicit unavailable state; actual HTTP regression fails on exact prior source,3 corrected tests/425 whole tests and21syntax checks pass. SQLite unchanged, zero providers. No live acceptance.",
           "reference": "night-verification-2026-11-12.json"
+        },
+        {
+          "date": "2026-11-14",
+          "kind": "Peu source UID mismatch and negative size fail closed;3 baseline regressions fail,3 corrected/10 targeted/431 whole tests and22syntax checks pass. Actual Aruba sync/SQLite with synthetic IMAP preserves cursor/cache before corrected retry; no live acceptance.",
+          "reference": "night-verification-2026-11-14.json"
         }
       ],
-      "updated_at": "2026-11-12"
+      "updated_at": "2026-11-14"
     },
     {
       "id": "7.4",
@@ -1173,10 +1198,15 @@
           "date": "2026-11-12",
           "kind": "Admin-only readonly Peu effect/request ledger counts and explicit unavailable state; actual HTTP regression fails on exact prior source,3 corrected tests/425 whole tests and21syntax checks pass. SQLite unchanged, zero providers. No live acceptance.",
           "reference": "night-verification-2026-11-12.json"
+        },
+        {
+          "date": "2026-11-14",
+          "kind": "Peu source UID mismatch and negative size fail closed;3 baseline regressions fail,3 corrected/10 targeted/431 whole tests and22syntax checks pass. Actual Aruba sync/SQLite with synthetic IMAP preserves cursor/cache before corrected retry; no live acceptance.",
+          "reference": "night-verification-2026-11-14.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-12"
+      "updated_at": "2026-11-14"
     },
     {
       "id": "2.1.1",

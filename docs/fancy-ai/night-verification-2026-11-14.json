@@ -1,0 +1,70 @@
+{
+  "backup": "No new provider download/integrity/decrypt/restore or deletion; existing dated restore evidence retained separately. Existing isolated backup tests included in suite.",
+  "effects": "No main push/merge/deploy/restart, production/Odoo mutation, real send, hosted migration, fiscal/payment/refund/purchase or new task.",
+  "source_integrity": {
+    "original_pr26_server_blob": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "combined_server_blob": "717c7c75167ec9c86650030353dd96f3cbf36f99",
+    "scope": "src/peuMailSync.js UID identity and nonnegative-size guards only; both server versions unchanged, corrected intake preserved"
+  },
+  "date": "2026-11-14",
+  "updated_at": "2026-11-14T01:53:02.087454+00:00",
+  "run_id": "fancy-night-20261114-imap-identity",
+  "modules": [
+    "P01",
+    "P03",
+    "P22"
+  ],
+  "requirement_ids": [
+    "1.4",
+    "1.4.1",
+    "1.5",
+    "2.5",
+    "7.2",
+    "7.3"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "registry": "dc25fab228c7f9838dcc0d7ec61fd08b0ad1e1de",
+    "source": "9e16508808b496d57d1cdc77e6c9e9119be2e85e",
+    "lease": "e8b910a7c1b0b07c72132ed1d71be0d901c25cde"
+  },
+  "tests": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js; node --check src/automationHealth.js; node --check src/peuMailService.js; node --check src/peuEffectDiagnostics.js; node --check src/peuMailSync.js",
+    "passed": 431,
+    "failed": 0,
+    "syntax_checks": 22,
+    "new_test": "test/peuImapIdentity.test.js",
+    "new_tests": 3,
+    "baseline_commit": "9e16508808b496d57d1cdc77e6c9e9119be2e85e",
+    "baseline_command": "node --test test/peuImapIdentity.test.js",
+    "baseline_passed": 0,
+    "baseline_failed": 3,
+    "corrected_passed": 3,
+    "targeted_command": "node --test test/peuImapIdentity.test.js test/peuMailMemory.test.js",
+    "targeted_passed": 10,
+    "environment": "Node24 isolated actual readFolder/ArubaService.sync, real SQLite, synthetic IMAP adapter and parser",
+    "coverage": [
+      "absent/wrong/string UID rejected before exposing batch cursor",
+      "negative metadata size refused before source fetch",
+      "actual sync keeps durable cache/cursor unchanged and parser unused after wrong UID; corrected retry reads same UID once, all readonly locks released"
+    ]
+  },
+  "defect": "Normal Peu readFolder source fetch trusted returned m.uid to set cache identity and maximum cursor. A mismatched UID could skip expected messages. Negative declared size also passed the metadata guard.",
+  "implementation": "Require returned normal-message UID to equal requested UID before adding batch item; reject with502 message_uid_mismatch and release readonly lock. Reject negative metadata size before source fetch. Existing oversize/UIDValidity handling and cursor transaction unchanged.",
+  "runtime": "Existing readFolder called by ArubaService.sync in the mounted Peu sync route, not a new poller. Tests invoke actual service plus SQLite and synthetic IMAP/parser; no new HTTP test or live provider claim.",
+  "reconciliation": "Fresh main/PR26/combined refs match checkpoint, draft/unmerged and lease free before reservation. Canonical state/handoff/requirements/render.yaml inspected; no applicable AGENTS/GitHub workflows found. No Render/Odoo/provider query.",
+  "oom": "Negative metadata now fails before source allocation in this path. No new RSS/heap/external/arrayBuffer profile, load test or historical OOM-cause proof.",
+  "limits": [
+    "Synthetic IMAP response inconsistency demonstrates a missing guard, not an observed live provider incident",
+    "This batch does not bound mailbox search IDs or flags collection and does not prove all cursor/folder identity paths",
+    "No live checkpoint/restart/provider reconciliation or F0/F1/F2/four-path acceptance;4.5.1/project case unchanged, activity74 untouched,F6 deferred"
+  ],
+  "next_action": "Continue evidence-bound provider/legacy approval reviewed recovery and effect-owner coordination; assess remaining sync search/flags memory risks. Reconcile HEADs/lease; live memory/continuity/disk/mobile acceptance remains separate.",
+  "remote_readback": {
+    "commit": "9c9b14ca70b86d398284ce22f0da98a5190b5f51",
+    "tree": "f0ffbb3b2ca8fa72eb9c0217b394d3d190e116f2",
+    "changed_paths_verified": 7,
+    "whole_tree_verified": true,
+    "servers_unchanged": true
+  }
+}

@@ -394,3 +394,15 @@ Finalized3 tests on exact archived4f526bf2:2 fail,1 passes. Corrected3/3, target
 Both original PR26 and combined server unchanged; repaired intake preserved. No new provider backup download/integrity/decrypt/restore/deletion/live checkpoint proof; prior dated evidence retained.4.5.1/project case unchanged, activity74 untouched,F0/F1/F2/four paths open,F6 deferred. No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task. Next evidence-bound provider/legacy approval recovery/effect-owner coordination; reconcile both HEADs/lease.
 
 Remote source 9e16508808b496d57d1cdc77e6c9e9119be2e85e, treee13d1410914316f854a9a56d3f7850582c5c803d: whole tree/all7 paths match tested files; original PR26 servera8ba0f7 and combined717c7c7 unchanged. This docs-only checkpoint releases canonical lease.
+
+
+## Peu source UID integrity — 2026-11-14
+Reconciled main e0c775f, registrydc25fab2, source9e165088; canonical leasee8b910a7 reserved. State/handoff/requirements/render.yaml read; no applicable AGENTS/GitHub workflows found. No fresh Render/Odoo/provider observation.
+
+Normal readFolder fetch used returned UID directly for cache identity and cursor. Missing/wrong/string UID now fails502 message_uid_mismatch before item exposure or parsing. Negative declared size fails before source fetch. Existing oversize, readonly lock release, UIDValidity and cache/cursor transaction retained. This is the existing ArubaService.sync path, no new poller.
+
+Three finalized regressions fail on exact archived9e165088; corrected3/3, targeted10/10, whole431/431 and22syntax checks pass. Actual service/SQLite with synthetic IMAP/parser proves wrong UID leaves durable cursor/cache unchanged, parser unused; corrected retry processes UID10 after cursor9 once, locks released. No new HTTP/live test. This demonstrates a missing guard, not a proven provider incident. Search-ID/flag collection memory and other identity paths remain open.
+
+Both original PR26 and combined server unchanged; corrected intake retained. No new OOM profile/load, provider backup download/integrity/decrypt/restore/deletion or live checkpoint proof; dated evidence retained.4.5.1/project case unchanged, activity74 untouched,F0/F1/F2/four paths open,F6 deferred. No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task. Next evidence-bound recovery/effect-owner coordination and remaining sync memory review; reconcile both HEADs/lease before writing.
+
+Remote source 9c9b14ca70b86d398284ce22f0da98a5190b5f51, treef0ffbb3b2ca8fa72eb9c0217b394d3d190e116f2: whole tree/all7 paths match tested files; original PR26 servera8ba0f7 and combined717c7c7 unchanged. This docs-only checkpoint releases canonical lease.

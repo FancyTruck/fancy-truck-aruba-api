@@ -54,3 +54,5 @@
 - `night-verification-2026-11-12.json`: admin readonly Peu ledger diagnostics, actual HTTP baseline fails,3 corrected/425 whole tests,21syntax checks. Real SQLite unchanged, zero providers; distinct requests/effects and explicit unavailable state; no live acceptance.
 
 - `night-verification-2026-11-13.json`: cached public metadata budget before JS parse;2 baseline failures/1pass,3 corrected/10 targeted/428 whole tests,21syntax checks. Actual readonly100-row HTTP fixture/cache preserved, zero providers; no live OOM proof.
+
+- `night-verification-2026-11-14.json`: Peu UID integrity/negative-size guard;3 baseline failures,3 corrected/10 targeted/431 whole tests,22syntax checks. Actual sync/SQLite synthetic IMAP preserves cursor/cache, corrected retry tested; no live acceptance.
