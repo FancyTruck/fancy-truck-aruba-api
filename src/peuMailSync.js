@@ -12,7 +12,7 @@ export async function readFolder(client,folder,cursor,limit=100){
     const selected=ids.filter(id=>id>=since).sort((a,b)=>a-b).slice(0,limit);
     for(const uid of selected){
       const meta=await client.fetchOne(uid,{size:true},{uid:true});
-      if(!meta||!Number.isSafeInteger(meta.size))throw problem('message_size_unavailable',502);
+      if(!meta||!Number.isSafeInteger(meta.size)||meta.size<0)throw problem('message_size_unavailable',502);
       if(meta.size>MAX_SOURCE_BYTES){
         const m=await client.fetchOne(uid,{uid:true,envelope:true,flags:true},{uid:true});
         if(!m||m.uid!==uid)throw problem('message_metadata_unavailable',502);
@@ -22,6 +22,8 @@ export async function readFolder(client,folder,cursor,limit=100){
       if(items.length&&totalBytes+meta.size>MAX_SOURCE_BYTES)break;
       const m=await client.fetchOne(uid,{uid:true,envelope:true,flags:true,bodyStructure:true,source:{start:0,maxLength:MAX_SOURCE_BYTES+1}},{uid:true});
       if(!m?.source||m.source.length>MAX_SOURCE_BYTES)throw problem('mail_sync_large_message_requires_review',413);
+      // A mismatched response cannot choose the durable cursor or cache key.
+      if(m.uid!==uid)throw problem('message_uid_mismatch',502);
       if(items.length&&totalBytes+m.source.length>MAX_SOURCE_BYTES)break;
       totalBytes+=m.source.length;
       items.push({uid:m.uid,envelope:m.envelope,flags:[...m.flags],bodyStructure:m.bodyStructure,source:m.source.toString('base64')});
