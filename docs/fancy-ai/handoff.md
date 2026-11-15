@@ -406,3 +406,15 @@ Three finalized regressions fail on exact archived9e165088; corrected3/3, target
 Both original PR26 and combined server unchanged; corrected intake retained. No new OOM profile/load, provider backup download/integrity/decrypt/restore/deletion or live checkpoint proof; dated evidence retained.4.5.1/project case unchanged, activity74 untouched,F0/F1/F2/four paths open,F6 deferred. No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task. Next evidence-bound recovery/effect-owner coordination and remaining sync memory review; reconcile both HEADs/lease before writing.
 
 Remote source 9c9b14ca70b86d398284ce22f0da98a5190b5f51, treef0ffbb3b2ca8fa72eb9c0217b394d3d190e116f2: whole tree/all7 paths match tested files; original PR26 servera8ba0f7 and combined717c7c7 unchanged. This docs-only checkpoint releases canonical lease.
+
+
+## Complete Peu flag snapshot — 2026-11-15
+Reconciled main e0c775f, registry48f47c92, source9c9b14ca; canonical lease3fe1b728 reserved. State/handoff/requirements/render.yaml inspected; no applicable AGENTS/GitHub workflows found. No fresh Render/Odoo/provider observation.
+
+Existing final flag fetch could silently omit a requested UID, then mark that cached message deleted; wrong UIDs accepted and all flag objects retained in JS. Existing sync now stages rows in a unique SQLite TEMP table, verifies complete200-UID batches, publishes flags/deletions once via existing transaction, and drops TEMP in finally. No durable schema/migration/new poller/route. Search UID array and SQLite staging memory remain; this is not a total memory cap. Earlier message/cursor commits are outside this final flags transaction.
+
+Five finalized tests on exact archived9c9b14ca:2 fail,3 already pass. Corrected5/5, targeted15/15, whole436/436 and23syntax checks pass. Actual Aruba sync/SQLite with synthetic IMAP400-UID snapshot; incomplete/wrong second batch, network interruption, final SQL failure, retry, cache preservation, TEMP cleanup and readonly lock release verified. Complete snapshot updates400 rows, marks one absent and preserves cursor. Commands in night-verification-2026-11-15.json. No new RSS/load/profile or real provider incident claim.
+
+Both original PR26 and combined server unchanged; repaired intake preserved. No new provider backup download/integrity/decrypt/restore/deletion or live checkpoint proof; dated evidence retained.4.5.1/project case unchanged, activity74 untouched,F0/F1/F2/four paths open,F6 deferred. No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task. Next bounded UID-search review and evidence-bound provider/legacy recovery/effect ownership; reconcile both HEADs/lease.
+
+Remote source 2b182193aec5781c4ec9c41da1593ef211e05a1c, treef9989a8fd3e8f61e9d8c0d5a8f1edd6c75e80241: whole tree/all8 paths match tested files; original PR26 servera8ba0f7 and combined717c7c7 unchanged. This docs-only checkpoint releases canonical lease.

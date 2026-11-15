@@ -56,3 +56,5 @@
 - `night-verification-2026-11-13.json`: cached public metadata budget before JS parse;2 baseline failures/1pass,3 corrected/10 targeted/428 whole tests,21syntax checks. Actual readonly100-row HTTP fixture/cache preserved, zero providers; no live OOM proof.
 
 - `night-verification-2026-11-14.json`: Peu UID integrity/negative-size guard;3 baseline failures,3 corrected/10 targeted/431 whole tests,22syntax checks. Actual sync/SQLite synthetic IMAP preserves cursor/cache, corrected retry tested; no live acceptance.
+
+- `night-verification-2026-11-15.json`: complete Peu flag snapshot staging/atomic application;2 baseline failures/3pass,5 corrected/15 targeted/436 whole tests,23syntax checks. Real SQLite/sync synthetic IMAP interruptions/transaction fault/retry; no live acceptance.
