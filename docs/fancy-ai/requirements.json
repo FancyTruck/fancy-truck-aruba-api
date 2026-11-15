@@ -319,10 +319,15 @@
           "date": "2026-11-14",
           "kind": "Peu source UID mismatch and negative size fail closed;3 baseline regressions fail,3 corrected/10 targeted/431 whole tests and22syntax checks pass. Actual Aruba sync/SQLite with synthetic IMAP preserves cursor/cache before corrected retry; no live acceptance.",
           "reference": "night-verification-2026-11-14.json"
+        },
+        {
+          "date": "2026-11-15",
+          "kind": "Complete IMAP flag snapshot staged in SQLite TEMP before atomic publication;2/5 baseline failures,5 corrected/15 targeted/436 whole tests,23syntax checks. Actual sync/SQLite synthetic IMAP, interruption and commit rollback; no live/OOM-cause acceptance.",
+          "reference": "night-verification-2026-11-15.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-14"
+      "updated_at": "2026-11-15"
     },
     {
       "id": "1.5",
@@ -407,9 +412,14 @@
           "date": "2026-11-14",
           "kind": "Peu source UID mismatch and negative size fail closed;3 baseline regressions fail,3 corrected/10 targeted/431 whole tests and22syntax checks pass. Actual Aruba sync/SQLite with synthetic IMAP preserves cursor/cache before corrected retry; no live acceptance.",
           "reference": "night-verification-2026-11-14.json"
+        },
+        {
+          "date": "2026-11-15",
+          "kind": "Complete IMAP flag snapshot staged in SQLite TEMP before atomic publication;2/5 baseline failures,5 corrected/15 targeted/436 whole tests,23syntax checks. Actual sync/SQLite synthetic IMAP, interruption and commit rollback; no live/OOM-cause acceptance.",
+          "reference": "night-verification-2026-11-15.json"
         }
       ],
-      "updated_at": "2026-11-14"
+      "updated_at": "2026-11-15"
     },
     {
       "id": "2.1",
@@ -491,9 +501,14 @@
           "date": "2026-11-14",
           "kind": "Peu source UID mismatch and negative size fail closed;3 baseline regressions fail,3 corrected/10 targeted/431 whole tests and22syntax checks pass. Actual Aruba sync/SQLite with synthetic IMAP preserves cursor/cache before corrected retry; no live acceptance.",
           "reference": "night-verification-2026-11-14.json"
+        },
+        {
+          "date": "2026-11-15",
+          "kind": "Complete IMAP flag snapshot staged in SQLite TEMP before atomic publication;2/5 baseline failures,5 corrected/15 targeted/436 whole tests,23syntax checks. Actual sync/SQLite synthetic IMAP, interruption and commit rollback; no live/OOM-cause acceptance.",
+          "reference": "night-verification-2026-11-15.json"
         }
       ],
-      "updated_at": "2026-11-14"
+      "updated_at": "2026-11-15"
     },
     {
       "id": "2.6",
@@ -895,9 +910,14 @@
           "date": "2026-11-14",
           "kind": "Peu source UID mismatch and negative size fail closed;3 baseline regressions fail,3 corrected/10 targeted/431 whole tests and22syntax checks pass. Actual Aruba sync/SQLite with synthetic IMAP preserves cursor/cache before corrected retry; no live acceptance.",
           "reference": "night-verification-2026-11-14.json"
+        },
+        {
+          "date": "2026-11-15",
+          "kind": "Complete IMAP flag snapshot staged in SQLite TEMP before atomic publication;2/5 baseline failures,5 corrected/15 targeted/436 whole tests,23syntax checks. Actual sync/SQLite synthetic IMAP, interruption and commit rollback; no live/OOM-cause acceptance.",
+          "reference": "night-verification-2026-11-15.json"
         }
       ],
-      "updated_at": "2026-11-14"
+      "updated_at": "2026-11-15"
     },
     {
       "id": "7.3",
@@ -996,9 +1016,14 @@
           "date": "2026-11-14",
           "kind": "Peu source UID mismatch and negative size fail closed;3 baseline regressions fail,3 corrected/10 targeted/431 whole tests and22syntax checks pass. Actual Aruba sync/SQLite with synthetic IMAP preserves cursor/cache before corrected retry; no live acceptance.",
           "reference": "night-verification-2026-11-14.json"
+        },
+        {
+          "date": "2026-11-15",
+          "kind": "Complete IMAP flag snapshot staged in SQLite TEMP before atomic publication;2/5 baseline failures,5 corrected/15 targeted/436 whole tests,23syntax checks. Actual sync/SQLite synthetic IMAP, interruption and commit rollback; no live/OOM-cause acceptance.",
+          "reference": "night-verification-2026-11-15.json"
         }
       ],
-      "updated_at": "2026-11-14"
+      "updated_at": "2026-11-15"
     },
     {
       "id": "7.4",
@@ -1037,9 +1062,14 @@
           "date": "2026-11-13",
           "kind": "SQLite public cached payload capped128KiB before JS parse;2/3 baseline scenarios fail,3 corrected/10 targeted/428 whole tests and21syntax checks pass. Real readonly HTTP100-row fixture, cache/cursor preserved; no OOM-cause/live acceptance.",
           "reference": "night-verification-2026-11-13.json"
+        },
+        {
+          "date": "2026-11-15",
+          "kind": "Complete IMAP flag snapshot staged in SQLite TEMP before atomic publication;2/5 baseline failures,5 corrected/15 targeted/436 whole tests,23syntax checks. Actual sync/SQLite synthetic IMAP, interruption and commit rollback; no live/OOM-cause acceptance.",
+          "reference": "night-verification-2026-11-15.json"
         }
       ],
-      "updated_at": "2026-11-13"
+      "updated_at": "2026-11-15"
     },
     {
       "id": "7.5",
@@ -1203,10 +1233,15 @@
           "date": "2026-11-14",
           "kind": "Peu source UID mismatch and negative size fail closed;3 baseline regressions fail,3 corrected/10 targeted/431 whole tests and22syntax checks pass. Actual Aruba sync/SQLite with synthetic IMAP preserves cursor/cache before corrected retry; no live acceptance.",
           "reference": "night-verification-2026-11-14.json"
+        },
+        {
+          "date": "2026-11-15",
+          "kind": "Complete IMAP flag snapshot staged in SQLite TEMP before atomic publication;2/5 baseline failures,5 corrected/15 targeted/436 whole tests,23syntax checks. Actual sync/SQLite synthetic IMAP, interruption and commit rollback; no live/OOM-cause acceptance.",
+          "reference": "night-verification-2026-11-15.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-14"
+      "updated_at": "2026-11-15"
     },
     {
       "id": "2.1.1",

@@ -1,6 +1,7 @@
 import {problem,transaction} from './peuMailDb.js';
 import {readFolder,reconcileSent} from './peuMailSync.js';
 import {MAX_POLL_SOURCE_BYTES} from './mailPolling.js';
+import {reconcileFlagSnapshot} from './peuFlagSnapshot.js';
 // Project legacy cache rows inside SQLite BEFORE crossing into JS. Older rows
 // may contain base64 attachment bodies; stripping them after JSON.parse is too late.
 const projectedPayload = `CASE WHEN length(payload)>16777216 THEN
@@ -48,9 +49,7 @@ export class ArubaService {
    }
    const lock=await client.getMailboxLock(folder,{readOnly:true});try{
      if(String(client.mailbox.uidValidity)!==cursor.validity)throw problem('uidvalidity_changed_retry',409);
-     const ids=await client.search({all:true},{uid:true});const flags=[];
-     for(let i=0;i<ids.length;i+=200)for await(const row of client.fetch(ids.slice(i,i+200).join(','),{uid:true,flags:true},{uid:true}))flags.push({uid:row.uid,flags:[...row.flags]});
-     transaction(this.db,()=>{this.db.prepare('UPDATE mail_messages SET deleted=1 WHERE account=? AND folder=? AND validity=?').run(account,folder,cursor.validity);for(const row of flags)this.db.prepare('UPDATE mail_messages SET flags=?,deleted=0 WHERE account=? AND folder=? AND validity=? AND uid=?').run(JSON.stringify(row.flags),account,folder,cursor.validity,row.uid);});
+     await reconcileFlagSnapshot({db:this.db,client,account,folder,validity:cursor.validity});
    }finally{lock.release();}
    const restricted=this.db.prepare("SELECT count(*) n FROM mail_messages WHERE account=? AND folder=? AND validity=? AND deleted=0 AND json_extract(payload,'$.content_status')='requires_large_message_download'").get(account,folder,cursor.validity).n;
    return {status:'synced',new_messages:total,cursor,restricted_messages:restricted,content_coverage:restricted?'partial':'available'};

@@ -1,0 +1,65 @@
+{
+  "backup": "No new provider download/integrity/decrypt/restore or deletion; existing dated restore evidence retained separately. Existing isolated backup tests included in suite.",
+  "effects": "No main push/merge/deploy/restart, production/Odoo mutation, real send, hosted migration, fiscal/payment/refund/purchase or new task.",
+  "source_integrity": {
+    "original_pr26_server_blob": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "combined_server_blob": "717c7c75167ec9c86650030353dd96f3cbf36f99",
+    "scope": "new Peu flag snapshot helper and call from existing sync; both server versions unchanged, corrected intake preserved"
+  },
+  "date": "2026-11-15",
+  "updated_at": "2026-11-15T01:14:20.744097+00:00",
+  "run_id": "fancy-night-20261115-flags-snapshot",
+  "modules": [
+    "P01",
+    "P03",
+    "P22"
+  ],
+  "requirement_ids": [
+    "1.4",
+    "1.4.1",
+    "1.5",
+    "2.5",
+    "7.2",
+    "7.3",
+    "7.4"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "registry": "48f47c925511c1273a47c55c6fc5672298136128",
+    "source": "9c9b14ca70b86d398284ce22f0da98a5190b5f51",
+    "lease": "3fe1b7287ea7193079118c0f79d1d34376b0ab9b"
+  },
+  "tests": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js; node --check src/automationHealth.js; node --check src/peuMailService.js; node --check src/peuEffectDiagnostics.js; node --check src/peuMailSync.js; node --check src/peuFlagSnapshot.js",
+    "passed": 436,
+    "failed": 0,
+    "syntax_checks": 23,
+    "new_test": "test/peuFlagSnapshot.test.js",
+    "new_tests": 5,
+    "baseline_commit": "9c9b14ca70b86d398284ce22f0da98a5190b5f51",
+    "baseline_command": "node --test test/peuFlagSnapshot.test.js",
+    "baseline_passed": 3,
+    "baseline_failed": 2,
+    "corrected_passed": 5,
+    "targeted_command": "node --test test/peuFlagSnapshot.test.js test/peuImapIdentity.test.js test/peuMailMemory.test.js",
+    "targeted_passed": 15,
+    "environment": "Node24 isolated actual ArubaService.sync with real SQLite, synthetic IMAP flags and transaction-failure trigger",
+    "coverage": [
+      "incomplete/wrong second flag batch rejected without applying staged flags/deletions, retry succeeds",
+      "network interruption and final SQL trigger failure preserve prior flags/deletions and remove TEMP table",
+      "complete400-UID/two-batch snapshot updates present rows, marks absent row, preserves cursor and releases readonly locks"
+    ]
+  },
+  "defect": "Flag fetch omissions were treated as absent messages and applied to cached deleted state. Wrong returned UIDs were accepted. Entire mailbox flag payloads accumulated in a JS array before publication.",
+  "implementation": "Existing sync calls reconcileFlagSnapshot within readonly mailbox lock: stage each returned flag row in a uniquely named SQLite TEMP table, validate every requested UID exactly once per200-ID batch, fail on omissions or unexpected/duplicate UID. Apply complete snapshot in one existing transaction, drop TEMP table in finally. No hosted migration or durable schema addition.",
+  "runtime": "Actual ArubaService.sync existing post-import flag reconciliation; no new poller/route. Earlier message/cache cursor commits are outside this final flags transaction and are not claimed rolled back.",
+  "reconciliation": "Fresh refs/main/combined/PR26 match checkpoint; draft/unmerged, canonical lease free before reservation. State/handoff/requirements/render.yaml inspected; no applicable AGENTS/GitHub workflows found. No Render/Odoo/provider query.",
+  "oom": "Removed mailbox-wide JS flag-object accumulation in this path; current response row and pending batch of at most200 UIDs are used. Search UID array and SQLite TEMP working memory remain; no new RSS/heap/external/arrayBuffer profile or historical OOM-cause proof.",
+  "limits": [
+    "SQLite TEMP staging may consume SQLite memory/disk; not a total memory cap. Search still materializes all UIDs",
+    "Incomplete fetch can reflect concurrent mailbox change; fail closed until fresh retry rather than infer deletion",
+    "Guarantee covers final flags/deletion application only, not earlier message/cursor commits or whole sync transaction",
+    "No live IMAP/load/restart/checkpoint proof;4.5.1/project case unchanged, activity74 untouched,F0/F1/F2/four paths open,F6 deferred"
+  ],
+  "next_action": "Review bounded search UID acquisition and evidence-bound provider/legacy approval recovery/effect-owner coordination. Reconcile HEADs/lease; actual live memory/continuity/disk/mobile acceptance remains separate."
+}
