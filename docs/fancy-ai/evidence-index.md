@@ -58,3 +58,6 @@
 - `night-verification-2026-11-14.json`: Peu UID integrity/negative-size guard;3 baseline failures,3 corrected/10 targeted/431 whole tests,22syntax checks. Actual sync/SQLite synthetic IMAP preserves cursor/cache, corrected retry tested; no live acceptance.
 
 - `night-verification-2026-11-15.json`: complete Peu flag snapshot staging/atomic application;2 baseline failures/3pass,5 corrected/15 targeted/436 whole tests,23syntax checks. Real SQLite/sync synthetic IMAP interruptions/transaction fault/retry; no live acceptance.
+
+- 2026-11-16 — `night-verification-2026-11-16.json`: bounded final flag UID search/failed SEARCH cache preservation;12 new,31 targeted,448 whole tests,23syntax checks. Actual sync/SQLite with synthetic IMAP and installed compiler; no live acceptance.
+- 2026-11-16 — `render-observation-2026-11-16.json`: independent readonly deployed-main samples and events; Nov13 exit1 cause unknown, no near-event log rows returned. No OOM/checkpoint acceptance or operational mutation.

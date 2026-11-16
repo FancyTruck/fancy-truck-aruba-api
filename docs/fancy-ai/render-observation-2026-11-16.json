@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-16",
+  "scope": "authorized readonly Render; independent deployed main, not isolated source patch",
+  "window": {
+    "start": "2026-11-16T01:00:00Z",
+    "end": "2026-11-16T01:55:00Z"
+  },
+  "memory": {
+    "samples": 12,
+    "min_bytes": 177942530,
+    "max_bytes": 189779970,
+    "min_MiB": 169.69922065734863,
+    "max_MiB": 180.98828315734863,
+    "limit_bytes": 536870900
+  },
+  "http_counts": [
+    {
+      "status": "200",
+      "samples": 12,
+      "sum": 263
+    }
+  ],
+  "service": {
+    "branch": "main",
+    "autoDeployTrigger": "commit",
+    "previews": "off",
+    "instances": 1,
+    "plan": "0.5c-512mb"
+  },
+  "deploy": {
+    "status": "live",
+    "commit": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "id": "dep-dbiia7vb9u1s73apusp0",
+    "finishedAt": "2026-10-30T23:16:33.079353Z"
+  },
+  "events": {
+    "window_start": "2026-11-09T01:55:00Z",
+    "window_end": "2026-11-16T01:55:00Z",
+    "filter": [
+      "server_failed",
+      "server_restarted"
+    ],
+    "pages": 2,
+    "complete": true,
+    "results": [
+      {
+        "type": "server_failed",
+        "timestamp": "2026-11-13T11:30:20.109767Z",
+        "reason": {
+          "evicted": false,
+          "nonZeroExit": 1
+        }
+      }
+    ]
+  },
+  "limits": "Sampled memory and HTTP counts do not prove checkpoints, complete uptime, peak memory or OOM resolution. Exit1 is not evidence of OOM; root cause still to diagnose. No error-level logs returned in requested ten-minute interval.",
+  "log_queries": [
+    {
+      "filter": "level:error",
+      "start": "2026-11-13T11:25:00Z",
+      "end": "2026-11-13T11:35:00Z",
+      "rows": 0,
+      "hasMore": false
+    },
+    {
+      "filter": "type:app",
+      "start": "2026-11-13T11:29:30Z",
+      "end": "2026-11-13T11:31:30Z",
+      "rows": 0,
+      "hasMore": false
+    }
+  ],
+  "effects": "Read-only service/deploy/metrics/events/logs queries; no trigger, restart, configuration or application mutation.",
+  "next_action": "Diagnose Nov13 exit1 only with actual process/error evidence. Do not label it OOM or attribute it to isolated source changes; no restart/replay authorized."
+}
