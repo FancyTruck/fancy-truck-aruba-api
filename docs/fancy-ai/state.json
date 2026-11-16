@@ -213,7 +213,14 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": null,
+  "lease": {
+    "run_id": "fancy-night-20261116-bounded-flag-search",
+    "component": "Render Peu bounded flag UID search",
+    "acquired_at": "2026-11-16T01:47:05.598Z",
+    "expires_at": "2026-11-16T02:47:05.598Z",
+    "base_head": "6c44a99ad7e7afacb78a914ac211565549d242cb",
+    "status": "active"
+  },
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
     "commit": "2b182193aec5781c4ec9c41da1593ef211e05a1c",
