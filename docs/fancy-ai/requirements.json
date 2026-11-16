@@ -324,10 +324,15 @@
           "date": "2026-11-15",
           "kind": "Complete IMAP flag snapshot staged in SQLite TEMP before atomic publication;2/5 baseline failures,5 corrected/15 targeted/436 whole tests,23syntax checks. Actual sync/SQLite synthetic IMAP, interruption and commit rollback; no live/OOM-cause acceptance.",
           "reference": "night-verification-2026-11-15.json"
+        },
+        {
+          "date": "2026-11-16",
+          "kind": "Source-only bounded final flag UID search and failed-SEARCH cache preservation;12 new/31 targeted/448 whole tests,23syntax checks. Actual sync/SQLite and installed IMAP compiler, synthetic inputs. No live acceptance.",
+          "reference": "night-verification-2026-11-16.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-15"
+      "updated_at": "2026-11-16"
     },
     {
       "id": "1.5",
@@ -417,9 +422,14 @@
           "date": "2026-11-15",
           "kind": "Complete IMAP flag snapshot staged in SQLite TEMP before atomic publication;2/5 baseline failures,5 corrected/15 targeted/436 whole tests,23syntax checks. Actual sync/SQLite synthetic IMAP, interruption and commit rollback; no live/OOM-cause acceptance.",
           "reference": "night-verification-2026-11-15.json"
+        },
+        {
+          "date": "2026-11-16",
+          "kind": "Source-only bounded final flag UID search and failed-SEARCH cache preservation;12 new/31 targeted/448 whole tests,23syntax checks. Actual sync/SQLite and installed IMAP compiler, synthetic inputs. No live acceptance.",
+          "reference": "night-verification-2026-11-16.json"
         }
       ],
-      "updated_at": "2026-11-15"
+      "updated_at": "2026-11-16"
     },
     {
       "id": "2.1",
@@ -506,9 +516,14 @@
           "date": "2026-11-15",
           "kind": "Complete IMAP flag snapshot staged in SQLite TEMP before atomic publication;2/5 baseline failures,5 corrected/15 targeted/436 whole tests,23syntax checks. Actual sync/SQLite synthetic IMAP, interruption and commit rollback; no live/OOM-cause acceptance.",
           "reference": "night-verification-2026-11-15.json"
+        },
+        {
+          "date": "2026-11-16",
+          "kind": "Source-only bounded final flag UID search and failed-SEARCH cache preservation;12 new/31 targeted/448 whole tests,23syntax checks. Actual sync/SQLite and installed IMAP compiler, synthetic inputs. No live acceptance.",
+          "reference": "night-verification-2026-11-16.json"
         }
       ],
-      "updated_at": "2026-11-15"
+      "updated_at": "2026-11-16"
     },
     {
       "id": "2.6",
@@ -915,9 +930,14 @@
           "date": "2026-11-15",
           "kind": "Complete IMAP flag snapshot staged in SQLite TEMP before atomic publication;2/5 baseline failures,5 corrected/15 targeted/436 whole tests,23syntax checks. Actual sync/SQLite synthetic IMAP, interruption and commit rollback; no live/OOM-cause acceptance.",
           "reference": "night-verification-2026-11-15.json"
+        },
+        {
+          "date": "2026-11-16",
+          "kind": "Source-only bounded final flag UID search and failed-SEARCH cache preservation;12 new/31 targeted/448 whole tests,23syntax checks. Actual sync/SQLite and installed IMAP compiler, synthetic inputs. No live acceptance.",
+          "reference": "night-verification-2026-11-16.json"
         }
       ],
-      "updated_at": "2026-11-15"
+      "updated_at": "2026-11-16"
     },
     {
       "id": "7.3",
@@ -1021,9 +1041,14 @@
           "date": "2026-11-15",
           "kind": "Complete IMAP flag snapshot staged in SQLite TEMP before atomic publication;2/5 baseline failures,5 corrected/15 targeted/436 whole tests,23syntax checks. Actual sync/SQLite synthetic IMAP, interruption and commit rollback; no live/OOM-cause acceptance.",
           "reference": "night-verification-2026-11-15.json"
+        },
+        {
+          "date": "2026-11-16",
+          "kind": "Source-only bounded final flag UID search and failed-SEARCH cache preservation;12 new/31 targeted/448 whole tests,23syntax checks. Actual sync/SQLite and installed IMAP compiler, synthetic inputs. No live acceptance.",
+          "reference": "night-verification-2026-11-16.json"
         }
       ],
-      "updated_at": "2026-11-15"
+      "updated_at": "2026-11-16"
     },
     {
       "id": "7.4",
@@ -1067,9 +1092,14 @@
           "date": "2026-11-15",
           "kind": "Complete IMAP flag snapshot staged in SQLite TEMP before atomic publication;2/5 baseline failures,5 corrected/15 targeted/436 whole tests,23syntax checks. Actual sync/SQLite synthetic IMAP, interruption and commit rollback; no live/OOM-cause acceptance.",
           "reference": "night-verification-2026-11-15.json"
+        },
+        {
+          "date": "2026-11-16",
+          "kind": "Source-only bounded final flag UID search and failed-SEARCH cache preservation;12 new/31 targeted/448 whole tests,23syntax checks. Actual sync/SQLite and installed IMAP compiler, synthetic inputs. No live acceptance.",
+          "reference": "night-verification-2026-11-16.json"
         }
       ],
-      "updated_at": "2026-11-15"
+      "updated_at": "2026-11-16"
     },
     {
       "id": "7.5",
@@ -1238,10 +1268,15 @@
           "date": "2026-11-15",
           "kind": "Complete IMAP flag snapshot staged in SQLite TEMP before atomic publication;2/5 baseline failures,5 corrected/15 targeted/436 whole tests,23syntax checks. Actual sync/SQLite synthetic IMAP, interruption and commit rollback; no live/OOM-cause acceptance.",
           "reference": "night-verification-2026-11-15.json"
+        },
+        {
+          "date": "2026-11-16",
+          "kind": "Source-only bounded final flag UID search and failed-SEARCH cache preservation;12 new/31 targeted/448 whole tests,23syntax checks. Actual sync/SQLite and installed IMAP compiler, synthetic inputs. No live acceptance.",
+          "reference": "night-verification-2026-11-16.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-15"
+      "updated_at": "2026-11-16"
     },
     {
       "id": "2.1.1",

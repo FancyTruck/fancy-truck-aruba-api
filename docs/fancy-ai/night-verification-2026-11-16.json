@@ -1,0 +1,68 @@
+{
+  "backup": "No new provider download/integrity/decrypt/restore or deletion; existing dated restore evidence retained separately. Existing isolated backup tests included in suite.",
+  "effects": "No main push/merge/deploy/restart, production/Odoo mutation, real send, hosted migration, fiscal/payment/refund/purchase or new task.",
+  "source_integrity": {
+    "original_pr26_server_blob": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "combined_server_blob": "717c7c75167ec9c86650030353dd96f3cbf36f99",
+    "scope": "Only existing flag helper production code changed; both server versions unchanged, corrected intake/awaiting_scope_review preserved."
+  },
+  "date": "2026-11-16",
+  "updated_at": "2026-11-16T01:52:41.441457+00:00",
+  "run_id": "fancy-night-20261116-bounded-flag-search",
+  "modules": [
+    "P01",
+    "P03",
+    "P22"
+  ],
+  "requirement_ids": [
+    "1.4",
+    "1.4.1",
+    "1.5",
+    "2.5",
+    "7.2",
+    "7.3",
+    "7.4"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "registry": "6c44a99ad7e7afacb78a914ac211565549d242cb",
+    "source": "2b182193aec5781c4ec9c41da1593ef211e05a1c",
+    "lease": "555e981203bfd786a591f9d7a390e3ab743e3100"
+  },
+  "tests": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js; node --check src/automationHealth.js; node --check src/peuMailService.js; node --check src/peuEffectDiagnostics.js; node --check src/peuMailSync.js; node --check src/peuFlagSnapshot.js",
+    "passed": 448,
+    "failed": 0,
+    "syntax_checks": 23,
+    "new_test": "test/peuFlagSearch.test.js",
+    "new_tests": 12,
+    "baseline_commit": "2b182193aec5781c4ec9c41da1593ef211e05a1c",
+    "baseline_command": "node --test test/peuFlagSearch.test.js",
+    "baseline_passed": 0,
+    "baseline_failed": 12,
+    "corrected_passed": 12,
+    "targeted_command": "node --test test/peuFlagSearch.test.js test/peuFlagSnapshot.test.js test/peuImapIdentity.test.js test/peuMailMemory.test.js test/peu-large-message.test.js",
+    "targeted_passed": 31,
+    "environment": "Node24.22.1 isolated actual ArubaService.sync/SQLite with synthetic IMAP; installed ImapFlow command compiler verified without network",
+    "coverage": [
+      "401 sparse UIDs across three <=200-message sequence windows; out-of-order SEARCH results sorted; exact deletion scope and cursor preservation",
+      "failed SEARCH false reproduces full cached-folder deletion on baseline; corrected failure preserves flags/deletions",
+      "partial/repeated/future UID search results, thrown search, changed EXISTS/UIDNEXT/UIDVALIDITY and invalid metadata reject without publishing staged snapshot; retry and TEMP/lock cleanup",
+      "confirmed empty mailbox skips SEARCH/FETCH and marks only matching cached rows absent; prior flag-fetch/SQL failure regressions preserved"
+    ],
+    "baseline_interpretation": "12 finalized tests fail on exact archived source. Most detect the newly required bounded query/metadata contract; the explicit false-SEARCH case independently demonstrates cache deletion rather than only an unsupported query shape.",
+    "installed_dependency_check": "Loaded installed imapflow/lib/commands/search.js with a synthetic connection; {seq:201:400}, uid:true compiles to UID SEARCH 201:400 and returns UIDs without ESEARCH."
+  },
+  "defect": "Final flag reconciliation materialized all mailbox UIDs. Separately, ImapFlow SEARCH false was treated as zero iterations and published an empty snapshot, marking all matching cached messages deleted; reproduced on synthetic actual sync/SQLite baseline.",
+  "implementation": "Existing final flag pass now searches bounded sequence windows of <=200 message positions, then fetches exact UIDs and stages flags using existing SQLite TEMP publication. Validates known EXISTS/UIDNEXT, exact search/fetch cardinality, safe monotonic UID batches and stable observed UIDVALIDITY/EXISTS/UIDNEXT before publication. Failed search is not an empty mailbox. No new route/poller/dependency/durable schema or hosted migration.",
+  "runtime": "Existing ArubaService.sync final flag reconciliation inside readonly IMAP lock. Earlier message/cache cursor commits remain outside this final flags transaction.",
+  "reconciliation": "Fresh main/combined/PR26 refs matched checkpoint; PR26 draft/unmerged, canonical lease free then reserved via compare-and-set. State/handoff/requirements/render.yaml read; no applicable AGENTS/GitHub workflows found. Source push is isolated, not main/deploy. No Render/Odoo/provider query.",
+  "oom": "Final flag UID search no longer retains a mailbox-wide JS UID array: each conforming search covers at most200 message positions, independent of sparse UID values. SQLite TEMP working memory/disk and other UID acquisition paths remain. No new RSS/heap/external/arrayBuffer profile or historical OOM cause proof.",
+  "limits": [
+    "Bounds conforming SEARCH result cardinality in final flag pass, not malformed provider responses before library parsing, individual flags payloads, SQLite memory/disk or whole sync memory. New-message readFolder/commercial search remain unbounded UID acquisitions.",
+    "Observed mailbox metadata changes fail closed; IMAP readonly lock serializes this client, not all external writers. No claim of a remote transaction or representative live concurrent-expunge proof.",
+    "Missing/invalid EXISTS or UIDNEXT now requires retry/review rather than assuming an empty mailbox. No ESEARCH extension needed; installed library compiler checked locally.",
+    "Earlier message/cursor commits are outside final flag publication. No live IMAP/load/restart/checkpoint proof;4.5.1/project case unchanged, activity74 untouched,F0/F1/F2/four paths open,F6 deferred."
+  ],
+  "next_action": "Review bounded UID acquisition for new-message readFolder and commercial polling; evidence-bound provider/legacy approval recovery and effect-owner coordination remain. Reconcile current HEADs/lease before source work; no live restart/load/provider writes authorized."
+}

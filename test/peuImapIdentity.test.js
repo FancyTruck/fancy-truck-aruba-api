@@ -7,7 +7,7 @@ import {readFolder} from '../src/peuMailSync.js';
 import {ArubaService} from '../src/peuMailService.js';
 import {openMailDb} from '../src/peuMailDb.js';
 function fixture(){let returnedUid=10,size=7,downloads=0,releases=0,locks=0;
- const client={mailbox:{uidValidity:'fixture'},list:async()=>[{path:'INBOX'}],async getMailboxLock(_,options){assert.deepEqual(options,{readOnly:true});locks++;return {release(){releases++;}};},async search(query){return query.all?[9,10]:[10];},async fetchOne(uid,q){assert.equal(uid,10);if(q.size)return {size};downloads++;return {uid:returnedUid,source:Buffer.from('fixture'),flags:new Set()};},async *fetch(){for(const uid of [9,10])yield {uid,flags:new Set()};}};
+ const client={mailbox:{uidValidity:'fixture',exists:2,uidNext:11},list:async()=>[{path:'INBOX'}],async getMailboxLock(_,options){assert.deepEqual(options,{readOnly:true});locks++;return {release(){releases++;}};},async search(query){return query.seq?[9,10]:[10];},async fetchOne(uid,q){assert.equal(uid,10);if(q.size)return {size};downloads++;return {uid:returnedUid,source:Buffer.from('fixture'),flags:new Set()};},async *fetch(){for(const uid of [9,10])yield {uid,flags:new Set()};}};
  return {client,set uid(value){returnedUid=value;},set size(value){size=value;},get counts(){return {downloads,releases,locks};}};
 }
 test('normal source fetch must return the exact requested UID before exposing a batch/cursor',async()=>{
