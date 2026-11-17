@@ -1,3 +1,4 @@
+import {mailDrafts} from './mailDrafts.js';
 import {intakeUpdates} from './intakeUpdates.js';
 import {travelFromDepot,travelDefinition} from './peuTravel.js';
 import {readOdoo,odooReadDefinitions} from './peuOdooRead.js';
@@ -9,6 +10,7 @@ const obj=(properties,required=Object.keys(properties))=>({type:'object',propert
 const approved=obj({action_id:str,payload_hash:{type:'string',pattern:'^[a-f0-9]{64}$'}});
 const reviewId={type:'string',pattern:'^[a-f0-9]{64}$'};
 const defs={
+ 'mail.drafts':{effect:'read',parameters:obj({since:{type:'string',minLength:20,maxLength:40},action_id:{type:'string',minLength:1,maxLength:100},after:{type:'string',maxLength:100},limit:{type:'integer',minimum:1,maximum:50}},['since'])},
  'intake.updates':{effect:'read',parameters:obj({since:{type:'string',minLength:20,maxLength:40},after:{type:'string',maxLength:150},limit:{type:'integer',minimum:1,maximum:100}},['since'])},
  'travel.from_depot':travelDefinition,
  ...odooReadDefinitions,
@@ -91,7 +93,8 @@ export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritabl
    db.prepare("INSERT INTO peu_operations VALUES(?,?,'executing',NULL)").run(command.idempotency_key,digest);
    try {
      let result; const p=command.parameters;
-     if(c.id==='intake.updates')result=intakeUpdates(approvals.store.state,p);
+     if(c.id==='mail.drafts')result=mailDrafts(approvals.store.state,p);
+     else if(c.id==='intake.updates')result=intakeUpdates(approvals.store.state,p);
      else if(c.id.startsWith('reviews.')){result=reviews[c.id.slice('reviews.'.length)](p);}
      else if(c.id==='travel.from_depot'){result=await travelFromDepot(p);}
      else if(odooReadDefinitions[c.id]){result=await readOdoo(odooRead,c.id,p);}
@@ -100,7 +103,8 @@ export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritabl
      else if(c.id==='mail.confirm_send'){
        assertWritable();
        const action=approvals.store.action(p.action_id);
-       if(!action||action.type!=='SEND_EMAIL'||!['pietro','hello'].includes(action.payload.account)||!action.peu_payload_hash||hash(action.payload)!==p.payload_hash||action.peu_payload_hash!==p.payload_hash)throw problem('exact_fancy_action_required',403);
+       if(!action||action.type!=='SEND_EMAIL'||!['pietro','hello'].includes(action.payload.account)||hash(action.payload)!==p.payload_hash||(action.peu_payload_hash&&action.peu_payload_hash!==p.payload_hash))throw problem('exact_fancy_action_required',403);
+       if(!action.peu_payload_hash){if(action.status!=='PENDING_APPROVAL')throw problem('mail_confirmation_state_conflict',409);action.peu_payload_hash=p.payload_hash;approvals.store.save();}
        const previous=get('peu_effects',action.id);
        if(!previous){
          if(action.status==='PENDING_APPROVAL'){
