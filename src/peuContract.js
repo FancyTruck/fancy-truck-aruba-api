@@ -1,4 +1,4 @@
-import {mailDrafts} from './mailDrafts.js';
+import {mailDrafts,draftPayload} from './mailDrafts.js';
 import {intakeUpdates} from './intakeUpdates.js';
 import {travelFromDepot,travelDefinition} from './peuTravel.js';
 import {readOdoo,odooReadDefinitions} from './peuOdooRead.js';
@@ -103,8 +103,8 @@ export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritabl
      else if(c.id==='mail.confirm_send'){
        assertWritable();
        const action=approvals.store.action(p.action_id);
-       if(!action||action.type!=='SEND_EMAIL'||!['pietro','hello'].includes(action.payload.account)||hash(action.payload)!==p.payload_hash||(action.peu_payload_hash&&action.peu_payload_hash!==p.payload_hash))throw problem('exact_fancy_action_required',403);
-       if(!action.peu_payload_hash){if(action.status!=='PENDING_APPROVAL')throw problem('mail_confirmation_state_conflict',409);action.peu_payload_hash=p.payload_hash;approvals.store.save();}
+       if(!action||action.type!=='SEND_EMAIL'||!['pietro','hello'].includes(action.payload.account)||hash(action.peu_payload_hash?action.payload:draftPayload(action))!==p.payload_hash||(action.peu_payload_hash&&action.peu_payload_hash!==p.payload_hash))throw problem('exact_fancy_action_required',403);
+       if(!action.peu_payload_hash){if(action.status!=='PENDING_APPROVAL')throw problem('mail_confirmation_state_conflict',409);action.payload=draftPayload(action);action.peu_payload_hash=p.payload_hash;approvals.store.save();}
        const previous=get('peu_effects',action.id);
        if(!previous){
          if(action.status==='PENDING_APPROVAL'){
