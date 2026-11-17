@@ -21,6 +21,20 @@ export function classifyCommercialMessage(subject = '', text = '', headers = new
       || (getHeader('auto-submitted') && getHeader('auto-submitted') !== 'no')) {
     return { kind: null, reason: 'automatic_or_mailing_list' };
   }
+  // A supplier answering OUR purchase request is not a customer asking to rent
+  // OUR fleet. Quarantine direction conflicts before even linking an old lead.
+  // No sender/domain blacklist: the same company may also be a real customer.
+  const financePitch = /(?:scopri quanto credito|quanto credito puoi ottenere|(?:finanziament[oi]|credito).{0,60}(?:per la tua impresa|per la vostra impresa|per la tua azienda))/i.test(title);
+  const consultingPitch = /business plan/i.test(title) && /(?:gratuit|consulenza|parlarne)/i.test(`${title} ${body}`);
+  const supplierFulfilment = /(?:vostr[oa] (?:richiesta|cantiere)|presso la (?:nostra )?filiale)/i.test(body)
+    && /(?:generatore|articolo proposto|nostr[oa] (?:mezzo|prodotto|attrezzatura))/i.test(body)
+    && /(?:disponibil|redazione del preventivo|procedere)/i.test(body);
+  const equipmentPitch = /(?:energia a bordo|riscaldamento|condizionatori|pannelli solari)/i.test(title)
+    && /(?:scopri|richiedi informazioni|richiedi un preventivo|installiamo|proponiamo)/i.test(body)
+    && !/(?:vorrei|vorremmo|cerchiamo).{0,80}(?:nolegg|food.?truck|airstream|brand activation|roadshow)/i.test(body);
+  if (financePitch || consultingPitch || supplierFulfilment || equipmentPitch) {
+    return { kind: null, reason: 'non_customer_direction_requires_review' };
+  }
   // Transactional account messages often lack List-* / Auto-Submitted headers.
   // Match their purpose, never block an entire provider or sender domain.
   // A customer's own request/reply accompanying a notification stays eligible.

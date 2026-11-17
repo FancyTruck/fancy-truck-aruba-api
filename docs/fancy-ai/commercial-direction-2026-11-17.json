@@ -1,0 +1,29 @@
+{
+  "date": "2026-11-17",
+  "scope": "urgent commercial direction correction; isolated main-based release candidate",
+  "baseline": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+  "branch": "fix/commercial-direction-20261117",
+  "implementation": "Before resolving existing CRM threads or creating leads, quarantine financing/consultancy pitches, equipment promotions and supplier fulfilment replies with explicit purpose signals into existing classification review. No sender/domain blacklist; no automatic deletion/archive/replay. Existing genuine rental/catering/activation/purchase requests retained.",
+  "evidence": "Readonly CRM note inspection confirmed financial and equipment communications treated as customer rental/catering and supplier response treated as customer reply. Full original incoming mail bodies were not available; public regression fixtures are synthetic, not copies or proof of original classifier inputs.",
+  "tests": {
+    "baseline_command": "node --test test/commercialDirection.test.js on unchanged main with final test file",
+    "baseline_passed": 5,
+    "baseline_failed": 6,
+    "new_passed": 11,
+    "combined_branch_suite_passed": 469,
+    "release_command": "npm test; npm run check; node --check src/commercialFilter.js; node --check src/commercialRouting.js",
+    "syntax_checks": 7,
+    "targeted_command": "node --test test/commercialDirection.test.js test/commercialFilter.test.js test/commercialRouting.test.js",
+    "release_suite_passed": 256,
+    "release_suite_failed": 0,
+    "targeted_passed": 58
+  },
+  "limits": [
+    "Purpose patterns reduce demonstrated risks but are not general semantic classification or a full CRM audit. Mixed/uncertain messages require review, not silent deletion.",
+    "Does not clean existing leads, fill missing structured CRM fields, fix all commercial replay/confirmation paths or establish notification delivery to Pietro. Those remain functional acceptance gaps.",
+    "Code is unreleased. Running service remains independently deployed main; prior PR26/combined work is deliberately excluded from this small release candidate.",
+    "No production/Odoo write, send, main push, merge, deploy, restart or economic operation. Existing COLLAUDO activity and project case untouched."
+  ],
+  "next_action": "Authorize/release only this reviewed correction, then verify real classification and review handling; separately implement evidence-bound structured CRM completion and delivered user notifications. Inventory existing bad leads for reviewed cleanup without automatic archive.",
+  "updated_at": "2026-11-17T11:59:39.092867+00:00"
+}
