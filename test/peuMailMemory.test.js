@@ -42,3 +42,10 @@ test('batch metadata reserves a bounded prefix and never skips the next UID',asy
 test('underreported batch and missing source fail without returning an advanced cursor',async()=>{
  for(const missing of [true,false]){const client={mailbox:{uidValidity:1},getMailboxLock:async()=>({release(){}}),search:async()=>[1,2],async *fetch(ids,q){for(const uid of ids.split(',').map(Number)){if(q.size)yield {uid,size:1,envelope:{},flags:new Set()};else if(!missing)yield {uid,source:Buffer.alloc(11*1024*1024)};}}};await assert.rejects(readFolder(client,'INBOX',null,100));}
 });
+test('history search finds old messages, isolates accounts and treats query as literal text',()=>{
+ const {db,service}=fixture({subject:'Colombo Vino',text:'Old rental request',from:[{address:'info@colombovino.it'}],attachments:[]});
+ db.prepare('INSERT INTO mail_messages VALUES(?,?,?,?,?,?,?,?,?)').run('hello','INBOX','1',900,'private','private',JSON.stringify({subject:'Colombo private',text:'Other mailbox'}),'[]',0);
+ assert.equal(service.search('pietro','colombo')[0].uid,1);assert.equal(service.search('pietro','%%').length,0);assert.equal(service.search('pietro','Other mailbox').length,0);
+ assert.throws(()=>service.search('hello','Colombo'));assert.throws(()=>service.search('pietro','x'));assert.throws(()=>service.search('pietro','Colombo',51));
+ db.exec('UPDATE mail_messages SET deleted=1');assert.equal(service.search('pietro','colombo').length,0);db.close();
+});

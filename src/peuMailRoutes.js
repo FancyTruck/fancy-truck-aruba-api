@@ -26,6 +26,7 @@ export function mountPeuMail(app,{withImap,parse,stateFile}) {
     finally{clearTimeout(timer);}
   }));
   app.get('/v1/peu/aruba/:account/messages',wrap(req=>({messages:service.messages(req.params.account,folder(req))})));
+  app.get('/v1/peu/aruba/:account/search',wrap(req=>({messages:service.search(req.params.account,String(req.query.q||''),Number(req.query.limit||20)),partial:syncing.has(req.params.account),scope:'cached_inbox_history'})));
   app.get('/v1/peu/aruba/:account/thread',wrap(req=>service.thread(req.params.account,String(req.query.thread||''))));
   app.get('/v1/peu/aruba/:account/attachment',wrap(req=>{
     const uid=Number(req.query.uid),index=Number(req.query.index);
