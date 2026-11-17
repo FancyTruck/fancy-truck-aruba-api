@@ -1,3 +1,4 @@
+import {websiteFormMessage} from './websiteForm.js';
 import {problem,transaction} from './peuMailDb.js';
 import {readFolder,reconcileSent} from './peuMailSync.js';
 // Project legacy cache rows inside SQLite BEFORE crossing into JS. Older rows
@@ -14,6 +15,7 @@ const publicPayload = `CASE WHEN length(payload)>16777216 THEN
  'from',json(coalesce(json_extract(payload,'$.from'),'[]')),
  'to',json(coalesce(json_extract(payload,'$.to'),'[]')),
  'inReplyTo',json_extract(payload,'$.inReplyTo'),
+ 'replyTo',json(coalesce(json_extract(payload,'$.replyTo'),'[]')),
  'references',json(coalesce(json_extract(payload,'$.references'),'[]')),
  'attachments',json(coalesce((SELECT json_group_array(json_object(
  'index',key,'filename',json_extract(value,'$.filename'),
@@ -32,7 +34,7 @@ export class ArubaService {
    for(let page=0;page<10000;page++){
      // A source may contain large MIME attachments: never retain 100 raw mails.
      const batch=await readFolder(client,folder,cursor,1),parsed=[];
-     for(const item of batch.items){const m=item.source===null?{subject:item.envelope?.subject||'',text:'',date:item.envelope?.date,from:{value:item.envelope?.from||[]},to:{value:item.envelope?.to||[]},messageId:item.envelope?.messageId,inReplyTo:item.envelope?.inReplyTo,attachments:[]}:await this.parse(Buffer.from(item.source,'base64'));const id=m.messageId||null,refs=Array.isArray(m.references)?m.references:typeof m.references==='string'?m.references.split(/\s+/):[];parsed.push({...item,message_id:id,thread_key:refs[0]||m.inReplyTo||id||`${batch.cursor.validity}:${item.uid}`,payload:JSON.stringify({content_status:item.content_status||'available',source_size:item.size||null,subject:m.subject||'',text:m.text||'',date:m.date?.toISOString()||null,from:m.from?.value||[],to:m.to?.value||[],inReplyTo:m.inReplyTo||null,references:refs,attachments:(m.attachments||[]).map((a,index)=>({index,filename:a.filename||null,contentType:a.contentType,size:a.size}))})});}
+     for(const item of batch.items){const m=item.source===null?{subject:item.envelope?.subject||'',text:'',date:item.envelope?.date,from:{value:item.envelope?.from||[]},to:{value:item.envelope?.to||[]},messageId:item.envelope?.messageId,inReplyTo:item.envelope?.inReplyTo,attachments:[]}:await this.parse(Buffer.from(item.source,'base64'));const reply=websiteFormMessage(m);const id=m.messageId||null,refs=Array.isArray(m.references)?m.references:typeof m.references==='string'?m.references.split(/\s+/):[];parsed.push({...item,message_id:id,thread_key:refs[0]||m.inReplyTo||id||`${batch.cursor.validity}:${item.uid}`,payload:JSON.stringify({content_status:item.content_status||'available',source_size:item.size||null,subject:m.subject||'',text:m.text||'',date:m.date?.toISOString()||null,from:m.from?.value||[],to:m.to?.value||[],replyTo:reply.websiteForm?reply.from.value:(m.replyTo?.value||m.from?.value||[]),inReplyTo:m.inReplyTo||null,references:refs,attachments:(m.attachments||[]).map((a,index)=>({index,filename:a.filename||null,contentType:a.contentType,size:a.size}))})});}
      transaction(this.db,()=>{if(batch.reset)this.db.prepare('UPDATE mail_messages SET deleted=1 WHERE account=? AND folder=?').run(account,folder);
        for(const m of parsed)this.db.prepare('INSERT INTO mail_messages VALUES(?,?,?,?,?,?,?,?,0) ON CONFLICT(account,folder,validity,uid) DO UPDATE SET payload=excluded.payload,flags=excluded.flags,deleted=0').run(account,folder,batch.cursor.validity,m.uid,m.message_id,m.thread_key,m.payload,JSON.stringify(m.flags));
        this.db.prepare('INSERT INTO mail_cursors VALUES(?,?,?,?) ON CONFLICT(account,folder) DO UPDATE SET validity=excluded.validity,last_uid=excluded.last_uid').run(account,folder,batch.cursor.validity,batch.cursor.uid);

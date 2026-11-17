@@ -23,11 +23,11 @@ export function classifyRentalBookings(bookings, { complete = true, now = new Da
     definitive, options, unknown, ignored, conflicts: definitive,
   };
 }
-export function unavailableVehicleAction({ leadId, recipient, product, dates }) {
+export function unavailableVehicleAction({ leadId, recipient, product, dates, account = 'hello' }) {
   return {
     type: 'SEND_EMAIL', target: recipient, case_id: `odoo-lead-${leadId}`,
     idempotency_key: `unavailable:${leadId}:${product.id}:${dates.start}:${dates.end}`,
-    payload: { account: 'hello', subject: 'Scelta alternativa per il suo noleggio Fancy Truck',
+    payload: { account, subject: 'Scelta alternativa per il suo noleggio Fancy Truck',
       text: `Buongiorno, il veicolo richiesto (${product.name}) risulta già impegnato per il periodo richiesto. Può indicarci un modello alternativo dal catalogo https://www.fancytruck.agency/truck/ oppure le caratteristiche essenziali per aiutarla a scegliere? Verificheremo la disponibilità dell’alternativa nelle sue date prima di confermarla.\n\nGrazie,\nFancy AI · Fancy Truck` },
   };
 }
