@@ -1,8 +1,8 @@
 # Peu integration
 
 `PEU_ACCESS_TOKEN` is a distinct service credential. It grants only the deployed
-Peu catalog, command/status API, contacts search and Pietro INBOX read/cache
-routes. It cannot access hello, administrative diagnostics, approval endpoints,
+Peu catalog, command/status API, contacts search and hello and Pietro INBOX read/cache
+routes. It cannot access administrative diagnostics, approval endpoints,
 legacy send endpoints, automation runs or arbitrary Odoo methods.
 
 Peu config: `FANCY_BASE_URL` points to this service, `FANCY_READ_TOKEN` contains
@@ -37,3 +37,14 @@ old snapshot requires reconciliation, never blind resubmission.
 
 Tests use mock Odoo/SMTP/IMAP. Do not perform live send tests without specific
 authorization for recipient and message.
+
+Both Aruba mailboxes are available to the owner bridge. The selected account is
+part of the approved payload and selects SMTP credentials and From together.
+Website notifications keep their original Message-ID but use the submitted customer
+address for commercial processing and reply preparation. Ordinary internal emails
+and malformed forms never acquire a submitted customer identity.
+
+Administrative POST /v1/:account/messages/:uid/reprocess requires the exact
+uid_validity and message_id. Only completed classification suspensions or site
+forms previously skipped as internal can be retried; unknown external effects
+remain quarantined. No recovery route sends email or advances the IMAP checkpoint.

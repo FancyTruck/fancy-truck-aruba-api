@@ -56,3 +56,11 @@ test('purchase request follows sales instead of rental', () => {
 test('rental request remains rental', () => {
   assert.equal(classify('Richiesta noleggio Fiat 238', 'Vorrei un preventivo per il Fiat 238.').kind, 'rental');
 });
+
+test('security notices and wrapped spam never become sales leads',()=>{
+ assert.equal(classify('Abbiamo rilevato accessi sospetti alla tua casella','Controlla gli accessi').kind,null);
+ assert.equal(classify('Abbiamo rilevato accessi sospetti alla tua casella','Controlla gli accessi').reason,'automatic_service_notification');
+ assert.equal(classify('Intesa Sanpaolo: Autorizzazione bonifico istantaneo','').reason,'automatic_service_notification');
+});
+
+test('generic property rental is not a truck request',()=>assert.equal(classify('Affitto appartamento','Vorrei affittare un ufficio').kind,null));

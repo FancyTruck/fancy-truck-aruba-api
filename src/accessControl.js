@@ -23,7 +23,7 @@ export function accessControl(env) {
     const actions = req.method==='GET' && path==='/v1/automation/status';
     const resolve = req.method==='POST' && /^\/v1\/classification-reviews\/[a-f0-9]{64}\/resolve$/.test(path);
     let allowed = role==='admin';
-    if(role==='peu') allowed = (req.method==='GET' && /^\/v1\/peu\/aruba\/pietro\/(folders|messages|thread|attachment)$/.test(path)) || (req.method==='POST' && path==='/v1/peu/aruba/pietro/sync');
+    if(role==='peu') allowed = (req.method==='GET' && /^\/v1\/peu\/aruba\/(?:pietro|hello)\/(folders|messages|thread|attachment)$/.test(path)) || (req.method==='POST' && /^\/v1\/peu\/aruba\/(?:pietro|hello)\/sync$/.test(path));
     if(role==='peu') allowed ||= (req.method==='GET' && (path==='/v1/peu/capabilities'||/^\/v1\/peu\/operations\/[^/]+$/.test(path)||path==='/v1/odoo/contacts/search')) || (req.method==='POST'&&path==='/v1/peu/commands');
     if(role==='peu') allowed ||= (req.method==='GET'&&path==='/v1/peu/whatsapp/events')||(req.method==='POST'&&path==='/v1/peu/whatsapp/reply');
     if(role==='peuInternal') allowed = ['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket?.remoteAddress) && ((req.method==='GET'&&['/v1/odoo/contacts/search','/v1/odoo/products/search','/v1/odoo/crm/stages'].includes(path)) || (req.method==='POST'&&['/v1/odoo/crm/leads','/v1/odoo/sales/drafts'].includes(path)));
