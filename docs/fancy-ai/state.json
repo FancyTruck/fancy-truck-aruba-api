@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "updated_at": "2026-11-16T01:52:41.441457+00:00",
+  "updated_at": "2026-11-17T01:28:14.681327+00:00",
   "baseline_commit": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
   "branch": "work/fancy-pr38-reconcile-20261101",
-  "stage": "combined bounded final flag UID search and failed-search cache preservation tested; not released",
+  "stage": "combined bounded new-message UID search tested; not released",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
@@ -42,33 +42,31 @@
     "sqlite-public-mail-payload-byte-budget-before-js-parse-with-incomplete-metadata-marker",
     "peu-source-uid-identity-and-nonnegative-size-before-cache-cursor-commit",
     "complete-peu-flag-snapshot-temp-staging-before-atomic-cache-publication",
-    "bounded-sequence-window-flag-uid-search-and-failed-search-cache-preservation"
+    "bounded-sequence-window-flag-uid-search-and-failed-search-cache-preservation",
+    "bounded-new-message-uid-search-with-sequence-probes-and-cursor-preservation"
   ],
   "tests": {
     "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js; node --check src/automationHealth.js; node --check src/peuMailService.js; node --check src/peuEffectDiagnostics.js; node --check src/peuMailSync.js; node --check src/peuFlagSnapshot.js",
-    "passed": 448,
+    "passed": 458,
     "failed": 0,
     "syntax_checks": 23,
-    "new_test": "test/peuFlagSearch.test.js",
-    "new_tests": 12,
-    "baseline_commit": "2b182193aec5781c4ec9c41da1593ef211e05a1c",
-    "baseline_command": "node --test test/peuFlagSearch.test.js",
+    "new_test": "test/peuNewUidSearch.test.js",
+    "new_passed": 10,
     "baseline_passed": 0,
-    "baseline_failed": 12,
-    "corrected_passed": 12,
-    "targeted_command": "node --test test/peuFlagSearch.test.js test/peuFlagSnapshot.test.js test/peuImapIdentity.test.js test/peuMailMemory.test.js test/peu-large-message.test.js",
-    "targeted_passed": 31,
-    "environment": "Node24.22.1 isolated actual ArubaService.sync/SQLite with synthetic IMAP; installed ImapFlow command compiler verified without network",
+    "baseline_failed": 10,
+    "baseline_command": "node --test test/peuNewUidSearch.test.js on exact archived9175357",
+    "baseline_interpretation": "All10 finalized tests fail on prior source, primarily because old SEARCH is mailbox-wide; not ten independent defects.",
+    "targeted_command": "node --test test/peuNewUidSearch.test.js test/peuFlagSearch.test.js test/peuFlagSnapshot.test.js test/peuImapIdentity.test.js test/peuMailMemory.test.js test/peu-large-message.test.js",
+    "targeted_passed": 41,
+    "environment": "Node24.22.1; actual readFolder/ArubaService.sync/SQLite, synthetic IMAP; sparse1200-UID page fixture and203-message sync/replay",
     "coverage": [
-      "401 sparse UIDs across three <=200-message sequence windows; out-of-order SEARCH results sorted; exact deletion scope and cursor preservation",
-      "failed SEARCH false reproduces full cached-folder deletion on baseline; corrected failure preserves flags/deletions",
-      "partial/repeated/future UID search results, thrown search, changed EXISTS/UIDNEXT/UIDVALIDITY and invalid metadata reject without publishing staged snapshot; retry and TEMP/lock cleanup",
-      "confirmed empty mailbox skips SEARCH/FETCH and marks only matching cached rows absent; prior flag-fetch/SQL failure regressions preserved"
-    ],
-    "baseline_interpretation": "12 finalized tests fail on exact archived source. Most detect the newly required bounded query/metadata contract; the explicit false-SEARCH case independently demonstrates cache deletion rather than only an unsupported query shape.",
-    "installed_dependency_check": "Loaded installed imapflow/lib/commands/search.js with a synthetic connection; {seq:201:400}, uid:true compiles to UID SEARCH 201:400 and returns UIDs without ESEARCH."
+      "first/middle/final pages and hasMore/cursor without gaps",
+      "empty/caught-up skips reversed N:* query",
+      "false/incomplete/duplicate search, failed probe and changed mailbox reject and release readonly lock",
+      "invalid metadata/page limits fail before search; existing size, identity, memory and flag regressions retained"
+    ]
   },
-  "next_action": "Review bounded UID acquisition for new-message readFolder and commercial polling; evidence-bound provider/legacy approval recovery and effect-owner coordination remain. Reconcile current HEADs/lease before source work; no live restart/load/provider writes authorized.",
+  "next_action": "Bound commercial polling UID acquisition; diagnose Nov13 exit1 only from actual process evidence. Provider reconciliation, legacy approval recovery/effect ownership and live checkpoints remain separate; reconcile HEADs/lease before writing.",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
@@ -171,9 +169,9 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-11-16T02:52:41.441864+01:00",
-  "run_id": "fancy-night-20261116-bounded-flag-search",
-  "current_lot": "P01/P03/P22 bounded flag UID search",
+  "updated_at_rome": "2026-11-17T02:28:14.681942+01:00",
+  "run_id": "fancy-night-20261117-new-uids",
+  "current_lot": "P01/P03/P22 bounded new-message UID acquisition",
   "live_render_deploy": "dep-dbiia7vb9u1s73apusp0",
   "upstream_integration_tests": {
     "status": "passed on isolated main-based source branch; no remote merge or deployment",
@@ -237,7 +235,7 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-16.json",
+  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-17.json",
   "lease_authority": "Canonical docs/fancy-ai/state.json on PR26; source branch state is not the global lease authority",
-  "tested_source_parent": "2b182193aec5781c4ec9c41da1593ef211e05a1c"
+  "tested_source_parent": "91753571563d7cc55984b1de2d5f86f96e018c38"
 }

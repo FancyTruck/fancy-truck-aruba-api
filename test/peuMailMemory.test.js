@@ -14,7 +14,7 @@ test('oversized legacy rows return explicit incomplete coverage and remain store
 });
 test('large IMAP message returns explicit metadata without downloading or mutating caller cursor',async()=>{
  let released=false,downloads=0;const cursor={validity:'1',uid:9};
- const client={mailbox:{uidValidity:1},getMailboxLock:async()=>({release(){released=true;}}),search:async()=>[10],fetchOne:async(_id,q)=>{if(q.source)downloads++;return q.size?{size:21*1024*1024}:{uid:10,flags:new Set(),envelope:{subject:'Large message'}};}};
+ const client={mailbox:{uidValidity:1,exists:1,uidNext:11},getMailboxLock:async()=>({release(){released=true;}}),search:async()=>[10],fetchOne:async(_id,q)=>{if(q.source)downloads++;return q.size?{size:21*1024*1024}:{uid:10,flags:new Set(),envelope:{subject:'Large message'}};}};
  const result=await readFolder(client,'INBOX',cursor,1);
  assert.equal(result.items[0].content_status,'requires_large_message_download');
  assert.equal(result.items[0].source,null);assert.equal(result.cursor.uid,10);
@@ -22,20 +22,20 @@ test('large IMAP message returns explicit metadata without downloading or mutati
 });
 test('large IMAP message with missing envelope stops without downloading or advancing the caller cursor',async()=>{
  let released=false,downloads=0;const cursor={validity:'1',uid:9};
- const client={mailbox:{uidValidity:1},getMailboxLock:async()=>({release(){released=true;}}),search:async()=>[10],fetchOne:async(_id,q)=>{if(q.source)downloads++;return {size:21*1024*1024};}};
+ const client={mailbox:{uidValidity:1,exists:1,uidNext:11},getMailboxLock:async()=>({release(){released=true;}}),search:async()=>[10],fetchOne:async(_id,q)=>{if(q.source)downloads++;return {size:21*1024*1024};}};
  await assert.rejects(readFolder(client,'INBOX',cursor,1),{code:'message_metadata_unavailable'});assert.equal(downloads,0);assert.equal(cursor.uid,9);assert.ok(released);
 });
 test('IMAP source is bounded even if reported size is incorrect',async()=>{
  let released=false;
- const client={mailbox:{uidValidity:1},getMailboxLock:async()=>({release(){released=true;}}),search:async()=>[1],fetchOne:async(_id,q)=>{if(!q.source)return {size:10};assert.equal(q.source.maxLength,20*1024*1024+1);return {source:Buffer.alloc(q.source.maxLength)};}};
+ const client={mailbox:{uidValidity:1,exists:1,uidNext:2},getMailboxLock:async()=>({release(){released=true;}}),search:async()=>[1],fetchOne:async(_id,q)=>{if(!q.source)return {size:10};assert.equal(q.source.maxLength,20*1024*1024+1);return {source:Buffer.alloc(q.source.maxLength)};}};
  await assert.rejects(readFolder(client,'INBOX',null,1),{code:'mail_sync_large_message_requires_review'});assert.ok(released);
 });
 test('small mail remains readable with its normal cursor',async()=>{
- const client={mailbox:{uidValidity:1},getMailboxLock:async()=>({release(){}}),search:async()=>[1],fetchOne:async(_id,q)=>q.source?{uid:1,source:Buffer.from('hello'),flags:new Set() }:{size:5}};
+ const client={mailbox:{uidValidity:1,exists:1,uidNext:2},getMailboxLock:async()=>({release(){}}),search:async()=>[1],fetchOne:async(_id,q)=>q.source?{uid:1,source:Buffer.from('hello'),flags:new Set() }:{size:5}};
  const r=await readFolder(client,'INBOX',null,1);assert.equal(r.cursor.uid,1);assert.equal(Buffer.from(r.items[0].source,'base64').toString(),'hello');
 });
 
 test('batch memory budget paginates without skipping messages',async()=>{
- let downloads=0;const client={mailbox:{uidValidity:1},getMailboxLock:async()=>({release(){}}),search:async()=>[1,2],fetchOne:async(uid,q)=>{if(!q.source)return {size:11*1024*1024};downloads++;return {uid,source:Buffer.alloc(11*1024*1024),flags:new Set()};}};
+ let downloads=0;const client={mailbox:{uidValidity:1,exists:2,uidNext:3},getMailboxLock:async()=>({release(){}}),search:async()=>[1,2],fetchOne:async(uid,q)=>{if(!q.source)return {size:11*1024*1024};downloads++;return {uid,source:Buffer.alloc(11*1024*1024),flags:new Set()};}};
  const r=await readFolder(client,'INBOX',null,100);assert.equal(downloads,1);assert.equal(r.items.length,1);assert.equal(r.cursor.uid,1);assert.equal(r.hasMore,true);
 });

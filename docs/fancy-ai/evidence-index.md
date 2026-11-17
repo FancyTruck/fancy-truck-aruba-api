@@ -60,3 +60,5 @@
 - `night-verification-2026-11-15.json`: complete Peu flag snapshot staging/atomic application;2 baseline failures/3pass,5 corrected/15 targeted/436 whole tests,23syntax checks. Real SQLite/sync synthetic IMAP interruptions/transaction fault/retry; no live acceptance.
 
 - 2026-11-16 — `night-verification-2026-11-16.json`: bounded final flag UID search/failed SEARCH cache preservation;12 new,31 targeted,448 whole tests,23syntax checks. Actual sync/SQLite with synthetic IMAP and installed compiler; no live acceptance.
+
+- 2026-11-17 — `night-verification-2026-11-17.json`: bounded new-message UID acquisition;10 new/41 targeted/458 whole tests,23 syntax checks; actual sync/SQLite with synthetic IMAP, no live acceptance.

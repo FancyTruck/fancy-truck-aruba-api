@@ -1,0 +1,63 @@
+{
+  "date": "2026-11-17",
+  "updated_at": "2026-11-17T01:28:14.681327+00:00",
+  "run_id": "fancy-night-20261117-new-uids",
+  "modules": [
+    "P01",
+    "P03",
+    "P22"
+  ],
+  "requirement_ids": [
+    "1.4",
+    "1.4.1",
+    "1.5",
+    "2.5",
+    "7.2",
+    "7.3",
+    "7.4"
+  ],
+  "baseline": {
+    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "registry": "24c08f556199ceda94d1e4e3a8a4dfe9d0d0debf",
+    "source": "91753571563d7cc55984b1de2d5f86f96e018c38"
+  },
+  "implementation": "Existing readFolder locates first unseen UID using at most32 UID-only sequence probes, then searches at most101 message positions. Small mailboxes need no probes; empty/caught-up skip search. Existing limit1..100,20MiB source/batch, exact source UID and size guards preserved. Requires valid EXISTS/UIDNEXT and stable observed metadata, complete unique search results; errors preserve caller cursor. No new poller/route/schema/dependency.",
+  "runtime": "Existing ArubaService.sync calls real readFolder; actual sync with SQLite imports203 synthetic sparse UIDs without gaps; caught-up replay downloads nothing. No provider calls. Earlier committed sync pages are not rolled back by failure of a later page.",
+  "tests": {
+    "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs; node --check src/intakeWatchdog.js; node --check src/reviewSnapshot.js; node --check public/reviews.js; node --check src/cycleRetention.js; node --check src/backupBundle.js; node --check src/processOwner.js; node --check src/peuMailDb.js; node --check src/peuMailRoutes.js; node --check src/peuContract.js; node --check src/peuWhatsApp.js; node --check src/automationHealth.js; node --check src/peuMailService.js; node --check src/peuEffectDiagnostics.js; node --check src/peuMailSync.js; node --check src/peuFlagSnapshot.js",
+    "passed": 458,
+    "failed": 0,
+    "syntax_checks": 23,
+    "new_test": "test/peuNewUidSearch.test.js",
+    "new_passed": 10,
+    "baseline_passed": 0,
+    "baseline_failed": 10,
+    "baseline_command": "node --test test/peuNewUidSearch.test.js on exact archived9175357",
+    "baseline_interpretation": "All10 finalized tests fail on prior source, primarily because old SEARCH is mailbox-wide; not ten independent defects.",
+    "targeted_command": "node --test test/peuNewUidSearch.test.js test/peuFlagSearch.test.js test/peuFlagSnapshot.test.js test/peuImapIdentity.test.js test/peuMailMemory.test.js test/peu-large-message.test.js",
+    "targeted_passed": 41,
+    "environment": "Node24.22.1; actual readFolder/ArubaService.sync/SQLite, synthetic IMAP; sparse1200-UID page fixture and203-message sync/replay",
+    "coverage": [
+      "first/middle/final pages and hasMore/cursor without gaps",
+      "empty/caught-up skips reversed N:* query",
+      "false/incomplete/duplicate search, failed probe and changed mailbox reject and release readonly lock",
+      "invalid metadata/page limits fail before search; existing size, identity, memory and flag regressions retained"
+    ]
+  },
+  "reconciliation": "Fresh refs match prior checkpoint; PR26 draft/unmerged, lease free then reserved via CAS. Canonical state/handoff/requirements and render.yaml read; no applicable AGENTS/workflows. Main and both server sources preserved. No fresh Render/Odoo/provider read; Nov16 observation remains dated independent evidence.",
+  "source_integrity": {
+    "original_pr26_server_blob": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "combined_server_blob": "717c7c75167ec9c86650030353dd96f3cbf36f99",
+    "scope": "existing peuMailSync helper only production change; corrected intake/awaiting_scope_review preserved"
+  },
+  "oom": "Removes unbounded new-message UID search array in this path for conforming responses; no new RSS/heap/external/arrayBuffer profile or historical OOM cause/resolution proof. Commercial polling and sent reconciliation searches remain unbounded.",
+  "backup": "No new provider download/integrity/decryption/restore/deletion; prior dated evidence retained.",
+  "limits": [
+    "Binary lookup adds up to32 metadata round trips per page; real provider latency/load not measured. Readonly lock serializes this client, not external mailbox writers; observed metadata change fails closed, no remote transaction claim.",
+    "SEARCH cardinality bounded for conforming replies; malformed provider parsing, SQLite working memory, flags and total service memory not capped by this patch.",
+    "Requires EXISTS/UIDNEXT and exact sequence metadata; unsupported/missing state refuses rather than silently falling back to full search.",
+    "F0/F1/F2/four commercial paths/live checkpoint acceptance remain open;4.5.1/project case unchanged, activity74 untouched,F6 deferred. Nov13 exit1 cause remains unknown; no fresh retry of empty near-event log queries."
+  ],
+  "effects": "No main push/merge/deploy/restart, production/Odoo write, hosted migration, real send, fiscal/payment/refund/purchase or new task.",
+  "next_action": "Bound commercial polling UID acquisition; diagnose Nov13 exit1 only from actual process evidence. Provider reconciliation, legacy approval recovery/effect ownership and live checkpoints remain separate; reconcile HEADs/lease before writing."
+}

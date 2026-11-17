@@ -1,5 +1,31 @@
 import {problem} from './peuMailDb.js';
 const MAX_SOURCE_BYTES=20*1024*1024;
+// Locate the first unseen UID by sequence metadata, then SEARCH at most101
+// message positions. Sparse UID numbers do not cause empty-range scanning.
+async function newUidPage(client,since,limit,validity){
+ if(!Number.isInteger(limit)||limit<1||limit>100)throw problem('invalid_mail_page_limit',400);
+ const {exists,uidNext}=client.mailbox;
+ if(!Number.isSafeInteger(exists)||exists<0||!Number.isSafeInteger(uidNext)||uidNext<1||uidNext>4294967295||exists>=uidNext||!Number.isSafeInteger(since)||since<1)throw problem('mailbox_metadata_unavailable',502);
+ const unchanged=()=>{if(client.mailbox?.exists!==exists||client.mailbox?.uidNext!==uidNext||String(client.mailbox?.uidValidity)!==validity)throw problem('mailbox_changed_retry',409);};
+ unchanged();
+ if(!exists||since>=uidNext)return {ids:[],more:false,unchanged};
+ let start=1;
+ if(exists>101&&since>1){
+  let low=1,high=exists+1,lower=0,upper=uidNext;
+  while(low<high){
+   const mid=Math.floor((low+high)/2),row=await client.fetchOne(mid,{uid:true},{uid:false});unchanged();
+   if(!row||row.seq!==mid||!Number.isSafeInteger(row.uid)||row.uid<=lower||row.uid>=upper)throw problem('message_uid_probe_unavailable',502);
+   if(row.uid<since){low=mid+1;lower=row.uid;}else{high=mid;upper=row.uid;}
+  }
+  start=low;
+ }
+ if(start>exists)return {ids:[],more:false,unchanged};
+ const end=Math.min(start+100,exists),found=await client.search({seq:`${start}:${end}`},{uid:true});unchanged();
+ if(!Array.isArray(found))throw problem('mail_uid_search_unavailable',502);
+ if(found.length!==end-start+1)throw problem('mail_uid_search_incomplete',502);
+ if(new Set(found).size!==found.length||found.some(uid=>!Number.isSafeInteger(uid)||uid<1||uid>=uidNext)||(start>1&&found.some(uid=>uid<since)))throw problem('message_uid_mismatch',502);
+ return {ids:found.filter(uid=>uid>=since).sort((a,b)=>a-b),more:end<exists,unchanged};
+}
 // Reuses an authenticated ImapFlow client created by Fancy's existing account resolver.
 // No independent polling service or production credential configuration.
 export async function readFolder(client,folder,cursor,limit=100){
@@ -7,8 +33,7 @@ export async function readFolder(client,folder,cursor,limit=100){
     const validity=String(client.mailbox.uidValidity),reset=!cursor||cursor.validity!==validity;
     const since=reset?1:Number(cursor.uid)+1,items=[];
     let totalBytes=0;
-    // Search avoids IMAP's N:* reversal when N exceeds the current maximum UID.
-    const ids=await client.search({uid:`${since}:*`},{uid:true});
+    const page=await newUidPage(client,since,limit,validity),ids=page.ids;
     const selected=ids.filter(id=>id>=since).sort((a,b)=>a-b).slice(0,limit);
     for(const uid of selected){
       const meta=await client.fetchOne(uid,{size:true},{uid:true});
@@ -28,7 +53,8 @@ export async function readFolder(client,folder,cursor,limit=100){
       totalBytes+=m.source.length;
       items.push({uid:m.uid,envelope:m.envelope,flags:[...m.flags],bodyStructure:m.bodyStructure,source:m.source.toString('base64')});
     }
-    return {folder,reset,items,cursor:{validity,uid:items.length?Math.max(...items.map(m=>m.uid)):reset?0:cursor.uid},hasMore:ids.filter(id=>id>=since).length>items.length};
+    page.unchanged();
+    return {folder,reset,items,cursor:{validity,uid:items.length?Math.max(...items.map(m=>m.uid)):reset?0:cursor.uid},hasMore:page.more||ids.length>items.length};
   }finally{lock.release();}
 }
 export async function folders(client){const list=await client.list();return list.filter(f=>f.path==='INBOX'||f.specialUse==='\\Sent').map(f=>({path:f.path,role:f.path==='INBOX'?'inbox':'sent'}));}
