@@ -31,3 +31,14 @@ test('batch memory budget paginates without skipping messages',async()=>{
  let downloads=0;const client={mailbox:{uidValidity:1},getMailboxLock:async()=>({release(){}}),search:async()=>[1,2],fetchOne:async(uid,q)=>{if(!q.source)return {size:11*1024*1024};downloads++;return {uid,source:Buffer.alloc(11*1024*1024),flags:new Set()};}};
  const r=await readFolder(client,'INBOX',null,100);assert.equal(downloads,1);assert.equal(r.items.length,1);assert.equal(r.cursor.uid,1);assert.equal(r.hasMore,true);
 });
+test('bounded batch imports 100 small messages with two FETCH round trips',async()=>{
+ let calls=0;const client={mailbox:{uidValidity:1},getMailboxLock:async()=>({release(){}}),search:async()=>Array.from({length:100},(_,i)=>i+1),async *fetch(ids,q){calls++;for(const uid of ids.split(',').map(Number))yield q.size?{uid,size:5,envelope:{},flags:new Set()}:{uid,source:Buffer.from('hello')};}};
+ const batch=await readFolder(client,'INBOX',null,100);assert.equal(batch.items.length,100);assert.equal(batch.cursor.uid,100);assert.equal(calls,2);assert.equal(batch.hasMore,false);
+});
+test('batch metadata reserves a bounded prefix and never skips the next UID',async()=>{
+ const client={mailbox:{uidValidity:1},getMailboxLock:async()=>({release(){}}),search:async()=>[1,2],async *fetch(ids,q){for(const uid of ids.split(',').map(Number))yield q.size?{uid,size:11*1024*1024,envelope:{},flags:new Set()}:{uid,source:Buffer.alloc(11*1024*1024)};}};
+ const batch=await readFolder(client,'INBOX',null,100);assert.equal(batch.items.length,1);assert.equal(batch.cursor.uid,1);assert.equal(batch.hasMore,true);
+});
+test('underreported batch and missing source fail without returning an advanced cursor',async()=>{
+ for(const missing of [true,false]){const client={mailbox:{uidValidity:1},getMailboxLock:async()=>({release(){}}),search:async()=>[1,2],async *fetch(ids,q){for(const uid of ids.split(',').map(Number)){if(q.size)yield {uid,size:1,envelope:{},flags:new Set()};else if(!missing)yield {uid,source:Buffer.alloc(11*1024*1024)};}}};await assert.rejects(readFolder(client,'INBOX',null,100));}
+});

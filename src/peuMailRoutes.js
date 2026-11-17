@@ -5,7 +5,7 @@ import {join,dirname} from 'node:path';
 export function mountPeuMail(app,{withImap,parse,stateFile}) {
   const db=openMailDb(join(dirname(stateFile),'peu-aruba.sqlite'));
   const service=new ArubaService({db,withImap,parse,accounts:['pietro','hello']});
-  const syncing=new Map();
+  const syncing=new Map(),finished=new Map();
   const wrap=fn=>async(req,res)=>{
     res.set('Cache-Control','no-store');
     try {
@@ -17,11 +17,12 @@ export function mountPeuMail(app,{withImap,parse,stateFile}) {
   app.get('/v1/peu/aruba/:account/folders',wrap(async req=>({folders:(await service.folders(req.params.account)).folders.filter(f=>f.path==='INBOX')})));
   app.post('/v1/peu/aruba/:account/sync',wrap(async req=>{
     folder(req); const account=req.params.account;
-    if(!syncing.has(account)) syncing.set(account,service.sync(account,'INBOX').then(result=>{console.log(JSON.stringify({event:'peu_aruba_sync',account,status:result.status,new_messages:result.new_messages}));return result;}).finally(()=>{syncing.delete(account);}));
+    if(finished.has(account)){const result=finished.get(account);finished.delete(account);return result;}
+    if(!syncing.has(account)) syncing.set(account,service.sync(account,'INBOX').then(result=>{console.log(JSON.stringify({event:'peu_aruba_sync',account,status:result.status,new_messages:result.new_messages}));finished.set(account,result);return result;}).finally(()=>{syncing.delete(account);}));
     // The initial history import outlives an HTTP request. Keep one job and
     // expose partial coverage instead of repeatedly timing out or duplicating it.
     let timer;
-    try{return await Promise.race([syncing.get(account),new Promise(resolve=>{timer=setTimeout(()=>resolve({status:'syncing',coverage:'backfill_in_progress'}),8000);})]);}
+    try{const result=await Promise.race([syncing.get(account),new Promise(resolve=>{timer=setTimeout(()=>resolve({status:'syncing',coverage:'backfill_in_progress'}),8000);})]);if(result.status!=='syncing')finished.delete(account);return result;}
     finally{clearTimeout(timer);}
   }));
   app.get('/v1/peu/aruba/:account/messages',wrap(req=>({messages:service.messages(req.params.account,folder(req))})));
