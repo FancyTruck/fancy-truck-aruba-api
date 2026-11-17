@@ -1,6 +1,6 @@
 {
   "date": "2026-11-17",
-  "scope": "urgent commercial direction correction; isolated main-based release candidate",
+  "scope": "PR39-only authorized release, followed by health/startup verification",
   "baseline": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
   "branch": "fix/commercial-direction-20261117",
   "implementation": "Before resolving existing CRM threads or creating leads, quarantine financing/consultancy pitches, equipment promotions and supplier fulfilment replies with explicit purpose signals into existing classification review. No sender/domain blacklist; no automatic deletion/archive/replay. Existing genuine rental/catering/activation/purchase requests retained.",
@@ -21,12 +21,33 @@
   "limits": [
     "Purpose patterns reduce demonstrated risks but are not general semantic classification or a full CRM audit. Mixed/uncertain messages require review, not silent deletion.",
     "Does not clean existing leads, fill missing structured CRM fields, fix all commercial replay/confirmation paths or establish notification delivery to Pietro. Those remain functional acceptance gaps.",
-    "Code is unreleased. Running service remains independently deployed main; prior PR26/combined work is deliberately excluded from this small release candidate.",
-    "No production/Odoo write, send, main push, merge, deploy, restart or economic operation. Existing COLLAUDO activity and project case untouched."
+    "PR39 is now released; prior PR26/combined source deliberately excluded. Release evidence below supersedes earlier source-only state.",
+    "Owner-authorized PR39 merge/automatic deploy performed. No manual Odoo writes, send, replay or cleanup invoked; existing runtime workers resumed. Existing COLLAUDO records not manually touched."
   ],
-  "next_action": "Authorize/release only this reviewed correction, then verify real classification and review handling; separately implement evidence-bound structured CRM completion and delivered user notifications. Inventory existing bad leads for reviewed cleanup without automatic archive.",
-  "updated_at": "2026-11-17T11:59:39.092867+00:00",
+  "next_action": "Observe real classification/review outcomes and complete structured CRM/confirmation/notification gaps. Reconcile private continuation with new main5bdde8 before further development; no general rollout authority.",
+  "updated_at": "2026-11-17T12:07:24.955595+00:00",
   "source_commit": "ea283533b900d0f8e3429a9633d607611ca0a375",
   "draft_pr": "https://github.com/FancyTruck/fancy-truck-aruba-api/pull/39",
-  "remote_readback": "complete tree/all4 paths verified; main server unchanged"
+  "remote_readback": "complete tree/all4 paths verified; main server unchanged",
+  "release": {
+    "authorized_by": "owner explicit instruction in current conversation: activate PR39 only",
+    "merged_pr": 39,
+    "commit": "5bdde8de240075c401db90d1df5884b1d795cf03",
+    "source_head": "ea283533b900d0f8e3429a9633d607611ca0a375",
+    "deploy": "dep-dbu45t5ckfvc73c6igq0",
+    "status": "live",
+    "finished_at_utc": "2026-11-17T12:05:55.299349Z",
+    "finished_at_rome": "2026-11-17T13:05:55.299349+01:00",
+    "source_verification": "merged main tree exactly equals tested PR39 tree; only4 PR paths, no PR26/combined source bundled",
+    "workload_verification": {
+      "health_get_http": 200,
+      "health_body": {
+        "ok": true,
+        "service": "fancy-truck-aruba-api"
+      },
+      "startup_log": "HTTP listener, OdooCRM14 stages and both IMAP/SMTP account checks OK"
+    },
+    "effects": "One authorized PR merge and automatic Render deployment/service instance replacement. Existing runtime workers resumed. No manual Odoo mutation, send, historical replay or CRM cleanup invoked; startup housekeeping log reports0 archived. Not a claim of zero normal runtime writes.",
+    "remaining": "Real-message classification/review behavior, structured lead completion, exact confirmations and delivered notifications still need operational verification. Startup/health are not end-to-end acceptance."
+  }
 }

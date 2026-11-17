@@ -65,3 +65,5 @@
 - 2026-11-17 — `night-verification-2026-11-17.json`: bounded new-message UID acquisition;10 new/41 targeted/458 whole tests,23 syntax checks; actual sync/SQLite with synthetic IMAP, no live acceptance.
 
 - 2026-11-17 — `commercial-direction-2026-11-17.json`: urgent readonly CRM diagnosis and main-based PR39 source correction;256 tests,7syntax checks; no operational acceptance.
+
+- 2026-11-17 — PR39-only authorized release: `commercial-direction-2026-11-17.json` release section; main5bdde8, exact tested tree; Render live12:05:55UTC, publichealth200 and startup checks. No full commercial/notification acceptance.
