@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-11-17T01:29:40.540308+00:00",
+  "updated_at": "2026-11-17T12:01:38.538078+00:00",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
   "stage": "PR26 source preserved; combined bounded new-message UID acquisition tested, not released",
@@ -52,7 +52,7 @@
     "syntax_checks": 8,
     "environment": "Node24.22.1 isolated PR26 with synthetic HTTP/IMAP tests"
   },
-  "next_action": "Bound commercial polling UID acquisition; diagnose Nov13 exit1 only from actual process evidence. Provider reconciliation, legacy approval recovery/effect ownership and live checkpoints remain separate; reconcile HEADs/lease before writing.",
+  "next_action": "Review/authorize PR39 release separately from PR26; structured CRM filling, exact confirmation handling and delivered notifications remain urgent functional gaps. Do not automatically archive existing CRM.",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
@@ -126,7 +126,7 @@
     {
       "date": "2026-11-16",
       "scope": "Render deployed main metadata,55-minute memory/HTTP samples and7-day filtered events, readonly",
-      "result": "12 samples169.7–181.0MiB/512;263 returned HTTP200 counts; one Nov13 exit1 event, cause unknown; near-event log queries0 rows",
+      "result": "12 samples169.7\u2013181.0MiB/512;263 returned HTTP200 counts; one Nov13 exit1 event, cause unknown; near-event log queries0 rows",
       "does_not_prove": "historical OOM cause/resolution, live checkpoints, all-interval peak/uptime or release of isolated source",
       "reference": "render-observation-2026-11-16.json"
     }
@@ -161,9 +161,9 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-11-17T02:29:40.544550+01:00",
+  "updated_at_rome": "2026-11-17T13:01:38.538376+01:00",
   "run_id": "fancy-night-20261117-new-uids",
-  "current_lot": "P01/P03/P22 bounded new-message UID acquisition; registry only",
+  "current_lot": "Urgent customer/supplier direction correction; main-based PR39, unreleased",
   "live_render_deploy": "dep-dbiia7vb9u1s73apusp0",
   "upstream_integration_tests": {
     "status": "passed on isolated main-based source branch; no remote merge or deployment",
@@ -199,13 +199,13 @@
     "combined_server_scope": "one helper import and one field in existing admin diagnostics; corrected intake/awaiting_scope_review and all prior safeguards preserved"
   },
   "last_lease": {
-    "run_id": "fancy-night-20261117-new-uids",
-    "component": "Peu bounded new-message UID acquisition",
-    "acquired_at": "2026-11-17T01:24:34.654Z",
-    "expires_at": "2026-11-17T02:24:34.654Z",
-    "base_head": "24c08f556199ceda94d1e4e3a8a4dfe9d0d0debf",
+    "run_id": "fancy-intake-direction-20261117",
+    "component": "commercial admission and supplier reply routing",
+    "acquired_at": "2026-11-17T11:57:12.441Z",
+    "expires_at": "2026-11-17T12:57:12.441Z",
+    "base_head": "2835648462a26cef824bf929019a13937e5faf8a",
     "status": "released",
-    "released_at": "2026-11-17T01:29:40.540308+00:00"
+    "released_at": "2026-11-17T12:01:38.538078+00:00"
   },
   "last_verified_tests": {
     "command": "npm test; npm run check",
@@ -222,14 +222,7 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": {
-    "run_id": "fancy-intake-direction-20261117",
-    "component": "commercial admission and supplier reply routing",
-    "acquired_at": "2026-11-17T11:57:12.441Z",
-    "expires_at": "2026-11-17T12:57:12.441Z",
-    "base_head": "2835648462a26cef824bf929019a13937e5faf8a",
-    "status": "active"
-  },
+  "lease": null,
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
     "commit": "dd4094878cf99369a9542779fe5d58f81e9a5820",
@@ -240,5 +233,14 @@
     "source_only": true,
     "remote_verified": true
   },
-  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-17.json"
+  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-17.json",
+  "commercial_correction": {
+    "branch": "fix/commercial-direction-20261117",
+    "commit": "ea283533b900d0f8e3429a9633d607611ca0a375",
+    "pr": 39,
+    "tests": 256,
+    "syntax_checks": 7,
+    "source_only": true,
+    "remote_verified": true
+  }
 }

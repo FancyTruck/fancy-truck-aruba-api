@@ -464,7 +464,15 @@
     {
       "id": "2.2",
       "objective": "Classificazione quattro percorsi",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-11-17",
+          "kind": "Readonly CRM notes confirm real commercial direction errors. PR39 main-based correction,256 tests/7syntax checks; classifier direction review only, not CRM filling or notification acceptance.",
+          "reference": "commercial-direction-2026-11-17.json"
+        }
+      ],
+      "updated_at": "2026-11-17"
     },
     {
       "id": "2.3",
@@ -551,6 +559,11 @@
           "date": "2026-11-17",
           "kind": "Bounded new-message UID acquisition in real readFolder/sync with synthetic IMAP/SQLite;10 new,41 targeted,458 whole tests and23 syntax checks; source-only, no live acceptance.",
           "reference": "night-verification-2026-11-17.json"
+        },
+        {
+          "date": "2026-11-17",
+          "kind": "Readonly CRM notes confirm real commercial direction errors. PR39 main-based correction,256 tests/7syntax checks; classifier direction review only, not CRM filling or notification acceptance.",
+          "reference": "commercial-direction-2026-11-17.json"
         }
       ],
       "updated_at": "2026-11-17"
@@ -563,7 +576,15 @@
     {
       "id": "3.1",
       "objective": "Raccolta dati commerciale",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-11-17",
+          "kind": "Readonly CRM notes confirm real commercial direction errors. PR39 main-based correction,256 tests/7syntax checks; classifier direction review only, not CRM filling or notification acceptance.",
+          "reference": "commercial-direction-2026-11-17.json"
+        }
+      ],
+      "updated_at": "2026-11-17"
     },
     {
       "id": "3.2",
@@ -595,7 +616,15 @@
     {
       "id": "3.3",
       "objective": "Preventivi nativi",
-      "status": "da verificare"
+      "status": "da verificare",
+      "evidence": [
+        {
+          "date": "2026-11-17",
+          "kind": "Readonly CRM notes confirm real commercial direction errors. PR39 main-based correction,256 tests/7syntax checks; classifier direction review only, not CRM filling or notification acceptance.",
+          "reference": "commercial-direction-2026-11-17.json"
+        }
+      ],
+      "updated_at": "2026-11-17"
     },
     {
       "id": "3.4",
@@ -740,8 +769,14 @@
           "date": "2026-11-05",
           "kind": "Native review closure snapshot:4 baseline HTTP scenario failures;7 corrected Node tests including parent.387 total/11syntax checks; browser/mobile/live NOT EXECUTED.",
           "reference": "night-verification-2026-11-05.json"
+        },
+        {
+          "date": "2026-11-17",
+          "kind": "Readonly CRM notes confirm real commercial direction errors. PR39 main-based correction,256 tests/7syntax checks; classifier direction review only, not CRM filling or notification acceptance.",
+          "reference": "commercial-direction-2026-11-17.json"
         }
-      ]
+      ],
+      "updated_at": "2026-11-17"
     },
     {
       "id": "5.3",
@@ -827,9 +862,14 @@
           "date": "2026-11-01",
           "kind": "PR38+PR26 isolated source reconciliation:357 tests and8syntax checks; durable review failure/reopen/replay tests; no live acceptance",
           "reference": "night-verification-2026-11-01.json"
+        },
+        {
+          "date": "2026-11-17",
+          "kind": "Readonly CRM notes confirm real commercial direction errors. PR39 main-based correction,256 tests/7syntax checks; classifier direction review only, not CRM filling or notification acceptance.",
+          "reference": "commercial-direction-2026-11-17.json"
         }
       ],
-      "updated_at": "2026-11-01"
+      "updated_at": "2026-11-17"
     },
     {
       "id": "7.2",
