@@ -1,3 +1,4 @@
+import {intakeUpdates} from './intakeUpdates.js';
 import {travelFromDepot,travelDefinition} from './peuTravel.js';
 import {readOdoo,odooReadDefinitions} from './peuOdooRead.js';
 import {hash,problem} from './peuCommon.js';
@@ -8,6 +9,7 @@ const obj=(properties,required=Object.keys(properties))=>({type:'object',propert
 const approved=obj({action_id:str,payload_hash:{type:'string',pattern:'^[a-f0-9]{64}$'}});
 const reviewId={type:'string',pattern:'^[a-f0-9]{64}$'};
 const defs={
+ 'intake.updates':{effect:'read',parameters:obj({since:{type:'string',minLength:20,maxLength:40},after:{type:'string',maxLength:150},limit:{type:'integer',minimum:1,maximum:100}},['since'])},
  'travel.from_depot':travelDefinition,
  ...odooReadDefinitions,
  'reviews.list':{effect:'read',parameters:obj({limit:{type:'integer',minimum:1,maximum:100},after_id:reviewId},[])},
@@ -89,7 +91,8 @@ export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritabl
    db.prepare("INSERT INTO peu_operations VALUES(?,?,'executing',NULL)").run(command.idempotency_key,digest);
    try {
      let result; const p=command.parameters;
-     if(c.id.startsWith('reviews.')){result=reviews[c.id.slice('reviews.'.length)](p);}
+     if(c.id==='intake.updates')result=intakeUpdates(approvals.store.state,p);
+     else if(c.id.startsWith('reviews.')){result=reviews[c.id.slice('reviews.'.length)](p);}
      else if(c.id==='travel.from_depot'){result=await travelFromDepot(p);}
      else if(odooReadDefinitions[c.id]){result=await readOdoo(odooRead,c.id,p);}
      else if(c.effect==='read'){result=await upstream(defs[c.id].path+(p.query?'?'+new URLSearchParams({q:p.query}):''));if(result.ok!==true)throw problem('read_failed',502);}
