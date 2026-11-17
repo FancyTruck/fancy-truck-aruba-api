@@ -50,6 +50,14 @@ export class ArubaService {
    return {status:'synced',new_messages:total,cursor,restricted_messages:restricted,content_coverage:restricted?'partial':'available'};
  });}
  messages(account,folder){this.account(account);return Array.from(this.db.prepare(`SELECT account,folder,validity,uid,message_id,thread_key,flags,deleted,${publicPayload} FROM mail_messages WHERE account=? AND folder=? AND deleted=0 ORDER BY uid DESC LIMIT 100`).iterate(account,folder),publicMessage);}
+ search(account,query,limit=20){
+  this.account(account);
+  if(typeof query!=='string'||query.trim().length<2||query.length>300||!Number.isSafeInteger(limit)||limit<1||limit>50)throw problem('invalid_mail_query');
+  return Array.from(this.db.prepare(`SELECT account,folder,validity,uid,message_id,thread_key,flags,deleted,${publicPayload}
+   FROM mail_messages WHERE account=? AND folder='INBOX' AND deleted=0 AND length(payload)<=16777216
+   AND instr(lower(coalesce(json_extract(payload,'$.subject'),'')||' '||coalesce(json_extract(payload,'$.text'),'')||' '||coalesce(json_extract(payload,'$.from'),'')||' '||coalesce(json_extract(payload,'$.to'),'')),lower(?))>0
+   ORDER BY uid DESC LIMIT ?`).iterate(account,query.trim(),limit),publicMessage);
+ }
  async attachment(account,folder,validity,uid,index){this.account(account);const r=this.db.prepare('SELECT uid FROM mail_messages WHERE account=? AND folder=? AND validity=? AND uid=? AND deleted=0').get(account,folder,validity,uid);if(!r)throw problem('message_not_found',404);
    return this.withImap(account,async client=>{const lock=await client.getMailboxLock(folder,{readOnly:true});try{
      if(String(client.mailbox.uidValidity)!==validity)throw problem('uidvalidity_changed_retry',409);
