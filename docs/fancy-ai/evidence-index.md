@@ -61,3 +61,5 @@
 
 - 2026-11-16 — `night-verification-2026-11-16.json`: bounded final flag UID search/failed SEARCH cache preservation;12 new,31 targeted,448 whole tests,23syntax checks. Actual sync/SQLite with synthetic IMAP and installed compiler; no live acceptance.
 - 2026-11-16 — `render-observation-2026-11-16.json`: independent readonly deployed-main samples and events; Nov13 exit1 cause unknown, no near-event log rows returned. No OOM/checkpoint acceptance or operational mutation.
+
+- 2026-11-17 — `night-verification-2026-11-17.json`: bounded new-message UID acquisition;10 new/41 targeted/458 whole tests,23 syntax checks; actual sync/SQLite with synthetic IMAP, no live acceptance.

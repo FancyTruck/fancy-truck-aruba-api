@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "updated_at": "2026-11-16T01:57:41.737478+00:00",
+  "updated_at": "2026-11-17T01:29:40.540308+00:00",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
-  "stage": "PR26 source preserved; combined bounded flag UID search tested, not released",
+  "stage": "PR26 source preserved; combined bounded new-message UID acquisition tested, not released",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
@@ -42,7 +42,8 @@
     "sqlite-public-mail-payload-byte-budget-before-js-parse-with-incomplete-metadata-marker",
     "peu-source-uid-identity-and-nonnegative-size-before-cache-cursor-commit",
     "complete-peu-flag-snapshot-temp-staging-before-atomic-cache-publication",
-    "bounded-sequence-window-flag-uid-search-and-failed-search-cache-preservation"
+    "bounded-sequence-window-flag-uid-search-and-failed-search-cache-preservation",
+    "bounded-new-message-uid-search-with-sequence-probes-and-cursor-preservation"
   ],
   "tests": {
     "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs",
@@ -51,7 +52,7 @@
     "syntax_checks": 8,
     "environment": "Node24.22.1 isolated PR26 with synthetic HTTP/IMAP tests"
   },
-  "next_action": "Review bounded UID acquisition for new-message readFolder and commercial polling; evidence-bound provider/legacy approval recovery and effect-owner coordination remain. Reconcile current HEADs/lease before source work; no live restart/load/provider writes authorized. Diagnose Nov13 exit1 from actual evidence; near-event logs returned0 rows.",
+  "next_action": "Bound commercial polling UID acquisition; diagnose Nov13 exit1 only from actual process evidence. Provider reconciliation, legacy approval recovery/effect ownership and live checkpoints remain separate; reconcile HEADs/lease before writing.",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
@@ -125,7 +126,7 @@
     {
       "date": "2026-11-16",
       "scope": "Render deployed main metadata,55-minute memory/HTTP samples and7-day filtered events, readonly",
-      "result": "12 samples169.7–181.0MiB/512;263 returned HTTP200 counts; one Nov13 exit1 event, cause unknown; near-event log queries0 rows",
+      "result": "12 samples169.7\u2013181.0MiB/512;263 returned HTTP200 counts; one Nov13 exit1 event, cause unknown; near-event log queries0 rows",
       "does_not_prove": "historical OOM cause/resolution, live checkpoints, all-interval peak/uptime or release of isolated source",
       "reference": "render-observation-2026-11-16.json"
     }
@@ -160,15 +161,15 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-11-16T02:57:41.741761+01:00",
-  "run_id": "fancy-night-20261116-bounded-flag-search",
-  "current_lot": "P01/P03/P22 bounded flag search and independent readonly Render observation; registry only",
+  "updated_at_rome": "2026-11-17T02:29:40.544550+01:00",
+  "run_id": "fancy-night-20261117-new-uids",
+  "current_lot": "P01/P03/P22 bounded new-message UID acquisition; registry only",
   "live_render_deploy": "dep-dbiia7vb9u1s73apusp0",
   "upstream_integration_tests": {
     "status": "passed on isolated main-based source branch; no remote merge or deployment",
     "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
     "pr26_source": "a450bb3ddfabf40191aa56fa0bbd2390a2476044",
-    "passed": 448,
+    "passed": 458,
     "failed": 0,
     "syntax_checks": 23,
     "resolved_paths": [
@@ -180,10 +181,10 @@
     ],
     "policy": "10MiB inline polling; durable recoverable REVIEW allows cursor handoff; content_processed=false; missing metadata or failed persistence holds UID; interactive20MiB unchanged",
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "91753571563d7cc55984b1de2d5f86f96e018c38",
-    "tree": "26da31c809475cbb9982ce94c17e35d68ef10dba",
-    "remote_readback": "whole tree and10 changed paths verified",
-    "date": "2026-11-16"
+    "commit": "dd4094878cf99369a9542779fe5d58f81e9a5820",
+    "tree": "030f3c5e1ed844ab1285d3a24282a031e6bc32e8",
+    "remote_readback": "whole tree/all8 changed paths verified",
+    "date": "2026-11-17"
   },
   "source_integrity": {
     "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
@@ -198,13 +199,13 @@
     "combined_server_scope": "one helper import and one field in existing admin diagnostics; corrected intake/awaiting_scope_review and all prior safeguards preserved"
   },
   "last_lease": {
-    "run_id": "fancy-night-20261116-bounded-flag-search",
-    "component": "Render Peu bounded flag UID search",
-    "acquired_at": "2026-11-16T01:47:05.598Z",
-    "expires_at": "2026-11-16T02:47:05.598Z",
-    "base_head": "6c44a99ad7e7afacb78a914ac211565549d242cb",
+    "run_id": "fancy-night-20261117-new-uids",
+    "component": "Peu bounded new-message UID acquisition",
+    "acquired_at": "2026-11-17T01:24:34.654Z",
+    "expires_at": "2026-11-17T02:24:34.654Z",
+    "base_head": "24c08f556199ceda94d1e4e3a8a4dfe9d0d0debf",
     "status": "released",
-    "released_at": "2026-11-16T01:57:41.737478+00:00"
+    "released_at": "2026-11-17T01:29:40.540308+00:00"
   },
   "last_verified_tests": {
     "command": "npm test; npm run check",
@@ -221,23 +222,16 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": {
-    "run_id": "fancy-night-20261117-new-uids",
-    "component": "Peu bounded new-message UID acquisition",
-    "acquired_at": "2026-11-17T01:24:34.654Z",
-    "expires_at": "2026-11-17T02:24:34.654Z",
-    "base_head": "24c08f556199ceda94d1e4e3a8a4dfe9d0d0debf",
-    "status": "active"
-  },
+  "lease": null,
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "91753571563d7cc55984b1de2d5f86f96e018c38",
+    "commit": "dd4094878cf99369a9542779fe5d58f81e9a5820",
     "parent": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
-    "tree": "26da31c809475cbb9982ce94c17e35d68ef10dba",
-    "tests": 448,
+    "tree": "030f3c5e1ed844ab1285d3a24282a031e6bc32e8",
+    "tests": 458,
     "syntax_checks": 23,
     "source_only": true,
     "remote_verified": true
   },
-  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-16.json"
+  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-17.json"
 }
