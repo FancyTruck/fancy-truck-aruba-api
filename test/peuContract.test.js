@@ -110,3 +110,27 @@ test('unknown mailbox cannot be prepared',async()=>{
 });
 
 test('automatic drafts are readable without approval and require exact owner confirmation to send',async()=>{const f=fixture();const a=f.approvals.queue({type:'SEND_EMAIL',target:mail.to,idempotency_key:'automatic',payload:{account:'hello',subject:mail.subject,text:mail.text}}).action;const r=await f.contract.execute(f.command('mail.drafts',{since:'2000-01-01T00:00:00.000Z',action_id:a.id},'read'));assert.equal(r.result.drafts[0].action_id,a.id);assert.equal(r.result.drafts[0].to,mail.to);assert.equal(f.sent,0);const params={action_id:a.id,payload_hash:r.result.drafts[0].payload_hash};const no=f.command('mail.confirm_send',params,'no');no.confirmation.confirmed=false;await assert.rejects(f.contract.execute(no));assert.equal(f.sent,0);await assert.rejects(f.contract.execute(f.command('mail.confirm_send',{...params,payload_hash:'changed'},'changed')));assert.equal(f.sent,0);await f.contract.execute(f.command('mail.confirm_send',params,'yes'));await f.contract.execute(f.command('mail.confirm_send',params,'replay'));assert.equal(f.sent,1);});
+
+test('delete draft cancels only the exact pending action and prevents later sending',async()=>{
+ const f=fixture();const p=(await f.contract.execute(f.command('mail.prepare',mail,'draft'))).result;
+ const other=(await f.contract.execute(f.command('mail.prepare',{...mail,subject:'Other'},'other'))).result;
+ const params={action_id:p.action_id,payload_hash:p.payload_hash};
+ await assert.rejects(f.contract.execute(f.command('mail.delete_draft',{...params,payload_hash:'0'.repeat(64)},'stale')));
+ const cmd=f.command('mail.delete_draft',params,'delete');cmd.confirmation.confirmed=false;
+ assert.equal((await f.contract.execute(cmd)).result.status,'draft_deleted');
+ await makePeuContract(f.config).execute(cmd);
+ assert.equal(f.approvals.store.action(other.action_id).status,'PENDING_APPROVAL');
+ assert.equal(f.approvals.store.action(p.action_id).status,'CANCELLED');
+ await assert.rejects(f.contract.execute(f.command('mail.confirm_send',params,'later-confirm')));
+ assert.equal(f.sent,0);assert.equal(f.writes,0);
+});
+test('draft original uses exact message ID, account and inbox, never a subject match',async()=>{
+ const f=fixture();const p=(await f.contract.execute(f.command('mail.prepare',{...mail,inReplyTo:'<customer-one>'},'draft'))).result;
+ const args={since:'2000-01-01T00:00:00.000Z',action_id:p.action_id};
+ const content={text:'Original customer request',subject:'Same subject',from:[{address:mail.to}]};
+ for(const [i,original] of [null,{message_id:'<other>',folder:'INBOX',payload:content},{message_id:'<customer-one>',folder:'Sent',payload:content},{message_id:'<customer-one>',folder:'INBOX',payload:content}].entries()){
+ const contract=makePeuContract({...f.config,readOriginal:async(account,id)=>{assert.equal(account,'pietro');assert.equal(id,'<customer-one>');return {original};}});
+ const draft=(await contract.execute(f.command('mail.drafts',args,'read-original-'+i))).result.drafts[0];
+ assert.equal(draft.original_status,i===3?'verified':'unavailable');assert.equal(!!draft.original,i===3);
+ }
+});
