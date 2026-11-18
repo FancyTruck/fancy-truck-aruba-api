@@ -8,9 +8,10 @@ const samples=[
  ['Re: Richiesta noleggio','Presso la filiale il generatore attualmente disponibile per il vostro cantiere è in allegato. Resto in attesa per procedere con la redazione del preventivo.'],
  ['Re: Richiesta noleggio','In risposta alla vostra richiesta, il nostro generatore è disponibile. Desiderate procedere con la redazione del preventivo?'],
 ];
-for(const [subject,text] of samples)test(`non-customer purpose reviewed before finding/creating a CRM lead: ${subject}`,async()=>{
+for(const [subject,text] of samples)test(`non-customer purpose excluded or reviewed before CRM: ${subject}`,async()=>{
+ const expectedReview=/generatore/i.test(text);
  let queued=0,lookups=0;const result=await routeCommercialMessage({parsed:{subject,text,from:{value:[{address:'supplier@example.test'}]},headers:new Map()},uid:1,account:'synthetic',uidValidity:'1',store:{queueClassification(row){queued++;assert.equal(row.reason,'non_customer_direction_requires_review');return {item:{id:'review-fixture'},duplicate:false};}},findLead:async()=>{lookups++;return {lead:{id:123},order_ids:[]};}});
- assert.equal(result.action,'review');assert.equal(queued,1);assert.equal(lookups,0);
+ assert.equal(result.action,expectedReview?'review':'skip');assert.equal(queued,expectedReview?1:0);assert.equal(lookups,0);
 });
 for(const [subject,text,kind] of [
  ['Richiesta noleggio','Vorrei noleggiare un food truck per un evento a Milano.','rental'],
