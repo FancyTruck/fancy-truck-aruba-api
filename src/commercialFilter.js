@@ -11,9 +11,27 @@ export function currentMessage(text = '') {
   return result.join('\n');
 }
 
+// Test the sender's own request, not a sales call-to-action or a quoted brief.
+function buyerRequest(body) {
+  const service = /\b(?:food\s*truck|bar\s*truck|truck|airstream|horsebox|catering|roadshow|road\s*tour|brand activation|nolegg\w*|affittare|acquistare)\b/i;
+  const wants = /\b(?:vorrei|vorremmo|avremmo bisogno|cerchiamo|ci servono?|necessitiamo|desideriamo|siamo interessati|would like|looking for|we need)\b/i;
+  const selling = /(?:propor(?:vi|ti|le)|offrir(?:vi|ti|le)|presentar(?:vi|ti|le)|illustrar(?:vi|ti|le)|aiutar(?:vi|ti|la)|supportar(?:vi|ti|la)|far(?:vi|ti|le) conoscere)/i;
+  return String(body).split(/[.!?;\n]+/).some(sentence=>service.test(sentence)&&((wants.test(sentence)&&!selling.test(sentence))||/(?:presentarvi|inviarvi|sottoporvi).{0,25}(?:brief|richiesta|progetto)/i.test(sentence)));
+}
+
+function supplierPitch(body) {
+  const directOffer = /\b(?:offriamo|vi proponiamo|ti proponiamo|le proponiamo|we offer|our services include|we provide|we can help you)\b/i;
+  const directedOffer = /\b(?:propor(?:vi|ti|le)|offrir(?:vi|ti|le)|presentar(?:vi|ti|le)|illustrar(?:vi|ti|le))\b/i;
+  const recipientBenefit = /(?:aiutarvi a|aiutarti a|supportarvi (?:nella|con|per)|aumentare (?:le vostre|le tue) vendite|migliorare (?:la vostra|la tua) visibilit[aà]|acquisire (?:nuovi|più) clienti|grow your business|boost your sales)/i;
+  const vendorIdentity = /(?:siamo (?:un['’]?|una|un)\s*(?:agenzia|societ[aà]|azienda)|siamo (?:fornitori|specializzati)|i nostri servizi|la nostra piattaforma|il nostro software|our platform|our software)/i;
+  const salesInvitation = /(?:prenota(?:re)? (?:una |la )?(?:call|demo|consulenza)|fissare (?:una |un )?(?:call|incontro)|richiedi (?:una |un )?(?:demo|preventivo)|scopri (?:come|i nostri|la nostra)|consulenza gratuita|prova gratuita|free (?:trial|demo))/i;
+  return directOffer.test(body)||directedOffer.test(body)||(vendorIdentity.test(body)&&(recipientBenefit.test(body)||salesInvitation.test(body)));
+}
+
 export function classifyCommercialMessage(subject = '', text = '', headers = new Map(), { isReply = false } = {}) {
   const title = String(subject).replace(/^(?:(?:re|r|fw|fwd|i)\s*:\s*)+/i, '');
   const body = currentMessage(text);
+  const buying = buyerRequest(body), pitching = supplierPitch(body);
   const value = `${title}\n${body}`.toLowerCase().replace(/\bfancy\s*truck\b/g, '');
   const getHeader = (key) => String(headers?.get?.(key) || '').toLowerCase();
   if (getHeader('list-id') || getHeader('list-unsubscribe')
@@ -32,8 +50,9 @@ export function classifyCommercialMessage(subject = '', text = '', headers = new
   const equipmentPitch = /(?:energia a bordo|riscaldamento|condizionatori|pannelli solari)/i.test(title)
     && /(?:scopri|richiedi informazioni|richiedi un preventivo|installiamo|proponiamo)/i.test(body)
     && !/(?:vorrei|vorremmo|cerchiamo).{0,80}(?:nolegg|food.?truck|airstream|brand activation|roadshow)/i.test(body);
-  if (financePitch || consultingPitch || supplierFulfilment || equipmentPitch) {
-    return { kind: null, reason: 'non_customer_direction_requires_review' };
+  if (supplierFulfilment) return { kind: null, reason: 'non_customer_direction_requires_review' };
+  if (financePitch || consultingPitch || equipmentPitch || pitching) {
+    return { kind: null, reason: buying ? 'non_customer_direction_requires_review' : 'supplier_offer' };
   }
   // Transactional account messages often lack List-* / Auto-Submitted headers.
   // Match their purpose, never block an entire provider or sender domain.
@@ -54,10 +73,8 @@ export function classifyCommercialMessage(subject = '', text = '', headers = new
   if (excludedTitle.test(title) || marketing.test(body)) {
     return { kind: null, reason: 'administrative_or_marketing' };
   }
-  const supplierOffer = /\b(?:offriamo|vi proponiamo|siamo fornitori|siamo specializzati|we offer)\b/i;
-  if (supplierOffer.test(body) && !customerRequest.test(body)) {
-    return { kind: null, reason: 'supplier_offer' };
-  }
+  // A company describing itself as an agency/supplier can still be a customer.
+  // Its identity alone is never grounds to reject its own explicit request.
   // A forwarded quote is not a fresh request just because its subject says "preventivo".
   if (/^\s*(?:(?:re|r)\s*:\s*)*(?:fw|fwd|i)\s*:/i.test(String(subject))
       && !customerRequest.test(body)) {
