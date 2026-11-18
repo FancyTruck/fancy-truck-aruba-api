@@ -151,3 +151,25 @@ test('review detail recovers only its exact original and keeps mailbox/message i
  const contract=makePeuContract(f.config),result=(await contract.execute(f.command('reviews.get',{review_id:row.id},'get-original'))).result.item;
  assert.equal(result.original_status,'verified');assert.equal(result.original.text,'Full original');assert.equal(reads,1);assert.equal(f.sent,0);
 });
+
+test('concurrent edit during verification rejects old send without poisoning the new approval hash',async()=>{
+ for(const legacy of [true,false]){
+  const f=fixture();const prepared=(await f.contract.execute(f.command('mail.prepare',mail,'draft'))).result;
+  const action=f.approvals.store.action(prepared.action_id);action.supersede_group='missing-details:1';if(legacy)delete action.peu_payload_hash;
+  let resume,entered,first=true;const gate=new Promise(r=>resume=r),started=new Promise(r=>entered=r);
+  const contract=makePeuContract({...f.config,verifyDraft:async()=>{if(first){first=false;entered();await gate;}return true;}});
+  const oldSend=contract.execute(f.command('mail.confirm_send',{action_id:action.id,payload_hash:prepared.payload_hash},'old-send')).catch(e=>e);
+  await started;
+  const edited=(await contract.execute(f.command('mail.update_draft',{action_id:action.id,payload_hash:prepared.payload_hash,text:'Correzione'},'edit'))).result;
+  resume();assert.equal((await oldSend).code,'mail_confirmation_state_conflict');assert.equal(action.status,'PENDING_APPROVAL');assert.equal(action.payload.text,'Correzione');assert.equal(f.sent,0);
+  if(legacy)assert.equal(action.peu_payload_hash,undefined);else assert.equal(action.peu_payload_hash,edited.payload_hash);
+  await contract.execute(f.command('mail.confirm_send',{action_id:action.id,payload_hash:edited.payload_hash},'new-send'));assert.equal(f.sent,1);
+ }
+});
+test('concurrent deletion during verification cannot resurrect the draft or arm approval',async()=>{
+ const f=fixture(),p=(await f.contract.execute(f.command('mail.prepare',mail,'draft'))).result,a=f.approvals.store.action(p.action_id);a.supersede_group='missing-details:1';delete a.peu_payload_hash;
+ let resume,entered;const gate=new Promise(r=>resume=r),started=new Promise(r=>entered=r);
+ const contract=makePeuContract({...f.config,verifyDraft:async()=>{entered();await gate;return true;}});
+ const old=contract.execute(f.command('mail.confirm_send',{action_id:a.id,payload_hash:p.payload_hash},'old')).catch(e=>e);await started;
+ await contract.execute(f.command('mail.delete_draft',{action_id:a.id,payload_hash:p.payload_hash},'delete'));resume();assert.equal((await old).code,'mail_confirmation_state_conflict');assert.equal(a.status,'CANCELLED');assert.equal(a.peu_payload_hash,undefined);assert.equal(f.sent,0);
+});

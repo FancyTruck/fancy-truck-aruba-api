@@ -144,7 +144,11 @@ export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritabl
        assertWritable();
        const action=approvals.store.action(p.action_id);
        if(!action||action.type!=='SEND_EMAIL'||!['pietro','hello'].includes(action.payload.account)||hash(action.peu_payload_hash?action.payload:draftPayload(action))!==p.payload_hash||(action.peu_payload_hash&&action.peu_payload_hash!==p.payload_hash))throw problem('exact_fancy_action_required',403);
-       if(action.status==='PENDING_APPROVAL'&&action.supersede_group?.startsWith('missing-details:')&&verifyDraft&&!await verifyDraft(action))throw problem('automatic_draft_requires_reverification',409);
+       if(action.status==='PENDING_APPROVAL'&&action.supersede_group?.startsWith('missing-details:')&&verifyDraft){
+         if(!await verifyDraft(action))throw problem('automatic_draft_requires_reverification',409);
+         // Verification yields to other requests. Recheck before binding approval to this payload.
+         if(approvals.store.action(p.action_id)!==action||action.status!=='PENDING_APPROVAL'||hash(action.peu_payload_hash?action.payload:draftPayload(action))!==p.payload_hash||(action.peu_payload_hash&&action.peu_payload_hash!==p.payload_hash))throw problem('mail_confirmation_state_conflict',409);
+       }
        if(!action.peu_payload_hash){if(action.status!=='PENDING_APPROVAL')throw problem('mail_confirmation_state_conflict',409);action.payload=draftPayload(action);action.peu_payload_hash=p.payload_hash;approvals.store.save();}
        const previous=get('peu_effects',action.id);
        if(!previous){
