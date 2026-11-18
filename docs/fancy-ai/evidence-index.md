@@ -67,3 +67,5 @@
 - 2026-11-17 — `commercial-direction-2026-11-17.json`: urgent readonly CRM diagnosis and main-based PR39 source correction;256 tests,7syntax checks; no operational acceptance.
 
 - 2026-11-17 — PR39-only authorized release: `commercial-direction-2026-11-17.json` release section; main5bdde8, exact tested tree; Render live12:05:55UTC, publichealth200 and startup checks. No full commercial/notification acceptance.
+
+- 2026-11-18: `night-verification-2026-11-18.json`; isolated continuation4a61f03/main24a8d6c reconciliation,499 synthetic/HTTP/SQLite tests and81syntax checks. Fresh readonly Render PR45 deploy metadata; no new live continuity/backup/OOM acceptance.

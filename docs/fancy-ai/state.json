@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "updated_at": "2026-11-17T12:07:24.955595+00:00",
+  "updated_at": "2026-11-18T02:00:12.800979+00:00",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
-  "stage": "PR39 only authorized and live; PR26/private continuation still unreleased",
+  "stage": "isolated continuation reconciled with current main PR45; operational acceptance open",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
@@ -52,7 +52,7 @@
     "syntax_checks": 8,
     "environment": "Node24.22.1 isolated PR26 with synthetic HTTP/IMAP tests"
   },
-  "next_action": "Observe real classification/review outcomes and complete structured CRM/confirmation/notification gaps. Reconcile private continuation with new main5bdde8 before further development; no general rollout authority.",
+  "next_action": "Reconcile fresh HEAD/lease then commercial UID bounds and batched sync memory/recovery; real CRM classification, structured completion, confirmations and notification evidence remain open.",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
@@ -126,13 +126,19 @@
     {
       "date": "2026-11-16",
       "scope": "Render deployed main metadata,55-minute memory/HTTP samples and7-day filtered events, readonly",
-      "result": "12 samples169.7–181.0MiB/512;263 returned HTTP200 counts; one Nov13 exit1 event, cause unknown; near-event log queries0 rows",
+      "result": "12 samples169.7\u2013181.0MiB/512;263 returned HTTP200 counts; one Nov13 exit1 event, cause unknown; near-event log queries0 rows",
       "does_not_prove": "historical OOM cause/resolution, live checkpoints, all-interval peak/uptime or release of isolated source",
       "reference": "render-observation-2026-11-16.json"
+    },
+    {
+      "date": "2026-11-18",
+      "scope": "Render get_service/list_deploys explicit confirmed workspace",
+      "result": "main PR45/24a8d6c independently live deploy dep-dbu7vak9v7es73dhlb1g since2026-11-17T16:24:53Z; main autoDeploy on, PR previews off",
+      "does_not_prove": "new memory/OOM/backup/checkpoint/end-to-end or isolated-source release"
     }
   ],
   "operational_evidence": "docs/fancy-ai/operational-verification-2026-10-22.json",
-  "live_render_commit": "5bdde8de240075c401db90d1df5884b1d795cf03",
+  "live_render_commit": "24a8d6cb2bc1b5eb27f08811ba9786695a6e6b98",
   "acceptance_items": {
     "4.5.1": {
       "status": "collaudato",
@@ -161,30 +167,30 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-11-17T13:07:24.956293+01:00",
-  "run_id": "pr39-authorized-release-20261117",
-  "current_lot": "PR39 authorized release evidence and registry; code active",
-  "live_render_deploy": "dep-dbu45t5ckfvc73c6igq0",
+  "updated_at_rome": "2026-11-18T03:00:12.801006+01:00",
+  "run_id": "fancy-night-20261118",
+  "current_lot": "PR39-45 reconciled into isolated source; bounded batch identity; not deployed",
+  "live_render_deploy": "dep-dbu7vak9v7es73dhlb1g",
   "upstream_integration_tests": {
     "status": "passed on isolated main-based source branch; no remote merge or deployment",
-    "main": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
+    "main": "24a8d6cb2bc1b5eb27f08811ba9786695a6e6b98",
     "pr26_source": "a450bb3ddfabf40191aa56fa0bbd2390a2476044",
-    "passed": 458,
+    "passed": 499,
     "failed": 0,
-    "syntax_checks": 23,
+    "syntax_checks": 81,
     "resolved_paths": [
-      "src/mailPolling.js",
-      "test/intakeIntegration.test.js",
-      "test/mailPolling.test.js",
-      "test/peuMailMemory.test.js",
-      "test/threadLinking.test.js"
+      "src/server.js",
+      "src/peuContract.js",
+      "src/peuMailRoutes.js",
+      "src/peuMailSync.js",
+      "test/peu-large-message.test.js"
     ],
     "policy": "10MiB inline polling; durable recoverable REVIEW allows cursor handoff; content_processed=false; missing metadata or failed persistence holds UID; interactive20MiB unchanged",
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "dd4094878cf99369a9542779fe5d58f81e9a5820",
-    "tree": "030f3c5e1ed844ab1285d3a24282a031e6bc32e8",
-    "remote_readback": "whole tree/all8 changed paths verified",
-    "date": "2026-11-17"
+    "commit": "4a61f03872982bba06fd46d8363306b1542ae552",
+    "tree": "0e77af4db712fe980854c66b3ee35b04f6d9408b",
+    "remote_readback": "fetched remote commit whole tree equals local tested tree",
+    "date": "2026-11-18"
   },
   "source_integrity": {
     "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
@@ -193,19 +199,19 @@
     "previous_corrected_project_guard_server_blob": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc",
     "previous_single_message_server_blob": "a11abed369707d1ab0efd38c37848223bb917de2",
     "previous_server_blob": "9ba35a907c6165a9051434d59fd7d72850fe24cc",
-    "combined_server_blob": "717c7c75167ec9c86650030353dd96f3cbf36f99",
+    "combined_server_blob": "e6dbfb0a292b258c0543edaa695cafaa5da7004c",
     "pr26_server_blob_unchanged": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
-    "previous_combined_server_blob": "72a808517ac2dde88e5bf8cce160fc8b17aa9598",
-    "combined_server_scope": "one helper import and one field in existing admin diagnostics; corrected intake/awaiting_scope_review and all prior safeguards preserved"
+    "previous_combined_server_blob": "717c7c75167ec9c86650030353dd96f3cbf36f99",
+    "combined_server_scope": "Latest main PR39-45 features reconciled, earlier isolated safeguards and awaiting_scope_review preserved."
   },
   "last_lease": {
-    "run_id": "pr39-authorized-release-20261117",
-    "component": "release evidence and registry only",
-    "acquired_at": "2026-11-17T12:06:04.457Z",
-    "expires_at": "2026-11-17T12:36:04.457Z",
-    "base_head": "6ddd960e851f84fa2363f437593f53c81c34b2e4",
+    "run_id": "fancy-night-20261118",
+    "component": "Render isolated reconciliation and sanitized registry",
+    "acquired_at": "2026-11-18T01:49:54.105Z",
+    "expires_at": "2026-11-18T02:49:54.105Z",
+    "base_head": "2eb9a3e9096097aa95292c7e121ffdb9df304595",
     "status": "released",
-    "released_at": "2026-11-17T12:07:24.955595+00:00"
+    "released_at": "2026-11-18T02:00:12.800979+00:00"
   },
   "last_verified_tests": {
     "command": "npm test; npm run check",
@@ -222,24 +228,19 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": {
-    "run_id": "fancy-night-20261118",
-    "component": "Render isolated reconciliation and sanitized registry",
-    "acquired_at": "2026-11-18T01:49:54.105Z",
-    "expires_at": "2026-11-18T02:49:54.105Z",
-    "base_head": "2eb9a3e9096097aa95292c7e121ffdb9df304595"
-  },
+  "lease": null,
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "dd4094878cf99369a9542779fe5d58f81e9a5820",
-    "parent": "e0c775fbe8e2e6e5bfc358c69847a748f294b2c3",
-    "tree": "030f3c5e1ed844ab1285d3a24282a031e6bc32e8",
-    "tests": 458,
-    "syntax_checks": 23,
+    "commit": "4a61f03872982bba06fd46d8363306b1542ae552",
+    "parent": "dd4094878cf99369a9542779fe5d58f81e9a5820",
+    "tree": "0e77af4db712fe980854c66b3ee35b04f6d9408b",
+    "tests": 499,
+    "syntax_checks": 81,
     "source_only": true,
-    "remote_verified": true
+    "remote_verified": true,
+    "main_reconciled": "24a8d6cb2bc1b5eb27f08811ba9786695a6e6b98"
   },
-  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-17.json",
+  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-18.json",
   "commercial_correction": {
     "branch": "fix/commercial-direction-20261117",
     "commit": "ea283533b900d0f8e3429a9633d607611ca0a375",
