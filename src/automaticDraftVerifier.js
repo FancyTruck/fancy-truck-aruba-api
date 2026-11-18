@@ -11,7 +11,7 @@ export function automaticDraftVerifier({readOriginal,odooRead,classify,teamCheck
  return async action=>{
   try{
    const id=action.payload?.inReplyTo;if(!id)incomplete('draft_source_reference_missing');
-   const {original}=await readOriginal(action.payload.account,id);if(!original?.payload?.text)incomplete('draft_original_not_found');
+   const response=await readOriginal(action.payload.account,id),original=response.original;if(!original?.payload?.text)incomplete(response.reason||'draft_original_not_found');
    if(original.payload.text_truncated)incomplete('draft_original_incomplete');
    const source=original.payload,decision=classify(source.subject,source.text);
    if(['supplier_offer','non_customer_direction_requires_review','administrative_or_marketing','automatic_or_mailing_list','automatic_service_notification'].includes(decision.reason))return cancel(action,'NOT_CUSTOMER_REQUEST');

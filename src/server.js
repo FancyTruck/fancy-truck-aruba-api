@@ -1025,7 +1025,7 @@ if (peuDb) {
   const originalReader=new ArubaService({db:peuDb,withImap,parse:simpleParser,accounts:['pietro','hello']});
   const upstream=(path,options={})=>jsonRequest(fetch,`http://127.0.0.1:${port||server.address().port}${path}`,{...options,headers:{'Content-Type':'application/json',Authorization:`Bearer ${peuInternalToken}`}});
   const odooRead=(model,domain,options)=>odooCall(model,'search_read',[domain],options);
-  const readDraftOriginal=draftOriginalResolver({readMailbox:(account,id)=>originalReader.draftOriginal(account,id),actions:()=>store.state.actions,odooRead,plainText:plainTextFromHtml});
+  const readDraftOriginal=draftOriginalResolver({readMailbox:(account,id)=>originalReader.draftOriginal(account,id),actions:()=>store.state.actions,accounts:['hello','pietro'].filter(name=>{try{accountConfig(name);return true;}catch{return false;}}),odooRead,plainText:plainTextFromHtml});
   const verifyDraft=automaticDraftVerifier({readOriginal:readDraftOriginal,odooRead,classify:(subject,text)=>classifyCommercialMessage(subject,text,new Map(),{isReply:true}),teamCheck:parsed=>teamAlreadyReplied({parsed,accounts:['hello','pietro'].filter(name=>{try{accountConfig(name);return true;}catch{return false;}}),withImap}),store});
   const startupDraftCheck=setTimeout(async()=>{try{
     const drafts=Object.values(store.state.actions).filter(a=>a.type==='SEND_EMAIL'&&a.status==='PENDING_APPROVAL'&&a.supersede_group?.startsWith('missing-details:')).map(a=>({action_id:a.id}));
