@@ -1026,7 +1026,7 @@ if (peuDb) {
       const id=action.payload?.inReplyTo;
       if(!id){console.log(JSON.stringify({event:'draft_verification',action_id:action.id,status:'source_missing',legacy:true}));return false;}
       const {original}=await originalReader.draftOriginal(action.payload.account,id);
-      if(!original?.payload?.text){console.log(JSON.stringify({event:'draft_verification',action_id:action.id,status:'original_not_found'}));return false;}
+      if(!original?.payload?.text){console.log(JSON.stringify({event:'draft_verification',action_id:action.id,status:'original_not_found',account:action.payload.account,reference_kind:id.startsWith('odoo-mail-message-')?'odoo_placeholder':/^<[^<>]+>$/.test(id)?'rfc_message_id':'non_rfc',case_id:action.case_id||null,created_at:action.created_at}));return false;}
       const source=original.payload;
       const decision=classifyCommercialMessage(source.subject,source.text,new Map(),{isReply:true});
       const blocked=['supplier_offer','non_customer_direction_requires_review','administrative_or_marketing','automatic_or_mailing_list','automatic_service_notification'].includes(decision.reason);
