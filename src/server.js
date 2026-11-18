@@ -1027,7 +1027,7 @@ if (peuDb) {
       const source=original.payload;
       const decision=classifyCommercialMessage(source.subject,source.text,new Map(),{isReply:true});
       const blocked=['supplier_offer','non_customer_direction_requires_review','administrative_or_marketing','automatic_or_mailing_list','automatic_service_notification'].includes(decision.reason);
-      const handled=blocked?false:(await teamAlreadyReplied({parsed:{messageId:id,date:source.date},accounts:['hello','pietro'].filter(name=>{try{accountConfig(name);return true;}catch{return false;}}),withImap})).handled;
+      const handled=blocked?false:(await teamAlreadyReplied({parsed:{messageId:id,date:source.date,from:source.from},accounts:['hello','pietro'].filter(name=>{try{accountConfig(name);return true;}catch{return false;}}),withImap})).handled;
       if(blocked||handled){store.cancelActionGroup(action.supersede_group,blocked?'NOT_CUSTOMER_REQUEST':'TEAM_ALREADY_REPLIED');return false;}
       return true;
     }catch{store.audit('AUTO_DRAFT_VERIFICATION_DEFERRED',{action_id:action.id});return false;}
