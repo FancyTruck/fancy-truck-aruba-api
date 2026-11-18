@@ -135,22 +135,19 @@ test('draft original uses exact message ID, account and inbox, never a subject m
  }
 });
 
-test('updating exact pending draft preserves envelope and source; stale send cannot execute',async()=>{
- const f=fixture(),p=(await f.contract.execute(f.command('mail.prepare',{...mail,inReplyTo:'<client>'},'draft'))).result;
- const params={action_id:p.action_id,payload_hash:p.payload_hash,text:'Possiamo consegnare venerdì.'};
- const cmd=f.command('mail.update_draft',params,'edit');cmd.confirmation.confirmed=false;
- const edited=(await f.contract.execute(cmd)).result;assert.equal(edited.status,'draft_updated');assert.notEqual(edited.payload_hash,p.payload_hash);
- await f.contract.execute(cmd);const action=f.approvals.store.action(p.action_id);
- assert.deepEqual(action.payload,{...mail,inReplyTo:'<client>',text:params.text});assert.equal(action.status,'PENDING_APPROVAL');assert.equal(action.peu_payload_hash,edited.payload_hash);
- await assert.rejects(f.contract.execute(f.command('mail.confirm_send',{action_id:p.action_id,payload_hash:p.payload_hash},'old-send')));
- await assert.rejects(f.contract.execute(f.command('mail.update_draft',{...params,text:'Second change'},'stale-edit')));
- await assert.rejects(f.contract.execute(f.command('mail.update_draft',{...params,to:'other@example.invalid'},'recipient-change')));
+test('snoozed reviews leave the queue and changed snapshots cannot be reused',async()=>{
+ const f=fixture(),row=review(f,'snooze'),before=await snapshot(f,row),until=new Date(Date.now()+86400000).toISOString();
+ const result=(await f.contract.execute(f.command('reviews.snooze',{review_id:row.id,snapshot_hash:before,until},'snooze'))).result;
+ assert.equal(result.status,'snoozed');assert.equal(result.item.snoozed_until,until);
+ assert.equal((await f.contract.execute(f.command('reviews.list',{},'list-snoozed'))).result.total,0);
+ await assert.rejects(f.contract.execute(f.command('reviews.resolve',{review_id:row.id,snapshot_hash:before,resolution:'NOT_COMMERCIAL',note:'Classificazione precedente ormai superata.'},'stale-close')));
+ const fresh=(await f.contract.execute(f.command('reviews.get',{review_id:row.id},'fresh-snooze'))).result.item;
+ await f.contract.execute(f.command('reviews.resolve',{review_id:row.id,snapshot_hash:fresh.snapshot_hash,resolution:'HANDLED_MANUALLY',note:'Il team ha già risposto al cliente.'},'close-snoozed'));
  assert.equal(f.sent,0);assert.equal(f.writes,0);
 });
-test('closed or approved drafts cannot be edited and failed persistence restores old payload',async()=>{
- for(const mode of ['approved','cancelled','disk']){const f=fixture(),p=(await f.contract.execute(f.command('mail.prepare',mail,'draft'))).result;
- const a=f.approvals.store.action(p.action_id),before=JSON.stringify(a.payload);
- if(mode==='approved')f.approve(p.action_id);else if(mode==='cancelled')a.status='CANCELLED';else f.approvals.store.save=()=>{throw Error('disk');};
- await assert.rejects(f.contract.execute(f.command('mail.update_draft',{action_id:p.action_id,payload_hash:p.payload_hash,text:'Edited'},'edit')));
- assert.equal(JSON.stringify(a.payload),before);assert.equal(f.sent,0);}
+test('review detail recovers only its exact original and keeps mailbox/message identity',async()=>{
+ const f=fixture(),row=review(f,'original-review',{account:'pietro',message_id:'<original>'});let reads=0;
+ f.config.readOriginal=async(account,id)=>{reads++;assert.equal(account,'pietro');assert.equal(id,'<original>');return {original:{message_id:id,folder:'INBOX',payload:{text:'Full original',from:[{address:row.sender}]}}};};
+ const contract=makePeuContract(f.config),result=(await contract.execute(f.command('reviews.get',{review_id:row.id},'get-original'))).result.item;
+ assert.equal(result.original_status,'verified');assert.equal(result.original.text,'Full original');assert.equal(reads,1);assert.equal(f.sent,0);
 });

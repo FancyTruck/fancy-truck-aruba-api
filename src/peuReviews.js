@@ -2,7 +2,7 @@ import {hash,problem} from './peuCommon.js';
 
 // This bridge is for the existing, trusted single-owner Peu connection only.
 // A caller cannot choose an actor or substitute an Odoo user identity.
-export function makePeuReviews(store,assertWritable) {
+export function makePeuReviews(store,assertWritable,readOriginal) {
   const find=id=>{
     const row=store.state.classification_reviews[id];
     if(!row)throw problem('review_not_found',404);
@@ -14,17 +14,37 @@ export function makePeuReviews(store,assertWritable) {
     excerpt:row.excerpt||'',snapshot_hash:hash(row),
     allowed_resolutions:row.status==='DA_CLASSIFICARE'&&!row.operation_id?['NOT_COMMERCIAL','HANDLED_MANUALLY']:[],
     requires_manual_reconciliation:Boolean(row.operation_id),
-    resolution:row.resolution||null,resolved_at:row.resolved_at||null,
+    resolution:row.resolution||null,resolved_at:row.resolved_at||null,snoozed_until:row.snoozed_until||null,message_id:row.message_id||null,
   });
   return {
     list({limit=50,after_id}={}) {
       const pending=Object.values(store.state.classification_reviews)
-        .filter(row=>row.status==='DA_CLASSIFICARE').sort((a,b)=>a.id.localeCompare(b.id));
+        .filter(row=>row.status==='DA_CLASSIFICARE'&&(!row.snoozed_until||Date.parse(row.snoozed_until)<=Date.now())).sort((a,b)=>a.id.localeCompare(b.id));
       const candidates=pending.filter(row=>!after_id||row.id>after_id);
       const page=candidates.slice(0,limit);
       return {ok:true,total:pending.length,items:page.map(view),next_after_id:candidates.length>limit?page.at(-1).id:null};
     },
-    get({review_id}) {return {ok:true,item:view(find(review_id))};},
+    async get({review_id}) {
+      const row=find(review_id),item=view(row);item.original_status='unavailable';
+      if(readOriginal&&row.message_id&&['hello','pietro'].includes(row.account))try{
+        const {original}=await readOriginal(row.account,row.message_id);
+        if(original?.message_id===row.message_id&&original.folder==='INBOX'&&original.payload?.text){
+          item.original={...original.payload,message_id:row.message_id};item.original_status='verified';
+        }
+      }catch{/* Keep the excerpt visible while exact original recovery is unavailable. */}
+      return {ok:true,item};
+    },
+    snooze({review_id,snapshot_hash,until}){
+      assertWritable();const row=find(review_id),date=Date.parse(until);
+      if(row.status!=='DA_CLASSIFICARE')throw problem('review_already_closed',409);
+      if(hash(row)!==snapshot_hash)throw problem('review_changed_reconfirm',409);
+      if(!Number.isFinite(date)||date<=Date.now()||date>Date.now()+366*86400000)throw problem('invalid_review_reminder');
+      const item={...row,snoozed_until:new Date(date).toISOString()};
+      store.state.classification_reviews[review_id]=item;
+      try{store.save();}catch{store.state.classification_reviews[review_id]=row;throw problem('review_persistence_failed',503);}
+      store.audit('CLASSIFICATION_SNOOZED',{review_id,until:item.snoozed_until,actor:'peu_owner'});
+      return {ok:true,status:'snoozed',item:view(item)};
+    },
     resolve({review_id,snapshot_hash,resolution,note}) {
       assertWritable();
       const row=find(review_id);
