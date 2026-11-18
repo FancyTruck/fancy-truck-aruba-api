@@ -16,6 +16,8 @@ export function automaticDraftVerifier({readOriginal,odooRead,classify,teamCheck
    if(original.payload.text_truncated)incomplete('draft_original_incomplete');
    const source=original.payload,decision=classify(source.subject,source.text);
    if(!decision.kind||['supplier_offer','non_customer_direction_requires_review','administrative_or_marketing','automatic_or_mailing_list','automatic_service_notification'].includes(decision.reason))return cancel(action,'NOT_CUSTOMER_REQUEST');
+   const recipient=address(action.payload.to||action.target),senders=(source.from||[]).map(a=>String(a.address||'').toLowerCase());
+   if(!recipient||!senders.includes(recipient))incomplete('draft_source_recipient_mismatch');
    // Odoo can retain the received message even after it leaves Aruba INBOX.
    // A later customer answer supersedes an old automatic request for details.
    if(original.source==='odoo_received'){
