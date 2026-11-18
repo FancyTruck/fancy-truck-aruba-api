@@ -1007,9 +1007,9 @@ if (peuDb) {
   const {makePeuContract,mountPeuContract}=await import('./peuContract.js');
   const {jsonRequest}=await import('./peuCommon.js');
   const {ArubaService}=await import('./peuMailService.js');
-  const originalReader=new ArubaService({db:peuDb,accounts:['pietro','hello']});
+  const originalReader=new ArubaService({db:peuDb,withImap,parse:simpleParser,accounts:['pietro','hello']});
   const upstream=(path,options={})=>jsonRequest(fetch,`http://127.0.0.1:${port||server.address().port}${path}`,{...options,headers:{'Content-Type':'application/json',Authorization:`Bearer ${peuInternalToken}`}});
-  mountPeuContract(app,makePeuContract({db:peuDb,approvals,upstream,readOriginal:(account,id)=>originalReader.original(account,id),odooRead:(model,domain,options)=>odooCall(model,'search_read',[domain],options),assertWritable:()=>assertWritable(runtime),
+  mountPeuContract(app,makePeuContract({db:peuDb,approvals,upstream,readOriginal:(account,id)=>originalReader.draftOriginal(account,id),odooRead:(model,domain,options)=>odooCall(model,'search_read',[domain],options),assertWritable:()=>assertWritable(runtime),
     verify:async(capability,response,marker)=>{
       const model=capability==='crm.create'?'crm.lead':'sale.order';
       const id=response.id||response.lead?.id||response.order?.id;
