@@ -16,6 +16,7 @@ const defs={
  'travel.from_depot':travelDefinition,
  ...odooReadDefinitions,
  'reviews.list':{effect:'read',parameters:obj({limit:{type:'integer',minimum:1,maximum:100},after_id:reviewId},[])},
+ 'reviews.reminders':{effect:'read',parameters:obj({limit:{type:'integer',minimum:1,maximum:100},after_id:reviewId},[])},
  'reviews.open_message':{effect:'write',parameters:obj({account:{type:'string',enum:['hello','pietro']},message_id:{type:'string',minLength:1,maxLength:998,pattern:'^[^\\r\\n]+$'}})},
  'reviews.get':{effect:'read',parameters:obj({review_id:reviewId})},
  'reviews.snooze':{effect:'write',parameters:obj({review_id:reviewId,snapshot_hash:reviewId,until:{type:'string',format:'date-time'}})},

@@ -1,6 +1,6 @@
 const escape = value => String(value ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
 export function intakeStatus(state, {now=Date.now(), operating=false}={}) {
-  const reviews=Object.values(state.classification_reviews||{}).filter(x=>x.status==='DA_CLASSIFICARE').sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+  const reviews=Object.values(state.classification_reviews||{}).filter(x=>x.status==='DA_CLASSIFICARE'&&(!x.snoozed_until||Date.parse(x.snoozed_until)<=now)).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
   const uncertain=Object.values(state.mail_operations||{}).filter(x=>x.status==='STARTED');
   const cycle=state.cycles?.at(-1);
   const issues=[];
