@@ -12,9 +12,16 @@ export async function routeCommercialMessage({ parsed, uid, account, uidValidity
     return { action: 'skip', reason: 'authorized_test_message' };
   }
   const classification = classifyCommercialMessage(parsed.subject, parsed.text, parsed.headers, {isReply: Boolean(parsed.inReplyTo || parsed.references?.length)});
+  const isReply = /^\s*(re|r)\s*:/i.test(String(parsed.subject || ''))
+    || Boolean(parsed.inReplyTo || parsed.references?.length);
+  // Administrative words can occur in a customer's order confirmation or invoice
+  // reply. Preserve an established case without admitting a new opportunity.
+  const administrativeReply = classification.reason === 'administrative_or_marketing'
+    && (isReply || quotationReferences(parsed.subject,currentMessage(parsed.text)).length);
   const excluded = nonCommercialCrmReason(parsed.subject);
-  if (excluded) return { action: 'skip', reason: excluded };
-  if (['automatic_or_mailing_list', 'automatic_service_notification', 'administrative_or_marketing', 'supplier_offer'].includes(classification.reason)) {
+  if (excluded && !administrativeReply) return { action: 'skip', reason: excluded };
+  if (['automatic_or_mailing_list', 'automatic_service_notification', 'supplier_offer'].includes(classification.reason)
+    || classification.reason === 'administrative_or_marketing' && !administrativeReply) {
     return { action: 'skip', reason: classification.reason };
   }
   const queue = (reason, candidates = []) => {
@@ -28,8 +35,6 @@ export async function routeCommercialMessage({ parsed, uid, account, uidValidity
     return { action: 'review', review_id: item.id, duplicate, reason };
   };
   if (['forward_requires_review', 'non_customer_direction_requires_review'].includes(classification.reason)) return queue(classification.reason);
-  const isReply = /^\s*(re|r)\s*:/i.test(String(parsed.subject || ''))
-    || Boolean(parsed.inReplyTo || parsed.references?.length);
   if (!classification.kind && !isReply && !quotationReferences(parsed.subject,currentMessage(parsed.text)).length) return queue(classification.reason);
   const match = await findLead(sender, parsed.subject, parsed);
   if (match.ambiguous) return queue(match.reason || 'multiple_matching_leads', match.candidate_ids || []);
@@ -38,3 +43,4 @@ export async function routeCommercialMessage({ parsed, uid, account, uidValidity
   if (isReply || !classification.kind) return queue('reply_without_matching_lead');
   return { action: 'create', kind: classification.kind };
 }
+

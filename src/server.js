@@ -1,4 +1,5 @@
 import {teamAlreadyReplied} from './teamReplyGuard.js';
+import {executeMailAction} from './mailExecution.js';
 import {websiteFormMessage} from './websiteForm.js';
 import { intakeStatus, syncIntakeWatchdog, suspensionDescription } from './intakeWatchdog.js';
 import { ensureCustomerAttention } from './customerAttention.js';
@@ -1404,23 +1405,18 @@ app.post('/v1/:account/send', async (req, res) => {
 app.post('/v1/actions/:id/execute', async (req, res) => {
   try {
     assertWritable(runtime);
-    const action = approvals.assertExecutable(req.params.id);
-    if(action.peu_payload_hash)throw new Error('Usare il comando Peu dedicato con registro persistente');
-    if (!['SEND_EMAIL', 'SEND_FOLLOW_UP', 'SEND_PAYMENT_REMINDER', 'SEND_QUOTE', 'SEND_CONTRACT', 'SEND_INVOICE'].includes(action.type)) {
-      return res.status(409).json({ ok: false, error: 'Questa azione richiede un connettore specifico e non può essere eseguita via SMTP generico' });
-    }
-    const payload = action.payload || {};
-    if (!payload.to && !action.target) throw new Error('Destinatario mancante');
-    if (!payload.subject || (!payload.text && !payload.html)) throw new Error('Contenuto non completo: esecuzione bloccata');
+    const action=await executeMailAction({approvals,id:req.params.id,send:async payload=>{
     const account = accountConfig(payload.account || 'hello');
     const transporter = nodemailer.createTransport({
       host: process.env.ARUBA_SMTP_HOST || 'smtps.aruba.it', port: Number(process.env.ARUBA_SMTP_PORT || 465), secure: true,
       auth: { user: account.email, pass: account.password },
     });
-    const info = await transporter.sendMail({ from: `Fancy Truck <${account.email}>`, to: payload.to || action.target,
+    try { return await transporter.sendMail({ from: `Fancy Truck <${account.email}>`, to: payload.to,
       cc: payload.cc || undefined, replyTo: account.email, subject: payload.subject, text: payload.text || undefined,
-      html: payload.html || undefined, inReplyTo: payload.inReplyTo || undefined, references: payload.references || undefined });
-    res.json({ ok: true, action: approvals.executed(action.id, { message_id: info.messageId, accepted: info.accepted, rejected: info.rejected }) });
+      html: payload.html || undefined, messageId:payload.messageId, inReplyTo: payload.inReplyTo || undefined, references: payload.references || undefined }); }
+    finally { transporter.close(); }
+    }});
+    res.json({ ok: true, action });
   } catch (error) {
     res.status(409).json({ ok: false, error: error instanceof Error ? error.message : 'Esecuzione bloccata' });
   }
@@ -1504,4 +1500,5 @@ const server = app.listen(port, runtime.host, (error) => {
 
 // Module exports permit isolated contract tests without exposing extra HTTP routes.
 export { processQuoteRequest, processQuoteReply, processSentMessage, findReplyLead, server, store, approvals };
+
 

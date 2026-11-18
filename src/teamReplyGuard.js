@@ -22,7 +22,7 @@ export async function teamAlreadyReplied({parsed,accounts,withImap}) {
        const refs=[...header.matchAll(/<[^<>\s]+>/g)].map(m=>m[0]);
        if(envelope.inReplyTo!==id&&!refs.includes(id))continue;
        if(parsed.date&&envelope.date&&new Date(envelope.date)<new Date(parsed.date))continue;
-       if(!folder.sent){
+       {
         // An internal-only handoff is not an answer to the customer. Likewise,
         // another customer message in the thread is not evidence of team handling.
         const senders=addresses(envelope.from);
@@ -41,3 +41,4 @@ export async function teamAlreadyReplied({parsed,accounts,withImap}) {
  }
  return {handled:false};
 }
+
