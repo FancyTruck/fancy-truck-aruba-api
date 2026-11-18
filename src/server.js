@@ -1024,16 +1024,16 @@ if (peuDb) {
   mountPeuContract(app,makePeuContract({db:peuDb,approvals,upstream,readOriginal:(account,id)=>originalReader.draftOriginal(account,id),verifyDraft:async action=>{
     try {
       const id=action.payload?.inReplyTo;
-      if(!id)return false;
+      if(!id){console.log(JSON.stringify({event:'draft_verification',action_id:action.id,status:'source_missing',legacy:true}));return false;}
       const {original}=await originalReader.draftOriginal(action.payload.account,id);
-      if(!original?.payload?.text)return false;
+      if(!original?.payload?.text){console.log(JSON.stringify({event:'draft_verification',action_id:action.id,status:'original_not_found'}));return false;}
       const source=original.payload;
       const decision=classifyCommercialMessage(source.subject,source.text,new Map(),{isReply:true});
       const blocked=['supplier_offer','non_customer_direction_requires_review','administrative_or_marketing','automatic_or_mailing_list','automatic_service_notification'].includes(decision.reason);
       const handled=blocked?false:(await teamAlreadyReplied({parsed:{messageId:id,date:source.date,from:source.from},accounts:['hello','pietro'].filter(name=>{try{accountConfig(name);return true;}catch{return false;}}),withImap})).handled;
       if(blocked||handled){store.cancelActionGroup(action.supersede_group,blocked?'NOT_CUSTOMER_REQUEST':'TEAM_ALREADY_REPLIED');return false;}
       return true;
-    }catch{store.audit('AUTO_DRAFT_VERIFICATION_DEFERRED',{action_id:action.id});return false;}
+    }catch(error){const code=String(error.code||error.message||'verification_failed');console.log(JSON.stringify({event:'draft_verification',action_id:action.id,status:'deferred',reason:/^[a-zA-Z0-9_]{1,100}$/.test(code)?code:'provider_error'}));store.audit('AUTO_DRAFT_VERIFICATION_DEFERRED',{action_id:action.id});return false;}
   },odooRead:(model,domain,options)=>odooCall(model,'search_read',[domain],options),assertWritable:()=>assertWritable(runtime),
     verify:async(capability,response,marker)=>{
       const model=capability==='crm.create'?'crm.lead':'sale.order';
