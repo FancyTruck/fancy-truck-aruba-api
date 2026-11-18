@@ -1,3 +1,4 @@
+import {verifyDraftPage} from './verifyDraftPage.js';
 import {mailDrafts,draftPayload} from './mailDrafts.js';
 import {intakeUpdates} from './intakeUpdates.js';
 import {travelFromDepot,travelDefinition} from './peuTravel.js';
@@ -97,10 +98,7 @@ export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritabl
      let result; const p=command.parameters;
      if(c.id==='mail.drafts'){
        result=mailDrafts(approvals.store.state,p);
-       if(verifyDraft){const checked=[];for(const draft of result.drafts){
-         const action=approvals.store.state.actions[draft.action_id];
-         if(!action?.supersede_group?.startsWith('missing-details:')||await verifyDraft(action))checked.push(draft);
-       }result.drafts=checked;}
+       if(verifyDraft)Object.assign(result,await verifyDraftPage(result.drafts,approvals.store.state.actions,verifyDraft));
 
        if(p.action_id)for(const draft of result.drafts){
          draft.original_status=draft.in_reply_to?'unavailable':'new_message';
