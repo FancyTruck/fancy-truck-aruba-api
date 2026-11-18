@@ -7,3 +7,9 @@ test('missing Aruba original is recovered from its exact Odoo case and customer'
 test('another customer or ambiguous copies cannot become the original',async()=>{for(const rows of [[{...message,email_from:'other@example.invalid'}],[message,message],[{...message,res_id:223}]]){const f=setup(rows);assert.equal((await f.resolve('hello','<exact@example.invalid>')).original,null);}});
 test('a different account or message never broadens into a subject search',async()=>{const f=setup();assert.equal((await f.resolve('pietro','<exact@example.invalid>')).original,null);assert.equal(f.queries,0);});
 test('existing Aruba original is preferred without Odoo lookup',async()=>{const original={payload:{text:'Aruba'}};const resolve=draftOriginalResolver({readMailbox:async()=>({original}),actions:()=>assert.fail('not needed')});assert.equal((await resolve('hello','<id>')).original,original);});
+
+test('a historical default hello account does not hide its exact original in Pietro inbox',async()=>{
+ const calls=[],original={message_id:'<exact>',folder:'INBOX',payload:{text:'Exact received message'}};
+ const resolve=draftOriginalResolver({accounts:['hello','pietro'],readMailbox:async account=>{calls.push(account);return {original:account==='pietro'?original:null};},actions:()=>assert.fail('No subject or Odoo search needed')});
+ assert.equal((await resolve('hello','<exact>')).original,original);assert.deepEqual(calls,['hello','pietro']);
+});

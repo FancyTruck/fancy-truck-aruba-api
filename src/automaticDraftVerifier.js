@@ -1,8 +1,9 @@
 const address=value=>String(value||'').match(/<([^<>\s]+@[^<>\s]+)>|^([^<>\s]+@[^<>\s]+)$/)?.slice(1).find(Boolean)?.toLowerCase()||'';
 function incomplete(code){throw Object.assign(Error(code),{code});}
-export function automaticDraftVerifier({readOriginal,odooRead,classify,teamCheck,store,log=console.log}){
+export function automaticDraftVerifier({readOriginal,odooRead,classify,teamCheck,store,canRetire=()=>true,log=console.log}){
  function cancel(action,reason){
   if(action.status!=='PENDING_APPROVAL')return false;
+  if(!canRetire())incomplete('draft_recovery_writes_blocked');
   const old={...action};Object.assign(action,{status:'CANCELLED',cancel_reason:reason,cancelled_at:new Date().toISOString()});
   try{store.save();}catch(error){Object.assign(action,old);for(const k of ['cancel_reason','cancelled_at'])if(!(k in old))delete action[k];throw error;}
   store.audit('ACTION_CANCELLED',{action_id:action.id,reason});
@@ -14,7 +15,7 @@ export function automaticDraftVerifier({readOriginal,odooRead,classify,teamCheck
    const response=await readOriginal(action.payload.account,id),original=response.original;if(!original?.payload?.text)incomplete(response.reason||'draft_original_not_found');
    if(original.payload.text_truncated)incomplete('draft_original_incomplete');
    const source=original.payload,decision=classify(source.subject,source.text);
-   if(['supplier_offer','non_customer_direction_requires_review','administrative_or_marketing','automatic_or_mailing_list','automatic_service_notification'].includes(decision.reason))return cancel(action,'NOT_CUSTOMER_REQUEST');
+   if(!decision.kind||['supplier_offer','non_customer_direction_requires_review','administrative_or_marketing','automatic_or_mailing_list','automatic_service_notification'].includes(decision.reason))return cancel(action,'NOT_CUSTOMER_REQUEST');
    // Odoo can retain the received message even after it leaves Aruba INBOX.
    // A later customer answer supersedes an old automatic request for details.
    if(original.source==='odoo_received'){

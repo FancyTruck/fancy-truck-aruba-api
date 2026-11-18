@@ -1026,8 +1026,8 @@ if (peuDb) {
   const upstream=(path,options={})=>jsonRequest(fetch,`http://127.0.0.1:${port||server.address().port}${path}`,{...options,headers:{'Content-Type':'application/json',Authorization:`Bearer ${peuInternalToken}`}});
   const odooRead=(model,domain,options)=>odooCall(model,'search_read',[domain],options);
   const readDraftOriginal=draftOriginalResolver({readMailbox:(account,id)=>originalReader.draftOriginal(account,id),actions:()=>store.state.actions,accounts:['hello','pietro'].filter(name=>{try{accountConfig(name);return true;}catch{return false;}}),odooRead,plainText:plainTextFromHtml});
-  const verifyDraft=automaticDraftVerifier({readOriginal:readDraftOriginal,odooRead,classify:(subject,text)=>classifyCommercialMessage(subject,text,new Map(),{isReply:true}),teamCheck:parsed=>teamAlreadyReplied({parsed,accounts:['hello','pietro'].filter(name=>{try{accountConfig(name);return true;}catch{return false;}}),withImap}),store});
-  const startupDraftCheck=setTimeout(async()=>{try{
+  const verifyDraft=automaticDraftVerifier({readOriginal:readDraftOriginal,odooRead,classify:(subject,text)=>classifyCommercialMessage(subject,text,new Map(),{isReply:true}),teamCheck:parsed=>teamAlreadyReplied({parsed,accounts:['hello','pietro'].filter(name=>{try{accountConfig(name);return true;}catch{return false;}}),withImap}),store,canRetire:()=>!runtime.readOnly&&!runtime.recoveryRequired});
+  const startupDraftCheck=setTimeout(async()=>{if(runtime.readOnly||runtime.recoveryRequired)return;try{
     const drafts=Object.values(store.state.actions).filter(a=>a.type==='SEND_EMAIL'&&a.status==='PENDING_APPROVAL'&&a.supersede_group?.startsWith('missing-details:')).map(a=>({action_id:a.id}));
     const result=await verifyDraftPage(drafts,store.state.actions,verifyDraft);
     console.log(JSON.stringify({event:'automatic_draft_recovery',checked:drafts.length,verified:result.drafts.length,verification_pending:result.verification_pending}));

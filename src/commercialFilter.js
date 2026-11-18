@@ -24,6 +24,9 @@ export function classifyCommercialMessage(subject = '', text = '', headers = new
   // A supplier answering OUR purchase request is not a customer asking to rent
   // OUR fleet. Quarantine direction conflicts before even linking an old lead.
   // No sender/domain blacklist: the same company may also be a real customer.
+  const businessAdministration = /(?:configurazione|passaggio|avvio).{0,45}odoo|(?:bilancio|contabilità|contabilita|paghe|cedolini)/i.test(title);
+  if(businessAdministration&&!/(?:vorrei|vorremmo|cerchiamo|ci serve|avremmo bisogno).{0,100}(?:nolegg|food.?truck|airstream|roadshow|brand activation)/i.test(body))return {kind:null,reason:'administrative_or_marketing'};
+  if(/\b(?:richiesta (?:di )?plafond|richiesta (?:di )?fido)\b/i.test(title))return {kind:null,reason:'non_customer_direction_requires_review'};
   const financePitch = /(?:scopri quanto credito|quanto credito puoi ottenere|(?:finanziament[oi]|credito).{0,60}(?:per la tua impresa|per la vostra impresa|per la tua azienda))/i.test(title);
   const consultingPitch = /business plan/i.test(title) && /(?:gratuit|consulenza|parlarne)/i.test(`${title} ${body}`);
   const supplierFulfilment = /(?:vostr[oa] (?:richiesta|cantiere)|presso la (?:nostra )?filiale)/i.test(body)

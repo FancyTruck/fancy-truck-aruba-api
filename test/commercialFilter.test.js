@@ -64,3 +64,10 @@ test('security notices and wrapped spam never become sales leads',()=>{
 });
 
 test('generic property rental is not a truck request',()=>assert.equal(classify('Affitto appartamento','Vorrei affittare un ufficio').kind,null));
+
+test('business administration and credit requests are not fleet rental demand',()=>{
+ for(const subject of ['R: Fancy Truck Srl - Configurazione Odoo','RE: Fancy Truck Srl/Il gelato della Carla Sas - Passaggio a Odoo','GRENKE ITALIA - Richiesta PLAFOND']){
+  assert.equal(classify(subject,'Ci occorrono informazioni per procedere con il contratto di noleggio.',new Map(),{isReply:true}).kind,null);
+ }
+ assert.equal(classify('Roadshow Odoo','Vorremmo noleggiare un Airstream per il roadshow di novembre.').kind,'brand_activation');
+});
