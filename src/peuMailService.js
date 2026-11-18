@@ -1,3 +1,4 @@
+import {websiteFormMessage} from './websiteForm.js';
 import {problem,transaction} from './peuMailDb.js';
 import {readFolder,reconcileSent} from './peuMailSync.js';
 import {MAX_POLL_SOURCE_BYTES} from './mailPolling.js';
@@ -16,6 +17,7 @@ const projectedPayload = `CASE WHEN length(payload)>16777216 THEN
  'from',json(coalesce(json_extract(payload,'$.from'),'[]')),
  'to',json(coalesce(json_extract(payload,'$.to'),'[]')),
  'inReplyTo',json_extract(payload,'$.inReplyTo'),
+ 'replyTo',json(coalesce(json_extract(payload,'$.replyTo'),'[]')),
  'references',json(coalesce(json_extract(payload,'$.references'),'[]')),
  'attachments',json(coalesce((SELECT json_group_array(json_object(
  'index',key,'filename',json_extract(value,'$.filename'),
@@ -39,9 +41,9 @@ export class ArubaService {
    const folders=await client.list();if(!folders.some(f=>f.path===folder&&(f.path==='INBOX'||f.specialUse==='\\Sent')))throw problem('folder_not_authorized',403);
    let cursor=this.db.prepare('SELECT validity,last_uid uid FROM mail_cursors WHERE account=? AND folder=?').get(account,folder),total=0;
    for(let page=0;page<10000;page++){
-     // A source may contain large MIME attachments: never retain 100 raw mails.
-     const batch=await readFolder(client,folder,cursor,1),parsed=[];
-     for(const item of batch.items){const m=item.source===null?{subject:item.envelope?.subject||'',text:'',date:item.envelope?.date,from:{value:item.envelope?.from||[]},to:{value:item.envelope?.to||[]},messageId:item.envelope?.messageId,inReplyTo:item.envelope?.inReplyTo,attachments:[]}:await this.parse(Buffer.from(item.source,'base64'));const id=m.messageId||null,refs=Array.isArray(m.references)?m.references:typeof m.references==='string'?m.references.split(/\s+/):[];parsed.push({...item,message_id:id,thread_key:refs[0]||m.inReplyTo||id||`${batch.cursor.validity}:${item.uid}`,payload:JSON.stringify({content_status:item.content_status||'available',source_size:item.size||null,subject:m.subject||'',text:m.text||'',date:m.date?.toISOString()||null,from:m.from?.value||[],to:m.to?.value||[],inReplyTo:m.inReplyTo||null,references:refs,attachments:(m.attachments||[]).map((a,index)=>({index,filename:a.filename||null,contentType:a.contentType,size:a.size}))})});}
+     // IMAP batches are capped at 20 MiB, including underreported sources.
+     const batch=await readFolder(client,folder,cursor,100),parsed=[];
+     for(const item of batch.items){const m=item.source===null?{subject:item.envelope?.subject||'',text:'',date:item.envelope?.date,from:{value:item.envelope?.from||[]},to:{value:item.envelope?.to||[]},messageId:item.envelope?.messageId,inReplyTo:item.envelope?.inReplyTo,attachments:[]}:await this.parse(Buffer.from(item.source,'base64'));const reply=websiteFormMessage(m);const id=m.messageId||null,refs=Array.isArray(m.references)?m.references:typeof m.references==='string'?m.references.split(/\s+/):[];parsed.push({...item,message_id:id,thread_key:refs[0]||m.inReplyTo||id||`${batch.cursor.validity}:${item.uid}`,payload:JSON.stringify({content_status:item.content_status||'available',source_size:item.size||null,subject:m.subject||'',text:m.text||'',date:m.date?.toISOString()||null,from:m.from?.value||[],to:m.to?.value||[],replyTo:reply.websiteForm?reply.from.value:(m.replyTo?.value||m.from?.value||[]),inReplyTo:m.inReplyTo||null,references:refs,attachments:(m.attachments||[]).map((a,index)=>({index,filename:a.filename||null,contentType:a.contentType,size:a.size}))})});}
      transaction(this.db,()=>{if(batch.reset)this.db.prepare('UPDATE mail_messages SET deleted=1 WHERE account=? AND folder=?').run(account,folder);
        for(const m of parsed)this.db.prepare('INSERT INTO mail_messages VALUES(?,?,?,?,?,?,?,?,0) ON CONFLICT(account,folder,validity,uid) DO UPDATE SET payload=excluded.payload,flags=excluded.flags,deleted=0').run(account,folder,batch.cursor.validity,m.uid,m.message_id,m.thread_key,m.payload,JSON.stringify(m.flags));
        this.db.prepare('INSERT INTO mail_cursors VALUES(?,?,?,?) ON CONFLICT(account,folder) DO UPDATE SET validity=excluded.validity,last_uid=excluded.last_uid').run(account,folder,batch.cursor.validity,batch.cursor.uid);
@@ -55,6 +57,14 @@ export class ArubaService {
    return {status:'synced',new_messages:total,cursor,restricted_messages:restricted,content_coverage:restricted?'partial':'available'};
  });}
  messages(account,folder){this.account(account);return Array.from(this.db.prepare(`SELECT account,folder,validity,uid,message_id,thread_key,flags,deleted,${publicPayload} FROM mail_messages WHERE account=? AND folder=? AND deleted=0 ORDER BY uid DESC LIMIT 100`).iterate(account,folder),publicMessage);}
+ search(account,query,limit=20){
+  this.account(account);
+  if(typeof query!=='string'||query.trim().length<2||query.length>300||!Number.isSafeInteger(limit)||limit<1||limit>50)throw problem('invalid_mail_query');
+  return Array.from(this.db.prepare(`SELECT account,folder,validity,uid,message_id,thread_key,flags,deleted,${publicPayload}
+   FROM mail_messages WHERE account=? AND folder='INBOX' AND deleted=0 AND length(payload)<=16777216
+   AND instr(lower(coalesce(json_extract(payload,'$.subject'),'')||' '||coalesce(json_extract(payload,'$.text'),'')||' '||coalesce(json_extract(payload,'$.from'),'')||' '||coalesce(json_extract(payload,'$.to'),'')),lower(?))>0
+   ORDER BY uid DESC LIMIT ?`).iterate(account,query.trim(),limit),publicMessage);
+ }
  async attachment(account,folder,validity,uid,index){this.account(account);const r=this.db.prepare('SELECT uid FROM mail_messages WHERE account=? AND folder=? AND validity=? AND uid=? AND deleted=0').get(account,folder,validity,uid);if(!r)throw problem('message_not_found',404);
    return this.withImap(account,async client=>{const lock=await client.getMailboxLock(folder,{readOnly:true});try{
      if(String(client.mailbox.uidValidity)!==validity)throw problem('uidvalidity_changed_retry',409);

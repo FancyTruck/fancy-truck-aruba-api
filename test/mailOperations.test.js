@@ -80,3 +80,25 @@ test('failed reconciliation save rolls back both review and journal', async t =>
   assert.deepEqual(args.store.snapshot(), before);
   assert.deepEqual(new JsonStateStore(args.store.filePath).snapshot(), before);
 });
+test('site form skipped as internal can recover once; successful effects never repeat',async t=>{
+ const args=setup(t);let writes=0;
+ await runMailOperation({...args,execute:async()=>({skipped:true,reason:'mittente interno o automatico'})});
+ const execute=async()=>{writes++;return {lead_id:42};};
+ await runMailOperation({...args,parsed:{...args.parsed,websiteForm:true},retrySuspended:true,execute});
+ await runMailOperation({...args,parsed:{...args.parsed,websiteForm:true},retrySuspended:true,execute});
+ assert.equal(writes,1);
+});
+test('recovery flag cannot repeat interrupted writes',async t=>{
+ const args=setup(t);let writes=0;
+ await assert.rejects(runMailOperation({...args,execute:async()=>{writes++;throw Error('uncertain');}}));
+ const result=await runMailOperation({...args,retrySuspended:true,execute:async()=>{writes++;}});
+ assert.equal(result.suspended,true);assert.equal(writes,1);
+});
+test('classification suspension can recover but missing or uncertain review cannot',async t=>{
+ for(const uncertain of [false,true]){
+ const args=setup(t),{item}=args.store.queueClassification({source_key:'review',account:'hello',reason:'commercial_intent_not_established',...(uncertain?{operation_id:'unknown'}:{})});
+ await runMailOperation({...args,execute:async()=>({suspended:true,review_id:item.id})});
+ let writes=0;await runMailOperation({...args,retrySuspended:true,execute:async()=>{writes++;return {lead_id:42};}});
+ assert.equal(writes,uncertain?0:1);
+ }
+});

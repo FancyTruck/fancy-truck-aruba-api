@@ -1,5 +1,6 @@
 import { reviewSnapshot } from './reviewSnapshot.js';
 import { acquireProcessOwner } from './processOwner.js';
+import {websiteFormMessage} from './websiteForm.js';
 import { intakeStatus, syncIntakeWatchdog, suspensionDescription } from './intakeWatchdog.js';
 import { peuEffectDiagnostics } from './peuEffectDiagnostics.js';
 import { ensureCustomerAttention } from './customerAttention.js';
@@ -338,7 +339,7 @@ async function queueStreetfoodHandoff(leadId, recipient, parsed) {
   const contact = REQUEST_CATEGORIES.event_food.contact;
   const action = approvals.queue({ type: 'SEND_EMAIL', target: recipient,
     case_id: `odoo-lead-${leadId}`, idempotency_key: `streetfood-handoff:${leadId}`,
-    payload: { account: 'hello', ...customerReplyHeaders(parsed, 'La sua richiesta per un evento food'),
+    payload: { account: parsed?.mailboxAccount || 'hello', ...customerReplyHeaders(parsed, 'La sua richiesta per un evento food'),
       html: `<p>Buongiorno, per la partecipazione a eventi food il suo riferimento è Cristiano, commerciale della nostra divisione streetfood: <a href="mailto:${contact}">${contact}</a>.</p><p>Grazie,<br>Fancy AI · Fancy Truck</p>` },
   }).action;
   return { lead_id: leadId, kind: 'event_food', handoff_contact: contact, approval_id: action.id };
@@ -356,7 +357,7 @@ async function askCustomerForMissingDetails(leadId, partner, senderName, missing
     type: 'SEND_EMAIL', target: partner.email, case_id: `odoo-lead-${leadId}`,
     idempotency_key: `missing-details:${leadId}:${missing.slice().sort().join(',')}`,
     supersede_group: `missing-details:odoo-lead-${leadId}`,
-    payload: { account: 'hello', ...customerReplyHeaders(newRequest, 'Informazioni necessarie per preparare il preventivo Fancy Truck'), html: body },
+    payload: { account: newRequest?.mailboxAccount || 'hello', ...customerReplyHeaders(newRequest, 'Informazioni necessarie per preparare il preventivo Fancy Truck'), html: body },
   }).action;
 }
 
@@ -492,7 +493,7 @@ async function createDraftFromCrmLead(lead, partner, kind, combinedText, key, pa
 
   if (isRental && availability.status === 'UNAVAILABLE') {
     const action = approvals.queue(unavailableVehicleAction({
-      leadId: lead.id, recipient: partner.email, product, dates,
+      leadId: lead.id, recipient: partner.email, product, dates, account: parsed?.mailboxAccount || 'hello',
     })).action;
     await setLeadProcedureStatus(lead.id, 'DA_INTEGRARE');
     return { awaiting_customer_choice: true, approval_id: action.id, availability: 'UNAVAILABLE' };
@@ -681,7 +682,8 @@ async function flagCustomerRequest(leadId) {
 }
 
 async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
-  parsed = { ...parsed, text: currentMessage(parsed.text) };
+  parsed = websiteFormMessage(parsed);
+  parsed = { ...parsed, mailboxAccount: accountName, text: currentMessage(parsed.text) };
   const sender = parsed.from?.value?.[0];
   const senderEmail = String(sender?.address || '').trim().toLowerCase();
   const decision = await routeCommercialMessage({
@@ -1035,9 +1037,9 @@ if (peuDb) {
       if(rows.length!==1||(capability==='crm.create'?!rows[0].description?.includes(`[AUTO:${marker}]`):rows[0].client_order_ref!==`AUTO:${marker}`))throw new Error('record_not_verified');
       return {ok:true,status:'verified',id,model};
     },smtp:async payload=>{
-      assertWritable(runtime); const account=accountConfig('pietro');
+      assertWritable(runtime); const account=accountConfig(payload.account);
       const transport=nodemailer.createTransport({host:process.env.ARUBA_SMTP_HOST||'smtps.aruba.it',port:Number(process.env.ARUBA_SMTP_PORT||465),secure:true,connectionTimeout:10000,greetingTimeout:10000,socketTimeout:15000,auth:{user:account.email,pass:account.password}});
-      try{return await transport.sendMail({from:`Fancy Truck <${account.email}>`,replyTo:account.email,to:payload.to,subject:payload.subject,text:payload.text,messageId:payload.messageId});}finally{transport.close();}
+      try{return await transport.sendMail({from:`Fancy Truck <${account.email}>`,replyTo:account.email,to:payload.to,subject:payload.subject,text:payload.text,messageId:payload.messageId,inReplyTo:payload.inReplyTo,references:payload.references});}finally{transport.close();}
     }
   }));
 }
@@ -1301,6 +1303,37 @@ app.post('/v1/odoo/chatter', async (req, res) => {
   } catch (error) {
     res.status(502).json({ ok: false, error: error instanceof Error ? error.message : 'Errore Odoo' });
   }
+});
+
+// Explicit recovery rereads the exact Aruba message; uncertain effects never retry.
+app.post('/v1/:account/messages/:uid/reprocess', async (req,res)=>{
+ try{
+  assertWritable(runtime);
+  const account=req.params.account,uid=Number(req.params.uid);
+  if(!['hello','pietro'].includes(account)||!Number.isSafeInteger(uid)||uid<1||!req.body?.uid_validity||!Object.hasOwn(req.body,'message_id'))throw Error('Identità del messaggio richiesta');
+  const result=await withImap(account,async client=>{
+   const lock=await client.getMailboxLock('INBOX',{readOnly:true});
+   try{
+    const validity=String(client.mailbox.uidValidity);
+    if(validity!==String(req.body.uid_validity))throw Error('UIDVALIDITY cambiato: riconciliare prima');
+    const meta=await client.fetchOne(uid,{size:true},{uid:true});
+    if(!meta||meta.size>10*1024*1024)throw Error('Messaggio grande o assente: verifica manuale necessaria');
+    const raw=await client.fetchOne(uid,{source:{maxLength:10*1024*1024+1}},{uid:true});
+    if(!raw?.source||raw.source.length>10*1024*1024)throw Error('Messaggio oltre il limite');
+    const parsed=websiteFormMessage(await simpleParser(raw.source));
+    if((parsed.messageId||null)!==req.body.message_id)throw Error('Message-ID cambiato');
+    const outcome=await runMailOperation({store,account,validity,uid,parsed,retrySuspended:true,
+      execute:()=>processQuoteRequest(parsed,uid,account,validity)});
+    store.recordMailOutcome(account,validity,uid,outcome);
+    if(!outcome.suspended&&!outcome.duplicate)for(const review of Object.values(store.state.classification_reviews)){
+      if(review.status==='DA_CLASSIFICARE'&&!review.operation_id&&review.account===account&&review.mailbox==='INBOX'&&review.uid===uid&&String(review.uid_validity)===validity)
+        store.resolveClassification(review.id,'HANDLED_MANUALLY','Messaggio riletto e rielaborato con filtro commerciale e controlli di idempotenza. Nessuna email inviata.','admin');
+    }
+    return outcome;
+   }finally{lock.release();}
+  });
+  res.json({ok:true,emails_sent:0,result});
+ }catch(error){res.status(409).json({ok:false,error:error.message});}
 });
 
 app.get('/v1/:account/status', async (req, res) => {

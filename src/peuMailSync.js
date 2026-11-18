@@ -26,6 +26,36 @@ async function newUidPage(client,since,limit,validity){
  if(new Set(found).size!==found.length||found.some(uid=>!Number.isSafeInteger(uid)||uid<1||uid>=uidNext)||(start>1&&found.some(uid=>uid<since)))throw problem('message_uid_mismatch',502);
  return {ids:found.filter(uid=>uid>=since).sort((a,b)=>a-b),more:end<exists,unchanged};
 }
+// Two bounded IMAP FETCH commands replace per-message round trips on backfills.
+async function batchItems(client,selected){
+ const metadata=new Map();
+ for await(const row of client.fetch(selected.join(','),{uid:true,size:true,envelope:true,flags:true},{uid:true})){
+  if(!selected.includes(row.uid)||metadata.has(row.uid))throw problem('message_uid_mismatch',502);
+  metadata.set(row.uid,row);
+ }
+ const chosen=[],small=[];let budget=0;
+ for(const uid of selected){
+  const m=metadata.get(uid);
+  if(!m||!Number.isSafeInteger(m.size)||m.size<0)throw problem('message_size_unavailable',502);
+  if(m.size>MAX_SOURCE_BYTES){if(!m.envelope)throw problem('message_metadata_unavailable',502);chosen.push(uid);continue;}
+  if(chosen.length&&budget+m.size>MAX_SOURCE_BYTES)break;
+  budget+=m.size;chosen.push(uid);small.push(uid);
+ }
+ const sources=new Map();let actual=0;
+ if(small.length)for await(const m of client.fetch(small.join(','),{uid:true,source:{start:0,maxLength:MAX_SOURCE_BYTES+1}},{uid:true})){
+  if(!small.includes(m.uid)||sources.has(m.uid))throw problem('message_uid_mismatch',502);
+  if(!m.source||m.source.length>MAX_SOURCE_BYTES)throw problem('mail_sync_large_message_requires_review',413);
+  actual+=m.source.length;if(actual>MAX_SOURCE_BYTES)throw problem('mail_sync_large_message_requires_review',413);
+  sources.set(m.uid,m.source.toString('base64'));
+ }
+ return chosen.map(uid=>{
+  const m=metadata.get(uid);
+  if(m.size<=MAX_SOURCE_BYTES&&!sources.has(uid))throw problem('message_metadata_unavailable',502);
+  return {uid,envelope:m.envelope,flags:[...(m.flags||[])],size:m.size,
+   source:m.size>MAX_SOURCE_BYTES?null:sources.get(uid),
+   content_status:m.size>MAX_SOURCE_BYTES?'requires_large_message_download':'available'};
+ });
+}
 // Reuses an authenticated ImapFlow client created by Fancy's existing account resolver.
 // No independent polling service or production credential configuration.
 export async function readFolder(client,folder,cursor,limit=100){
@@ -35,7 +65,8 @@ export async function readFolder(client,folder,cursor,limit=100){
     let totalBytes=0;
     const page=await newUidPage(client,since,limit,validity),ids=page.ids;
     const selected=ids.filter(id=>id>=since).sort((a,b)=>a-b).slice(0,limit);
-    for(const uid of selected){
+    if(selected.length&&limit>1&&typeof client.fetch==='function')items.push(...await batchItems(client,selected));
+    else for(const uid of selected){
       const meta=await client.fetchOne(uid,{size:true},{uid:true});
       if(!meta||!Number.isSafeInteger(meta.size)||meta.size<0)throw problem('message_size_unavailable',502);
       if(meta.size>MAX_SOURCE_BYTES){

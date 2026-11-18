@@ -27,7 +27,7 @@ export async function routeCommercialMessage({ parsed, uid, account, uidValidity
     });
     return { action: 'review', review_id: item.id, duplicate, reason };
   };
-  if (classification.reason === 'forward_requires_review') return queue(classification.reason);
+  if (['forward_requires_review', 'non_customer_direction_requires_review'].includes(classification.reason)) return queue(classification.reason);
   const isReply = /^\s*(re|r)\s*:/i.test(String(parsed.subject || ''))
     || Boolean(parsed.inReplyTo || parsed.references?.length);
   if (!classification.kind && !isReply && !quotationReferences(parsed.subject,currentMessage(parsed.text)).length) return queue(classification.reason);

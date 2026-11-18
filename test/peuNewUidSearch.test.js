@@ -9,7 +9,7 @@ function fixture(count=1200){
  async fetchOne(uid,q,o){
   if(q.uid&&!q.source&&!q.envelope){probes++;assert.equal(o.uid,false);assert.deepEqual(q,{uid:true});if(mode==='probe')return false;return {seq:uid,uid:ids[uid-1]};}
   assert.equal(o.uid,true);assert(ids.includes(uid));if(q.size)return {size:3};downloads++;if(mode==='changed')c.mailbox.exists--;return {uid,flags:new Set(),source:Buffer.from('abc')};
- },async *fetch(range){for(const uid of range.split(',').map(Number))yield {uid,flags:new Set()};}};
+ },async *fetch(range,q){for(const uid of range.split(',').map(Number)){if(q.size)yield {uid,size:3,envelope:{},flags:new Set()};else if(q.source){downloads++;yield {uid,source:Buffer.from('abc')};}else yield {uid,flags:new Set()};}}};
  return {c,ids,set mode(v){mode=v;},get counts(){return {searches,probes,downloads,releases};}};
 }
 test('bounded new UID page locates sparse cursor by <=32 metadata probes and <=101 search results',async()=>{

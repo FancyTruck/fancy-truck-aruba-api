@@ -21,12 +21,26 @@ export function classifyCommercialMessage(subject = '', text = '', headers = new
       || (getHeader('auto-submitted') && getHeader('auto-submitted') !== 'no')) {
     return { kind: null, reason: 'automatic_or_mailing_list' };
   }
+  // A supplier answering OUR purchase request is not a customer asking to rent
+  // OUR fleet. Quarantine direction conflicts before even linking an old lead.
+  // No sender/domain blacklist: the same company may also be a real customer.
+  const financePitch = /(?:scopri quanto credito|quanto credito puoi ottenere|(?:finanziament[oi]|credito).{0,60}(?:per la tua impresa|per la vostra impresa|per la tua azienda))/i.test(title);
+  const consultingPitch = /business plan/i.test(title) && /(?:gratuit|consulenza|parlarne)/i.test(`${title} ${body}`);
+  const supplierFulfilment = /(?:vostr[oa] (?:richiesta|cantiere)|presso la (?:nostra )?filiale)/i.test(body)
+    && /(?:generatore|articolo proposto|nostr[oa] (?:mezzo|prodotto|attrezzatura))/i.test(body)
+    && /(?:disponibil|redazione del preventivo|procedere)/i.test(body);
+  const equipmentPitch = /(?:energia a bordo|riscaldamento|condizionatori|pannelli solari)/i.test(title)
+    && /(?:scopri|richiedi informazioni|richiedi un preventivo|installiamo|proponiamo)/i.test(body)
+    && !/(?:vorrei|vorremmo|cerchiamo).{0,80}(?:nolegg|food.?truck|airstream|brand activation|roadshow)/i.test(body);
+  if (financePitch || consultingPitch || supplierFulfilment || equipmentPitch) {
+    return { kind: null, reason: 'non_customer_direction_requires_review' };
+  }
   // Transactional account messages often lack List-* / Auto-Submitted headers.
   // Match their purpose, never block an entire provider or sender domain.
   // A customer's own request/reply accompanying a notification stays eligible.
   const customerRequest = /\b(?:vorrei|vorremmo|avremmo bisogno|cerchiamo|ci serve|ci servono|necessitiamo|would like|looking for)\b/i;
   const prefixedConversation = isReply || /^\s*(?:re|r|fw|fwd|i)\s*:/i.test(String(subject));
-  const serviceNotification = /\b(?:account login notification|(?:new|successful|suspicious) (?:account )?(?:login|sign[ -]?in)|(?:verify|confirm) (?:your )?e-?mail(?: address)?|(?:complete|finish) your .{0,60}account (?:setup|registration)|password (?:reset|changed)|reset (?:your )?password|(?:verification|security|one.time) code|notifica (?:di )?accesso|verifica (?:il tuo indirizzo )?e-?mail|conferma (?:il tuo indirizzo )?e-?mail|codice (?:di )?(?:verifica|sicurezza)|reimposta(?:zione)? password)\b/i;
+  const serviceNotification = /\b(?:account login notification|(?:new|successful|suspicious) (?:account )?(?:login|sign[ -]?in)|(?:verify|confirm) (?:your )?e-?mail(?: address)?|(?:complete|finish) your .{0,60}account (?:setup|registration)|password (?:reset|changed)|reset (?:your )?password|(?:verification|security|one.time) code|accessi sospetti|autorizzazione bonifico(?: istantaneo)?|notifica (?:di )?accesso|verifica (?:il tuo indirizzo )?e-?mail|conferma (?:il tuo indirizzo )?e-?mail|codice (?:di )?(?:verifica|sicurezza)|reimposta(?:zione)? password)\b/i;
   if (!prefixedConversation && !customerRequest.test(body) && serviceNotification.test(title)) {
     return { kind: null, reason: 'automatic_service_notification' };
   }
@@ -35,7 +49,7 @@ export function classifyCommercialMessage(subject = '', text = '', headers = new
   if (!prefixedConversation && !customerRequest.test(body) && fundingPromotion) {
     return { kind: null, reason: 'administrative_or_marketing' };
   }
-  const excludedTitle = /\b(?:fattur[ae]|estratto conto|ordine.{0,30}(?:conferm|spedit)|conferma.{0,25}ordine|spedito|consegnato|in consegna|documento disponibile|risoluzione richiesta assistenza|nuovo (?:accesso|dispositivo)|new login|preventiv[oi] riparazione|membership rewards|newsletter)\b/i;
+  const excludedTitle = /\b(?:fattur[ae]|estratto conto|ordine.{0,30}(?:conferm|spedit)|conferma.{0,25}ordine|spedito|consegnato|in consegna|documento disponibile|risoluzione richiesta assistenza|nuovo (?:accesso|dispositivo)|new login|preventiv[oi] riparazione|membership rewards|newsletter|black friday|coupon)\b/i;
   const marketing = /\b(?:disiscriviti|unsubscribe|offerta riservata|codice sconto|fino al \d+% di sconto)\b/i;
   if (excludedTitle.test(title) || marketing.test(body)) {
     return { kind: null, reason: 'administrative_or_marketing' };
@@ -56,7 +70,7 @@ export function classifyCommercialMessage(subject = '', text = '', headers = new
     && /(?:mi affiderei a voi|da sviluppare|ci ha chiesto un.idea|vorremmo|avremmo bisogno)/i.test(body);
   if (activationBrief) return { kind: 'brand_activation', reason: 'explicit_commercial_request' };
   const service = catalogueModelsIn(value).length > 0 || /\b(?:food\s*truck|bar\s*truck|truck|airstream|horsebox|container|gazebo|ape|catering|road\s*tour|roadshow|brand activation|noleggio|noleggiare)\b/i.test(value);
-  const intent = /\b(?:richiest[ae]|richied\w*|vorre[im]\w*|vorremmo|avremmo|cerchiamo|ci serv\w*|necessit\w*|preventiv[oi]|quotazion[ei]|disponibilit[aà]|informazioni|interessat[oi]|request|quote|looking for|would like|availability)\b/i.test(value);
+  const intent = /\b(?:affittare|affitto|richiest[ae]|richied\w*|vorre[im]\w*|vorremmo|avremmo|cerchiamo|ci serv\w*|necessit\w*|preventiv[oi]|quotazion[ei]|disponibilit[aà]|informazioni|interessat[oi]|request|quote|looking for|would like|availability)\b/i.test(value);
   const eventFood = /\b(?:partecip\w*|adesion\w*)\b/i.test(value) && /\b(?:street\s*food|food|festival|fiera)\b/i.test(value);
   if (eventFood) return { kind: 'event_food', reason: 'explicit_commercial_request' };
   if (/\b(?:brand activation|road\s*tour|roadshow)\b/i.test(value) && intent) return { kind: 'brand_activation', reason: 'explicit_commercial_request' };

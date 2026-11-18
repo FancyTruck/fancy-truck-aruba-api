@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-18",
+  "scope": "isolated reconciliation P00/P01/P03/P04/P05/P20; no release",
+  "source_parent": "dd4094878cf99369a9542779fe5d58f81e9a5820",
+  "main_reconciled": "24a8d6cb2bc1b5eb27f08811ba9786695a6e6b98",
+  "conflicts_resolved": [
+    "src/server.js",
+    "src/peuContract.js",
+    "src/peuMailRoutes.js",
+    "src/peuMailSync.js",
+    "test/peu-large-message.test.js"
+  ],
+  "implementation": [
+    "Preserve PR39-45 website forms, both mailboxes, history search, batching, completed-sync handoff, mail events and exact reviewed legacy draft recipient.",
+    "Preserve process ownership, readonly startup/effect ledgers, shared MIME gate, bounded UID discovery/flag staging/cache projection and approval/SMTP replay barriers.",
+    "Combine bounded UID discovery with batched FETCH; reject duplicate/foreign metadata and source UIDs before parsing or durable checkpoint. Four new real-service SQLite regressions."
+  ],
+  "tests": {
+    "command": "node --test --test-reporter=tap; npm run check; node --check for every src/*.js and scripts/*.mjs",
+    "passed": 499,
+    "failed": 0,
+    "syntax_checks": 81,
+    "first_reconciliation_pass": 488,
+    "first_reconciliation_fail": 7,
+    "environment": "isolated synthetic IMAP/HTTP/SMTP and temporary SQLite; no provider sends",
+    "notes": "Seven initial failures resolved by retaining batched IMAP query shape in fixtures and explicit identity checks. No previous successful count is claimed live."
+  },
+  "live_readonly": {
+    "commit": "24a8d6cb2bc1b5eb27f08811ba9786695a6e6b98",
+    "deploy": "dep-dbu7vak9v7es73dhlb1g",
+    "status": "live",
+    "finished_at": "2026-11-17T16:24:53.521441Z",
+    "workspace": "tea-daa7c667bikc73fkk940",
+    "main_auto_deploy": true,
+    "pr_previews": false
+  },
+  "oom": "No new memory profile or historical OOM attribution; limits are risk reductions, not live acceptance. Prior Nov13 exit1 remains unexplained.",
+  "backup": "No new download, integrity, decrypt or restore. Keep dated prior restore evidence; retention/alarm acceptance remains open.",
+  "limitations": [
+    "Main is independently released; this combined source is not deployed.",
+    "IMAP readonly locks are not remote mailbox transactions; no proof against concurrent expunge.",
+    "Existing real CRM cleanup awaits its separate permanent-delete confirmation; no lead deleted.",
+    "4.5.1 remains accepted; activity74/order331/project15 untouched. F0/F1/F2/four paths open, F6 deferred.",
+    "No current provider latency/RSS/load/checkpoint or delivery acceptance."
+  ],
+  "effects": "No main push/remote merge/deploy/restart/production/Odoo mutation/hosted migration/send/economic action/new automation.",
+  "next_action": "Reconcile fresh HEADs; review batched sync memory and failure boundaries, commercial polling UID bounds and real checkpoint diagnostics. Existing user-facing CRM/notification gaps require actual evidence."
+}

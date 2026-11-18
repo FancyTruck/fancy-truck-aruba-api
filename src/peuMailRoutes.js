@@ -5,13 +5,13 @@ import {createMailReadGate} from './mailReadGate.js';
 // Deliberately no SMTP, Odoo writes, approval or execution routes.
 export function mountPeuMail(app,{withImap,parse,stateFile,readOnly=false,mailReadGate=createMailReadGate()}) {
   const db=openMailDb(join(dirname(stateFile),'peu-aruba.sqlite'),{readOnly});
-  const service=new ArubaService({db,withImap,parse,accounts:['pietro']});
-  let syncing=null;
+  const service=new ArubaService({db,withImap,parse,accounts:['pietro','hello']});
+  const syncing=new Map(),finished=new Map();
   const wrap=(fn,{mime=false}={})=>async(req,res)=>{
     res.set('Cache-Control','no-store');
     let workDone;
     try {
-      if(req.params.account!=='pietro')throw problem('account_not_authorized',403);
+      if(!['pietro','hello'].includes(req.params.account))throw problem('account_not_authorized',403);
       if(mime){
         workDone=mailReadGate.claim(res);
         if(!workDone)return res.set('Retry-After','1').status(429).json({error:'mail_read_busy'});
@@ -21,21 +21,24 @@ export function mountPeuMail(app,{withImap,parse,stateFile,readOnly=false,mailRe
     finally{workDone?.();}
   };
   const folder=req=>{const value=req.body?.folder||req.query.folder;if(value!=='INBOX')throw problem('folder_not_authorized',403);return value;};
-  app.get('/v1/peu/aruba/:account/folders',wrap(async()=>({folders:(await service.folders('pietro')).folders.filter(f=>f.path==='INBOX')})));
+  app.get('/v1/peu/aruba/:account/folders',wrap(async req=>({folders:(await service.folders(req.params.account)).folders.filter(f=>f.path==='INBOX')})));
   app.post('/v1/peu/aruba/:account/sync',wrap(async req=>{
-    folder(req); if(!syncing) syncing=service.sync('pietro','INBOX').then(result=>{console.log(JSON.stringify({event:'peu_aruba_sync',account:'pietro',status:result.status,new_messages:result.new_messages}));return result;}).finally(()=>{syncing=null;});
+    folder(req); const account=req.params.account;
+    if(finished.has(account)){const result=finished.get(account);finished.delete(account);return result;}
+    if(!syncing.has(account)) syncing.set(account,service.sync(account,'INBOX').then(result=>{console.log(JSON.stringify({event:'peu_aruba_sync',account,status:result.status,new_messages:result.new_messages}));finished.set(account,result);return result;}).finally(()=>{syncing.delete(account);}));
     // The initial history import outlives an HTTP request. Keep one job and
     // expose partial coverage instead of repeatedly timing out or duplicating it.
     let timer;
-    try{return await Promise.race([syncing,new Promise(resolve=>{timer=setTimeout(()=>resolve({status:'syncing',coverage:'backfill_in_progress'}),8000);})]);}
+    try{const result=await Promise.race([syncing.get(account),new Promise(resolve=>{timer=setTimeout(()=>resolve({status:'syncing',coverage:'backfill_in_progress'}),8000);})]);if(result.status!=='syncing')finished.delete(account);return result;}
     finally{clearTimeout(timer);}
   }));
-  app.get('/v1/peu/aruba/:account/messages',wrap(req=>({messages:service.messages('pietro',folder(req))})));
-  app.get('/v1/peu/aruba/:account/thread',wrap(req=>service.thread('pietro',String(req.query.thread||''))));
+  app.get('/v1/peu/aruba/:account/messages',wrap(req=>({messages:service.messages(req.params.account,folder(req))})));
+  app.get('/v1/peu/aruba/:account/search',wrap(req=>({messages:service.search(req.params.account,String(req.query.q||''),Number(req.query.limit||20)),partial:syncing.has(req.params.account),scope:'cached_inbox_history'})));
+  app.get('/v1/peu/aruba/:account/thread',wrap(req=>service.thread(req.params.account,String(req.query.thread||''))));
   app.get('/v1/peu/aruba/:account/attachment',wrap(req=>{
     const uid=Number(req.query.uid),index=Number(req.query.index);
     if(!Number.isSafeInteger(uid)||uid<1||!Number.isSafeInteger(index)||index<0)throw problem('invalid_attachment');
-    return service.attachment('pietro',folder(req),String(req.query.validity),uid,index);
+    return service.attachment(req.params.account,folder(req),String(req.query.validity),uid,index);
   },{mime:true}));
   return db;
 }

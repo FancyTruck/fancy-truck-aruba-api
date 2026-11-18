@@ -73,13 +73,14 @@ test('four production intake paths use Odoo contract and approval queue without 
     {kind:'brand_activation',subject:'Richiesta brand activation',first:'Vorrei un preventivo brand activation',reply:'Airstream a Milano il 20/12/2026. Allestimenti: nessuno. Personalizzazioni: logo. Staff: nessuno. Gestione del servizio: nostra. Permessi: nostri. Adempimenti: nostri.'},
     {kind:'rental',subject:'Richiesta noleggio Airstream',first:'Vorrei noleggiare un Airstream',reply:'Dal 20/12/2026 al 21/12/2026, dalle 10:00 alle 18:00 a Milano. Personalizzazioni: nessuna. Attrezzature: nessuna. Allestimenti: nessuno. Richieste particolari: nessuna.'},
   ];
-  for(const item of cases) await t.test(item.kind,async()=>{
+  for(const item of cases.flatMap(item=>['hello','pietro'].map(account=>({...item,account})))) await t.test(item.kind+':'+item.account,async()=>{
     lead=null;orders=[];writes=[];
-    const parsed={subject:item.subject,text:item.first,messageId:`<${item.kind}-first>`,from:{value:[{address:partner.email,name:'Cliente'}]}};
-    const first=await app.processQuoteRequest(parsed,1,'hello','123');
+    const parsed={subject:item.subject,text:item.first,mailboxAccount:item.account,messageId:`<${item.kind}-${item.account}-first>`,from:{value:[{address:partner.email,name:'Cliente'}]}};
+    const first=await app.processQuoteRequest(parsed,1,item.account,'123');
     assert.equal(first.kind,item.kind);assert.equal(writes.filter(model=>model==='crm.lead').length,1);
     const actions=Object.values(app.store.state.actions).filter(action=>action.case_id===`odoo-lead-${lead.id}`);
     assert.equal(actions.length,1);assert.equal(actions[0].status,'PENDING_APPROVAL');
+    assert.equal(actions[0].payload.account,item.account);
     assert.equal(actions[0].payload.subject, `Re: ${parsed.subject}`);
     assert.equal(actions[0].payload.inReplyTo, parsed.messageId);
     assert.equal(actions[0].payload.references, parsed.messageId);
@@ -92,7 +93,7 @@ test('four production intake paths use Odoo contract and approval queue without 
     }
     assert.equal(orders.length,0);
     assert.equal(lead.stage_id,1);
-    const partial=await app.processQuoteReply({...parsed,text:'Grazie, confermo Milano.\n\nOn Wed, 21 Oct 2026 06:44:18 +0000, Fancy Truck <hello@fancytruck.it> wrote:\n> Data: 20/12/2026. 80 ospiti, 4 ore, 2 foodtruck. Cena.\n> Personalizzazioni: nessuna. Attrezzature: nessuna. Allestimenti: nessuno. Richieste particolari: nessuna.\n> Staff: nostro. Gestione del servizio: nostra. Permessi: nostri. Adempimenti: nostri.',messageId:`<${item.kind}-partial>`},2,lead);
+    const partial=await app.processQuoteReply({...parsed,text:'Grazie, confermo Milano.\n\nOn Wed, 21 Oct 2026 06:44:18 +0000, Fancy Truck <hello@fancytruck.it> wrote:\n> Data: 20/12/2026. 80 ospiti, 4 ore, 2 foodtruck. Cena.\n> Personalizzazioni: nessuna. Attrezzature: nessuna. Allestimenti: nessuno. Richieste particolari: nessuna.\n> Staff: nostro. Gestione del servizio: nostra. Permessi: nostri. Adempimenti: nostri.',messageId:`<${item.kind}-${item.account}-partial>`},2,lead);
     assert.equal(partial.lead_id,first.lead_id);
     assert.ok(partial.missing.length>0);
     assert.doesNotMatch(lead.description, /On Wed|> Personalizzazioni/);
@@ -102,7 +103,7 @@ test('four production intake paths use Odoo contract and approval queue without 
     if(item.kind==='catering') assert(partial.missing.includes('numero di ospiti'));
     assert.equal(orders.length,0);
     assert.equal(lead.stage_id,1);
-    const completedMessage={...parsed,text:item.reply,messageId:`<${item.kind}-reply>`};
+    const completedMessage={...parsed,text:item.reply,messageId:`<${item.kind}-${item.account}-reply>`};
     const second=await app.processQuoteReply(completedMessage,3,lead);
     assert.equal(second.lead_id,first.lead_id);assert.equal(second.ready_for_review,true);
     assert.equal(app.store.action(actions[0].id).status,'CANCELLED');
