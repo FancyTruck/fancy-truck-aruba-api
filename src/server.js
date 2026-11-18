@@ -1,3 +1,6 @@
+import {draftOriginalResolver} from './draftOriginalResolver.js';
+import {automaticDraftVerifier} from './automaticDraftVerifier.js';
+import {verifyDraftPage} from './verifyDraftPage.js';
 import {fastMailPoll} from './fastMailPoll.js';
 import {teamAlreadyReplied} from './teamReplyGuard.js';
 import {executeMailAction} from './mailExecution.js';
@@ -1021,20 +1024,15 @@ if (peuDb) {
   const {ArubaService}=await import('./peuMailService.js');
   const originalReader=new ArubaService({db:peuDb,withImap,parse:simpleParser,accounts:['pietro','hello']});
   const upstream=(path,options={})=>jsonRequest(fetch,`http://127.0.0.1:${port||server.address().port}${path}`,{...options,headers:{'Content-Type':'application/json',Authorization:`Bearer ${peuInternalToken}`}});
-  mountPeuContract(app,makePeuContract({db:peuDb,approvals,upstream,readOriginal:(account,id)=>originalReader.draftOriginal(account,id),verifyDraft:async action=>{
-    try {
-      const id=action.payload?.inReplyTo;
-      if(!id){console.log(JSON.stringify({event:'draft_verification',action_id:action.id,status:'source_missing',legacy:true}));return false;}
-      const {original}=await originalReader.draftOriginal(action.payload.account,id);
-      if(!original?.payload?.text){console.log(JSON.stringify({event:'draft_verification',action_id:action.id,status:'original_not_found',account:action.payload.account,reference_kind:id.startsWith('odoo-mail-message-')?'odoo_placeholder':/^<[^<>]+>$/.test(id)?'rfc_message_id':'non_rfc',case_id:action.case_id||null,created_at:action.created_at}));return false;}
-      const source=original.payload;
-      const decision=classifyCommercialMessage(source.subject,source.text,new Map(),{isReply:true});
-      const blocked=['supplier_offer','non_customer_direction_requires_review','administrative_or_marketing','automatic_or_mailing_list','automatic_service_notification'].includes(decision.reason);
-      const handled=blocked?false:(await teamAlreadyReplied({parsed:{messageId:id,date:source.date,from:source.from},accounts:['hello','pietro'].filter(name=>{try{accountConfig(name);return true;}catch{return false;}}),withImap})).handled;
-      if(blocked||handled){store.cancelActionGroup(action.supersede_group,blocked?'NOT_CUSTOMER_REQUEST':'TEAM_ALREADY_REPLIED');return false;}
-      return true;
-    }catch(error){const code=String(error.code||error.message||'verification_failed');console.log(JSON.stringify({event:'draft_verification',action_id:action.id,status:'deferred',reason:/^[a-zA-Z0-9_]{1,100}$/.test(code)?code:'provider_error'}));store.audit('AUTO_DRAFT_VERIFICATION_DEFERRED',{action_id:action.id});return false;}
-  },odooRead:(model,domain,options)=>odooCall(model,'search_read',[domain],options),assertWritable:()=>assertWritable(runtime),
+  const odooRead=(model,domain,options)=>odooCall(model,'search_read',[domain],options);
+  const readDraftOriginal=draftOriginalResolver({readMailbox:(account,id)=>originalReader.draftOriginal(account,id),actions:()=>store.state.actions,odooRead,plainText:plainTextFromHtml});
+  const verifyDraft=automaticDraftVerifier({readOriginal:readDraftOriginal,odooRead,classify:(subject,text)=>classifyCommercialMessage(subject,text,new Map(),{isReply:true}),teamCheck:parsed=>teamAlreadyReplied({parsed,accounts:['hello','pietro'].filter(name=>{try{accountConfig(name);return true;}catch{return false;}}),withImap}),store});
+  const startupDraftCheck=setTimeout(async()=>{try{
+    const drafts=Object.values(store.state.actions).filter(a=>a.type==='SEND_EMAIL'&&a.status==='PENDING_APPROVAL'&&a.supersede_group?.startsWith('missing-details:')).map(a=>({action_id:a.id}));
+    const result=await verifyDraftPage(drafts,store.state.actions,verifyDraft);
+    console.log(JSON.stringify({event:'automatic_draft_recovery',checked:drafts.length,verified:result.drafts.length,verification_pending:result.verification_pending}));
+  }catch{console.error('automatic_draft_recovery_failed');}},1000);startupDraftCheck.unref();
+  mountPeuContract(app,makePeuContract({db:peuDb,approvals,upstream,readOriginal:readDraftOriginal,verifyDraft,odooRead:(model,domain,options)=>odooCall(model,'search_read',[domain],options),assertWritable:()=>assertWritable(runtime),
     verify:async(capability,response,marker)=>{
       const model=capability==='crm.create'?'crm.lead':'sale.order';
       const id=response.id||response.lead?.id||response.order?.id;

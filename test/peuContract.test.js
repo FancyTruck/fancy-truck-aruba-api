@@ -194,3 +194,11 @@ test('closed or approved drafts cannot be edited and failed persistence restores
  assert.equal(JSON.stringify(a.payload),before);assert.equal(f.sent,0);}
 });
 test('opening an incoming notification recovers its exact original and reuses the case',async()=>{const f=fixture();f.config.readOriginal=async(account,messageId)=>({original:{message_id:messageId,folder:'INBOX',payload:{subject:'Risposta cliente',text:'Corpo completo',from:[{address:'client@example.invalid'}]}}});const contract=makePeuContract(f.config);const parameters={account:'pietro',message_id:'<actual-original@example.invalid>'};const first=(await contract.execute(f.command('reviews.open_message',parameters,'open-first'))).result;assert.equal(first.status,'opened');assert.equal(first.item.original_status,'verified');const second=(await contract.execute(f.command('reviews.open_message',parameters,'open-again'))).result;assert.equal(second.item.id,first.item.id);assert.equal(Object.keys(f.approvals.store.state.classification_reviews).length,1);assert.equal(f.sent,0);assert.equal(f.writes,0);});
+
+test('suspended draft exposes its full original without authorizing sending',async()=>{
+ const f=fixture(),p=(await f.contract.execute(f.command('mail.prepare',{...mail,inReplyTo:'<source@example.invalid>'},'prepare-held'))).result;
+ f.approvals.store.action(p.action_id).supersede_group='missing-details:odoo-lead-42';
+ const contract=makePeuContract({...f.config,verifyDraft:async()=>false,readOriginal:async()=>({original:{message_id:'<source@example.invalid>',folder:'INBOX',payload:{text:'Complete customer request',from:[{address:mail.to}]}}})});
+ const r=(await contract.execute(f.command('mail.drafts',{since:'2000-01-01T00:00:00.000Z',action_id:p.action_id},'read-held'))).result;
+ assert.equal(r.drafts.length,0);assert.equal(r.suspended_drafts[0].original.text,'Complete customer request');assert.equal(r.suspended_drafts[0].verification_status,'incomplete');assert.equal(f.sent,0);
+});

@@ -8,3 +8,9 @@ test('slow draft checks overlap, stay bounded and preserve results in page order
 test('manual drafts bypass automatic checks; cancelled or missing rows stay hidden',async()=>{
  const drafts=['manual','cancelled','gone'].map(action_id=>({action_id}));const result=await verifyDraftPage(drafts,{manual:{status:'PENDING_APPROVAL'},cancelled:{status:'CANCELLED'}},()=>{throw Error('should not run');});assert.deepEqual(result.drafts,[drafts[0]]);assert.equal(result.verification_pending,0);
 });
+
+test('verification failure exposes a stable safe reason',async()=>{
+ const drafts=[{action_id:'draft'}],actions={draft:{status:'PENDING_APPROVAL',supersede_group:'missing-details:lead'}};
+ const out=await verifyDraftPage(drafts,actions,async()=>{const e=Error('private provider details');e.code='draft_original_not_found';throw e;});
+ assert.equal(out.suspended_drafts[0].verification_reason,'draft_original_not_found');assert.equal(out.verification_pending,1);
+});

@@ -6,8 +6,9 @@ export async function verifyDraftPage(drafts,actions,verify){
   const action=actions[drafts[i].action_id];
   if(!action||action.status!=='PENDING_APPROVAL')continue;
   if(!action.supersede_group?.startsWith('missing-details:')){keep[i]=true;continue;}
-  try{keep[i]=await verify(action)===true&&action.status==='PENDING_APPROVAL';}catch{/* incomplete verification never authorizes a draft */}
-  if(!keep[i]&&action.status==='PENDING_APPROVAL'){pending++;suspended.push({...drafts[i],verification_status:'incomplete'});}
+  let reason='verification_incomplete';
+  try{keep[i]=await verify(action)===true&&action.status==='PENDING_APPROVAL';}catch(error){reason=/^[a-z][a-z0-9_]{0,99}$/.test(error?.code||'')?error.code:'verification_unavailable';}
+  if(!keep[i]&&action.status==='PENDING_APPROVAL'){pending++;suspended.push({...drafts[i],verification_status:'incomplete',verification_reason:reason});}
  }}
  await Promise.all(Array.from({length:Math.min(4,drafts.length)},worker));
  return {drafts:drafts.filter((_,i)=>keep[i]),verification_pending:pending,suspended_drafts:suspended.sort((a,b)=>a.action_id.localeCompare(b.action_id))};

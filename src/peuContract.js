@@ -102,12 +102,12 @@ export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritabl
        result=mailDrafts(approvals.store.state,p);
        if(verifyDraft)Object.assign(result,await verifyDraftPage(result.drafts,approvals.store.state.actions,verifyDraft));
 
-       if(p.action_id)for(const draft of result.drafts){
+       if(p.action_id)for(const draft of [...result.drafts,...(result.suspended_drafts||[])]){
          draft.original_status=draft.in_reply_to?'unavailable':'new_message';
          if(draft.in_reply_to)try{
            const response=await readOriginal?.(draft.account,draft.in_reply_to);
            const original=response?.original;
-           if(original?.message_id===draft.in_reply_to&&original.folder==='INBOX'&&original.payload?.text){draft.original=original.payload;draft.original_status='verified';}
+           if(original?.message_id===draft.in_reply_to&&(original.folder==='INBOX'||(original.folder==='ODOO'&&original.source==='odoo_received'))&&original.payload?.text){draft.original=original.payload;draft.original_status='verified';}
          }catch{/* A missing original must never be replaced by a subject match. */}
        }
      }
