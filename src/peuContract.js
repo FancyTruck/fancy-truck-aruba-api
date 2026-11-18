@@ -28,7 +28,7 @@ const defs={
  'mail.confirm_send':{effect:'send',parameters:approved},
  'operation.execute':{effect:'write',parameters:approved},
 };
-export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritable,odooRead,readOriginal}){
+export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritable,odooRead,readOriginal,verifyDraft}){
  const applicationAssertWritable=assertWritable;
  assertWritable=()=>{
    if(approvals.store.state.recovery?.required||
@@ -96,6 +96,11 @@ export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritabl
      let result; const p=command.parameters;
      if(c.id==='mail.drafts'){
        result=mailDrafts(approvals.store.state,p);
+       if(verifyDraft){const checked=[];for(const draft of result.drafts){
+         const action=approvals.store.state.actions[draft.action_id];
+         if(!action?.supersede_group?.startsWith('missing-details:')||await verifyDraft(action))checked.push(draft);
+       }result.drafts=checked;}
+
        if(p.action_id)for(const draft of result.drafts){
          draft.original_status=draft.in_reply_to?'unavailable':'new_message';
          if(draft.in_reply_to)try{
@@ -126,6 +131,7 @@ export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritabl
        assertWritable();
        const action=approvals.store.action(p.action_id);
        if(!action||action.type!=='SEND_EMAIL'||!['pietro','hello'].includes(action.payload.account)||hash(action.peu_payload_hash?action.payload:draftPayload(action))!==p.payload_hash||(action.peu_payload_hash&&action.peu_payload_hash!==p.payload_hash))throw problem('exact_fancy_action_required',403);
+       if(action.status==='PENDING_APPROVAL'&&action.supersede_group?.startsWith('missing-details:')&&verifyDraft&&!await verifyDraft(action))throw problem('automatic_draft_requires_reverification',409);
        if(!action.peu_payload_hash){if(action.status!=='PENDING_APPROVAL')throw problem('mail_confirmation_state_conflict',409);action.payload=draftPayload(action);action.peu_payload_hash=p.payload_hash;approvals.store.save();}
        const previous=get('peu_effects',action.id);
        if(!previous){

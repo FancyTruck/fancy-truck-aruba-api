@@ -1,0 +1,8 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {teamAlreadyReplied} from '../src/teamReplyGuard.js';
+const parsed={messageId:'<customer@example.test>',date:new Date('2026-11-17')};
+function fixture(rows){let released=0;return {get released(){return released},withImap:async(account,fn)=>fn({list:async()=>[{path:'Sent',specialUse:'\\Sent'}],getMailboxLock:async()=>({release(){released++;}}),search:async()=>rows[account]?[1]:[],fetchOne:async()=>rows[account]})};}
+test('find historical team answer in another connected account',async()=>{const f=fixture({pietro:{headers:Buffer.from('References: <customer@example.test>'),envelope:{date:new Date('2026-11-18')}}});assert.equal((await teamAlreadyReplied({parsed,accounts:['hello','pietro'],withImap:f.withImap})).handled,true);assert.equal(f.released,2);});
+test('substring search results do not establish a reply',async()=>{const f=fixture({hello:{headers:Buffer.from('References: <other@example.test>'),envelope:{}}});assert.equal((await teamAlreadyReplied({parsed,accounts:['hello'],withImap:f.withImap})).handled,false);});
+test('older sent mail must not suppress a new customer request',async()=>{const f=fixture({hello:{headers:Buffer.from('References: <customer@example.test>'),envelope:{date:new Date('2026-11-16')}}});assert.equal((await teamAlreadyReplied({parsed,accounts:['hello'],withImap:f.withImap})).handled,false);});
+test('missing identity blocks drafting rather than inventing coverage',async()=>{await assert.rejects(teamAlreadyReplied({parsed:{},accounts:['hello'],withImap:async()=>{}}),/missing_message_id/);});

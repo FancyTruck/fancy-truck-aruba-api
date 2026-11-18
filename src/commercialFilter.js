@@ -54,6 +54,10 @@ export function classifyCommercialMessage(subject = '', text = '', headers = new
   if (excludedTitle.test(title) || marketing.test(body)) {
     return { kind: null, reason: 'administrative_or_marketing' };
   }
+  // Require the sender's own request; a sales pitch asking for a call is not demand.
+  const salesPitch = /(?:vi|ti|le)\s+(?:offriamo|proponiamo|presentiamo)|(?:nostri|i nostri)\s+(?:servizi|prodotti)|(?:aumentare|migliorare).{0,50}(?:visibilità|vendite|fatturato|presenza online)|(?:fissare|organizzare|prenotare).{0,30}(?:demo|call conoscitiva|chiamata conoscitiva)|(?:agenzia|consulenza).{0,50}(?:marketing|seo|lead generation)/i;
+  const ownFleetRequest = /(?:vorrei|vorremmo|cerchiamo|ci servirebbe|avremmo bisogno|richiediamo).{0,100}(?:nolegg|affitt|food.?truck|airstream|catering|roadshow|vostr[oi] (?:mezzi|servizi))/i;
+  if (salesPitch.test(body)) return {kind:null,reason:ownFleetRequest.test(body)?'non_customer_direction_requires_review':'supplier_offer'};
   const supplierOffer = /\b(?:offriamo|vi proponiamo|siamo fornitori|siamo specializzati|we offer)\b/i;
   if (supplierOffer.test(body) && !customerRequest.test(body)) {
     return { kind: null, reason: 'supplier_offer' };

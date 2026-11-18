@@ -1,3 +1,4 @@
+import {teamAlreadyReplied} from './teamReplyGuard.js';
 import {websiteFormMessage} from './websiteForm.js';
 import { intakeStatus, syncIntakeWatchdog, suspensionDescription } from './intakeWatchdog.js';
 import { ensureCustomerAttention } from './customerAttention.js';
@@ -676,6 +677,14 @@ async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
   if (decision.action === 'skip') return { skipped: true, reason: decision.reason };
   if (decision.action === 'review') return { suspended: true, ...decision };
   if (decision.action === 'link') { await flagCustomerRequest(decision.match.lead.id); return linkThreadMessage({parsed,match:decision.match,direction:'incoming',call:odooCall,store}); }
+  const teamCheck = await teamAlreadyReplied({parsed, accounts: ['hello','pietro'].filter(name => {
+    try { accountConfig(name); return true; } catch { return false; }
+  }), withImap});
+  if (teamCheck.handled) {
+    if (decision.lead?.id) store.cancelActionGroup(`missing-details:odoo-lead-${decision.lead.id}`, 'TEAM_ALREADY_REPLIED');
+    store.audit('AUTO_DRAFT_SKIPPED', {reason:'team_already_replied', account:accountName, message_id:parsed.messageId});
+    return {skipped:true, reason:'team_already_replied'};
+  }
   if (decision.action === 'reply') return processQuoteReply(parsed, uid, decision.lead);
   const kind = decision.kind;
 
@@ -1009,7 +1018,20 @@ if (peuDb) {
   const {ArubaService}=await import('./peuMailService.js');
   const originalReader=new ArubaService({db:peuDb,withImap,parse:simpleParser,accounts:['pietro','hello']});
   const upstream=(path,options={})=>jsonRequest(fetch,`http://127.0.0.1:${port||server.address().port}${path}`,{...options,headers:{'Content-Type':'application/json',Authorization:`Bearer ${peuInternalToken}`}});
-  mountPeuContract(app,makePeuContract({db:peuDb,approvals,upstream,readOriginal:(account,id)=>originalReader.draftOriginal(account,id),odooRead:(model,domain,options)=>odooCall(model,'search_read',[domain],options),assertWritable:()=>assertWritable(runtime),
+  mountPeuContract(app,makePeuContract({db:peuDb,approvals,upstream,readOriginal:(account,id)=>originalReader.draftOriginal(account,id),verifyDraft:async action=>{
+    try {
+      const id=action.payload?.inReplyTo;
+      if(!id)return false;
+      const {original}=await originalReader.draftOriginal(action.payload.account,id);
+      if(!original?.payload?.text)return false;
+      const source=original.payload;
+      const decision=classifyCommercialMessage(source.subject,source.text,new Map(),{isReply:true});
+      const blocked=['supplier_offer','non_customer_direction_requires_review','administrative_or_marketing','automatic_or_mailing_list','automatic_service_notification'].includes(decision.reason);
+      const handled=blocked?false:(await teamAlreadyReplied({parsed:{messageId:id,date:source.date},accounts:['hello','pietro'].filter(name=>{try{accountConfig(name);return true;}catch{return false;}}),withImap})).handled;
+      if(blocked||handled){store.cancelActionGroup(action.supersede_group,blocked?'NOT_CUSTOMER_REQUEST':'TEAM_ALREADY_REPLIED');return false;}
+      return true;
+    }catch{store.audit('AUTO_DRAFT_VERIFICATION_DEFERRED',{action_id:action.id});return false;}
+  },odooRead:(model,domain,options)=>odooCall(model,'search_read',[domain],options),assertWritable:()=>assertWritable(runtime),
     verify:async(capability,response,marker)=>{
       const model=capability==='crm.create'?'crm.lead':'sale.order';
       const id=response.id||response.lead?.id||response.order?.id;
