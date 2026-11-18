@@ -134,3 +134,23 @@ test('draft original uses exact message ID, account and inbox, never a subject m
  assert.equal(draft.original_status,i===3?'verified':'unavailable');assert.equal(!!draft.original,i===3);
  }
 });
+
+test('updating exact pending draft preserves envelope and source; stale send cannot execute',async()=>{
+ const f=fixture(),p=(await f.contract.execute(f.command('mail.prepare',{...mail,inReplyTo:'<client>'},'draft'))).result;
+ const params={action_id:p.action_id,payload_hash:p.payload_hash,text:'Possiamo consegnare venerdì.'};
+ const cmd=f.command('mail.update_draft',params,'edit');cmd.confirmation.confirmed=false;
+ const edited=(await f.contract.execute(cmd)).result;assert.equal(edited.status,'draft_updated');assert.notEqual(edited.payload_hash,p.payload_hash);
+ await f.contract.execute(cmd);const action=f.approvals.store.action(p.action_id);
+ assert.deepEqual(action.payload,{...mail,inReplyTo:'<client>',text:params.text});assert.equal(action.status,'PENDING_APPROVAL');assert.equal(action.peu_payload_hash,edited.payload_hash);
+ await assert.rejects(f.contract.execute(f.command('mail.confirm_send',{action_id:p.action_id,payload_hash:p.payload_hash},'old-send')));
+ await assert.rejects(f.contract.execute(f.command('mail.update_draft',{...params,text:'Second change'},'stale-edit')));
+ await assert.rejects(f.contract.execute(f.command('mail.update_draft',{...params,to:'other@example.invalid'},'recipient-change')));
+ assert.equal(f.sent,0);assert.equal(f.writes,0);
+});
+test('closed or approved drafts cannot be edited and failed persistence restores old payload',async()=>{
+ for(const mode of ['approved','cancelled','disk']){const f=fixture(),p=(await f.contract.execute(f.command('mail.prepare',mail,'draft'))).result;
+ const a=f.approvals.store.action(p.action_id),before=JSON.stringify(a.payload);
+ if(mode==='approved')f.approve(p.action_id);else if(mode==='cancelled')a.status='CANCELLED';else f.approvals.store.save=()=>{throw Error('disk');};
+ await assert.rejects(f.contract.execute(f.command('mail.update_draft',{action_id:p.action_id,payload_hash:p.payload_hash,text:'Edited'},'edit')));
+ assert.equal(JSON.stringify(a.payload),before);assert.equal(f.sent,0);}
+});
