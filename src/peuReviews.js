@@ -17,6 +17,16 @@ export function makePeuReviews(store,assertWritable,readOriginal) {
     resolution:row.resolution||null,resolved_at:row.resolved_at||null,snoozed_until:row.snoozed_until||null,message_id:row.message_id||null,
   });
   return {
+    async open_message({account,message_id}){
+      assertWritable();if(!['hello','pietro'].includes(account)||!message_id||/[\r\n]/.test(message_id))throw problem('invalid_original_reference');
+      const existing=Object.values(store.state.classification_reviews).find(row=>row.account===account&&row.message_id===message_id&&row.mailbox==='INBOX');
+      if(existing)return {ok:true,status:'opened',item:(await this.get({review_id:existing.id})).item};
+      const response=await readOriginal?.(account,message_id),original=response?.original;
+      if(original?.message_id!==message_id||original.folder!=='INBOX'||!original.payload?.text)throw problem('original_unavailable',409);
+      const source=original.payload,from=source.from||[];if(from.length!==1||!from[0].address)throw problem('original_sender_ambiguous',409);
+      const {item}=store.queueClassification({source_key:JSON.stringify([account,'INBOX',message_id]),account,mailbox:'INBOX',message_id,sender:from[0].address,subject:source.subject||'',excerpt:source.text.slice(0,4000),reason:'owner_followup',candidate_ids:[]});
+      return {ok:true,status:'opened',item:{...view(item),original:source,original_status:'verified'}};
+    },
     list({limit=50,after_id}={}) {
       const pending=Object.values(store.state.classification_reviews)
         .filter(row=>row.status==='DA_CLASSIFICARE'&&(!row.snoozed_until||Date.parse(row.snoozed_until)<=Date.now())).sort((a,b)=>a.id.localeCompare(b.id));

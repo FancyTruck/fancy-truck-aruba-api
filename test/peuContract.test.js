@@ -173,3 +173,24 @@ test('concurrent deletion during verification cannot resurrect the draft or arm 
  const old=contract.execute(f.command('mail.confirm_send',{action_id:a.id,payload_hash:p.payload_hash},'old')).catch(e=>e);await started;
  await contract.execute(f.command('mail.delete_draft',{action_id:a.id,payload_hash:p.payload_hash},'delete'));resume();assert.equal((await old).code,'mail_confirmation_state_conflict');assert.equal(a.status,'CANCELLED');assert.equal(a.peu_payload_hash,undefined);assert.equal(f.sent,0);
 });
+
+test('updating exact pending draft preserves envelope and source; stale send cannot execute',async()=>{
+ const f=fixture(),p=(await f.contract.execute(f.command('mail.prepare',{...mail,inReplyTo:'<client>'},'draft'))).result;
+ const params={action_id:p.action_id,payload_hash:p.payload_hash,text:'Possiamo consegnare venerdì.'};
+ const cmd=f.command('mail.update_draft',params,'edit');cmd.confirmation.confirmed=false;
+ const edited=(await f.contract.execute(cmd)).result;assert.equal(edited.status,'draft_updated');assert.notEqual(edited.payload_hash,p.payload_hash);
+ await f.contract.execute(cmd);const action=f.approvals.store.action(p.action_id);
+ assert.deepEqual(action.payload,{...mail,inReplyTo:'<client>',text:params.text});assert.equal(action.status,'PENDING_APPROVAL');assert.equal(action.peu_payload_hash,edited.payload_hash);
+ await assert.rejects(f.contract.execute(f.command('mail.confirm_send',{action_id:p.action_id,payload_hash:p.payload_hash},'old-send')));
+ await assert.rejects(f.contract.execute(f.command('mail.update_draft',{...params,text:'Second change'},'stale-edit')));
+ await assert.rejects(f.contract.execute(f.command('mail.update_draft',{...params,to:'other@example.invalid'},'recipient-change')));
+ assert.equal(f.sent,0);assert.equal(f.writes,0);
+});
+test('closed or approved drafts cannot be edited and failed persistence restores old payload',async()=>{
+ for(const mode of ['approved','cancelled','disk']){const f=fixture(),p=(await f.contract.execute(f.command('mail.prepare',mail,'draft'))).result;
+ const a=f.approvals.store.action(p.action_id),before=JSON.stringify(a.payload);
+ if(mode==='approved')f.approve(p.action_id);else if(mode==='cancelled')a.status='CANCELLED';else f.approvals.store.save=()=>{throw Error('disk');};
+ await assert.rejects(f.contract.execute(f.command('mail.update_draft',{action_id:p.action_id,payload_hash:p.payload_hash,text:'Edited'},'edit')));
+ assert.equal(JSON.stringify(a.payload),before);assert.equal(f.sent,0);}
+});
+test('opening an incoming notification recovers its exact original and reuses the case',async()=>{const f=fixture();f.config.readOriginal=async(account,messageId)=>({original:{message_id:messageId,folder:'INBOX',payload:{subject:'Risposta cliente',text:'Corpo completo',from:[{address:'client@example.invalid'}]}}});const contract=makePeuContract(f.config);const parameters={account:'pietro',message_id:'<actual-original@example.invalid>'};const first=(await contract.execute(f.command('reviews.open_message',parameters,'open-first'))).result;assert.equal(first.status,'opened');assert.equal(first.item.original_status,'verified');const second=(await contract.execute(f.command('reviews.open_message',parameters,'open-again'))).result;assert.equal(second.item.id,first.item.id);assert.equal(Object.keys(f.approvals.store.state.classification_reviews).length,1);assert.equal(f.sent,0);assert.equal(f.writes,0);});

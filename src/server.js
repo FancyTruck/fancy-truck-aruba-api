@@ -1,3 +1,4 @@
+import {fastMailPoll} from './fastMailPoll.js';
 import {teamAlreadyReplied} from './teamReplyGuard.js';
 import {executeMailAction} from './mailExecution.js';
 import {websiteFormMessage} from './websiteForm.js';
@@ -786,6 +787,7 @@ async function checkIntakeWatchdog() {
 }
 
 let operationalCycleRunning = false;
+const fastInboxTick=fastMailPoll({canRun:()=>runtime.automationEnabled&&!runtime.readOnly&&!runtime.recoveryRequired&&withinOperatingWindow(),busy:()=>operationalCycleRunning,setBusy:value=>{operationalCycleRunning=value;},poll:pollQuoteRequests,record:(account,state)=>store.integration('aruba:'+account,state)});
 
 async function runOperationalCycle({ force = false } = {}) {
   assertWritable(runtime);
@@ -1493,6 +1495,7 @@ const server = app.listen(port, runtime.host, (error) => {
   if (runtime.automationEnabled && !runtime.readOnly) {
     setTimeout(checkIntakeWatchdog,30000);
     setInterval(checkIntakeWatchdog,5*60*1000);
+    setInterval(()=>fastInboxTick().catch(()=>console.error('mail_intake_check_failed')),60000);
     setTimeout(() => runOperationalCycle().catch((error) => console.error(`CICLO OPERATIVO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 15000);
     setInterval(() => runOperationalCycle().catch((error) => console.error(`CICLO OPERATIVO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 60 * 60 * 1000);
   }
