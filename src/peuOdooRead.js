@@ -1,4 +1,4 @@
-import {customerActions} from './customerActions.js';
+import {customerActions,customerTag} from './customerActions.js';
 import {readRentalSchedule} from './peuRentalSchedule.js';
 import {problem} from './peuCommon.js';
 const id={type:'integer',minimum:1};
@@ -19,7 +19,7 @@ export async function readOdoo(read,capability,p,now=new Date()){
  const rental=capability==='rentals.list';
  const sales=rental||capability.startsWith('sales.'),model=sales?'sale.order':'crm.lead';
  const fields=sales?['id','name','partner_id','state','date_order','amount_total','currency_id','user_id','is_rental_order','rental_start_date','rental_return_date','signed_on']:['id','name','partner_id','stage_id','expected_revenue','probability','date_deadline','user_id'];
- const domain=[];if(p.partner_id)domain.push(['partner_id','=',p.partner_id]);
+ const domain=capability==='crm.list'?[['active','=',true],['tag_ids.name','=',customerTag]]:[];if(p.partner_id)domain.push(['partner_id','=',p.partner_id]);
  if(p.query)domain.push(['name','ilike',p.query]);
  const single=capability==='sales.get',limit=single?1:(p.limit||10);
  if(single)domain.push(['id','=',p.id]);

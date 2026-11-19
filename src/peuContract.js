@@ -1,3 +1,4 @@
+import {customerWorkspace} from './customerWorkspace.js';
 import {completeCustomerActivity} from './completeCustomerActivity.js';
 import {verifyDraftPage} from './verifyDraftPage.js';
 import {mailDrafts,draftPayload} from './mailDrafts.js';
@@ -12,6 +13,10 @@ const obj=(properties,required=Object.keys(properties))=>({type:'object',propert
 const approved=obj({action_id:str,payload_hash:{type:'string',pattern:'^[a-f0-9]{64}$'}});
 const reviewId={type:'string',pattern:'^[a-f0-9]{64}$'};
 const defs={
+ 'crm.customer':{effect:'read',parameters:obj({opportunity_id:id})},
+ 'crm.change_stage':{effect:'write',parameters:obj({opportunity_id:id,revision:{type:'string',pattern:'^[a-f0-9]{64}$'},stage_id:id})},
+ 'crm.add_activity':{effect:'write',parameters:obj({opportunity_id:id,revision:{type:'string',pattern:'^[a-f0-9]{64}$'},summary:{type:'string',minLength:1,maxLength:200},date:{type:'string',format:'date'}})},
+ 'crm.postpone_activity':{effect:'write',parameters:obj({opportunity_id:id,revision:{type:'string',pattern:'^[a-f0-9]{64}$'},activity_id:id,activity_revision:{type:'string',pattern:'^[a-f0-9]{64}$'},date:{type:'string',format:'date'}})},
  'crm.complete_activity':{effect:'write',parameters:obj({activity_id:id,opportunity_id:id,revision:{type:'string',pattern:'^[a-f0-9]{64}$'}})},
  'mail.drafts':{effect:'read',parameters:obj({since:{type:'string',minLength:20,maxLength:40},action_id:{type:'string',minLength:1,maxLength:100},after:{type:'string',maxLength:100},limit:{type:'integer',minimum:1,maximum:50}},['since'])},
  'intake.updates':{effect:'read',parameters:obj({since:{type:'string',minLength:20,maxLength:40},after:{type:'string',maxLength:150},limit:{type:'integer',minimum:1,maximum:100}},['since'])},
@@ -35,7 +40,7 @@ const defs={
  'mail.confirm_send':{effect:'send',parameters:approved},
  'operation.execute':{effect:'write',parameters:approved},
 };
-export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritable,odooRead,readOriginal,verifyDraft,completeActivity}){
+export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritable,odooRead,readOriginal,verifyDraft,completeActivity,odooWrite}){
  const applicationAssertWritable=assertWritable;
  assertWritable=()=>{
    if(approvals.store.state.recovery?.required||
@@ -138,6 +143,7 @@ export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritabl
        approvals.store.audit('ACTION_CANCELLED',{action_id:action.id,reason:'OWNER_DELETED_DRAFT'});
        result={ok:true,status:'draft_deleted',action_id:action.id};
      }
+     else if(['crm.customer','crm.change_stage','crm.add_activity','crm.postpone_activity'].includes(c.id)){if(c.id!=='crm.customer')assertWritable();result=await customerWorkspace(odooRead,odooWrite,c.id,p);}
      else if(c.id==='crm.complete_activity'){assertWritable();result=await completeCustomerActivity(odooRead,completeActivity,p);}
      else if(c.id==='intake.updates')result=intakeUpdates(approvals.store.state,p);
      else if(c.id.startsWith('reviews.')){result=await reviews[c.id.slice('reviews.'.length)](p);}
