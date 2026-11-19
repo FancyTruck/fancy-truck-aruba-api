@@ -1,5 +1,11 @@
 import { reviewSnapshot } from './reviewSnapshot.js';
 import { acquireProcessOwner } from './processOwner.js';
+import {draftOriginalResolver} from './draftOriginalResolver.js';
+import {automaticDraftVerifier} from './automaticDraftVerifier.js';
+import {verifyDraftPage} from './verifyDraftPage.js';
+import {fastMailPoll} from './fastMailPoll.js';
+import {teamAlreadyReplied} from './teamReplyGuard.js';
+import {executeMailAction} from './mailExecution.js';
 import {websiteFormMessage} from './websiteForm.js';
 import { intakeStatus, syncIntakeWatchdog, suspensionDescription } from './intakeWatchdog.js';
 import { peuEffectDiagnostics } from './peuEffectDiagnostics.js';
@@ -692,6 +698,14 @@ async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
   if (decision.action === 'skip') return { skipped: true, reason: decision.reason };
   if (decision.action === 'review') return { suspended: true, ...decision };
   if (decision.action === 'link') { await flagCustomerRequest(decision.match.lead.id); return linkThreadMessage({parsed,match:decision.match,direction:'incoming',call:odooCall,store}); }
+  const teamCheck = await teamAlreadyReplied({parsed, accounts: ['hello','pietro'].filter(name => {
+    try { accountConfig(name); return true; } catch { return false; }
+  }), withImap});
+  if (teamCheck.handled) {
+    if (decision.lead?.id) store.cancelActionGroup(`missing-details:odoo-lead-${decision.lead.id}`, 'TEAM_ALREADY_REPLIED');
+    store.audit('AUTO_DRAFT_SKIPPED', {reason:'team_already_replied', account:accountName, message_id:parsed.messageId});
+    return {skipped:true, reason:'team_already_replied'};
+  }
   if (decision.action === 'reply') return processQuoteReply(parsed, uid, decision.lead);
   const kind = decision.kind;
 
@@ -792,6 +806,7 @@ async function checkIntakeWatchdog() {
 }
 
 let operationalCycleRunning = false;
+const fastInboxTick=fastMailPoll({canRun:()=>runtime.automationEnabled&&!runtime.readOnly&&!runtime.recoveryRequired&&withinOperatingWindow(),busy:()=>operationalCycleRunning,setBusy:value=>{operationalCycleRunning=value;},poll:pollQuoteRequests,record:(account,state)=>store.integration('aruba:'+account,state)});
 
 async function runOperationalCycle({ force = false } = {}) {
   assertWritable(runtime);
@@ -1027,8 +1042,18 @@ if (peuDb) {
   mountPeuWhatsApp(app,new PeuWhatsAppGateway({db:peuDb,call:odooCall,parse:simpleParser,assertWritable:()=>assertWritable(runtime),readOnly:runtime.readOnly}));
   const {makePeuContract,mountPeuContract}=await import('./peuContract.js');
   const {jsonRequest}=await import('./peuCommon.js');
+  const {ArubaService}=await import('./peuMailService.js');
+  const originalReader=new ArubaService({db:peuDb,withImap,parse:simpleParser,accounts:['pietro','hello']});
   const upstream=(path,options={})=>jsonRequest(fetch,`http://127.0.0.1:${port||server.address().port}${path}`,{...options,headers:{'Content-Type':'application/json',Authorization:`Bearer ${peuInternalToken}`}});
-  mountPeuContract(app,makePeuContract({db:peuDb,approvals,upstream,readOnly:runtime.readOnly,odooRead:(model,domain,options)=>odooCall(model,'search_read',[domain],options),assertWritable:()=>assertWritable(runtime),
+  const odooRead=(model,domain,options)=>odooCall(model,'search_read',[domain],options);
+  const readDraftOriginal=draftOriginalResolver({readMailbox:(account,id)=>originalReader.draftOriginal(account,id),actions:()=>store.state.actions,accounts:['hello','pietro'].filter(name=>{try{accountConfig(name);return true;}catch{return false;}}),odooRead,plainText:plainTextFromHtml});
+  const verifyDraft=automaticDraftVerifier({readOriginal:readDraftOriginal,odooRead,classify:(subject,text)=>classifyCommercialMessage(subject,text,new Map(),{isReply:true}),teamCheck:parsed=>teamAlreadyReplied({parsed,accounts:['hello','pietro'].filter(name=>{try{accountConfig(name);return true;}catch{return false;}}),withImap}),store,canRetire:()=>!runtime.readOnly&&!runtime.recoveryRequired});
+  const startupDraftCheck=setTimeout(async()=>{if(runtime.readOnly||runtime.recoveryRequired)return;try{
+    const drafts=Object.values(store.state.actions).filter(a=>a.type==='SEND_EMAIL'&&a.status==='PENDING_APPROVAL'&&a.supersede_group?.startsWith('missing-details:')).map(a=>({action_id:a.id}));
+    const result=await verifyDraftPage(drafts,store.state.actions,verifyDraft);
+    console.log(JSON.stringify({event:'automatic_draft_recovery',checked:drafts.length,verified:result.drafts.length,verification_pending:result.verification_pending}));
+  }catch{console.error('automatic_draft_recovery_failed');}},1000);startupDraftCheck.unref();
+  mountPeuContract(app,makePeuContract({db:peuDb,approvals,upstream,readOriginal:readDraftOriginal,verifyDraft,readOnly:runtime.readOnly,odooRead:(model,domain,options)=>odooCall(model,'search_read',[domain],options),assertWritable:()=>assertWritable(runtime),
     verify:async(capability,response,marker)=>{
       const model=capability==='crm.create'?'crm.lead':'sale.order';
       const id=response.id||response.lead?.id||response.order?.id;
@@ -1423,49 +1448,23 @@ app.post('/v1/:account/send', async (req, res) => {
 });
 
 app.post('/v1/actions/:id/execute', async (req, res) => {
-  let execution, providerObservation;
   try {
     assertWritable(runtime);
-    const action = approvals.assertExecutable(req.params.id);
-    if(action.peu_payload_hash)throw new Error('Usare il comando Peu dedicato con registro persistente');
-    if (!['SEND_EMAIL', 'SEND_FOLLOW_UP', 'SEND_PAYMENT_REMINDER', 'SEND_QUOTE', 'SEND_CONTRACT', 'SEND_INVOICE'].includes(action.type)) {
-      return res.status(409).json({ ok: false, error: 'Questa azione richiede un connettore specifico e non può essere eseguita via SMTP generico' });
-    }
-    const payload = action.payload || {};
-    if (!payload.to && !action.target) throw new Error('Destinatario mancante');
-    if (!payload.subject || (!payload.text && !payload.html)) throw new Error('Contenuto non completo: esecuzione bloccata');
+    const action=await executeMailAction({approvals,id:req.params.id,send:async payload=>{
     const account = accountConfig(payload.account || 'hello');
     const transporter = nodemailer.createTransport({
       host: process.env.ARUBA_SMTP_HOST || 'smtps.aruba.it', port: Number(process.env.ARUBA_SMTP_PORT || 465), secure: true,
       connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 15000,
       auth: { user: account.email, pass: account.password },
     });
-    execution = store.beginSmtpExecution(action.id);
-    const info = await transporter.sendMail({ from: `Fancy Truck <${account.email}>`, to: payload.to || action.target,
+    try { return await transporter.sendMail({ from: `Fancy Truck <${account.email}>`, to: payload.to,
       cc: payload.cc || undefined, replyTo: account.email, subject: payload.subject, text: payload.text || undefined,
-      html: payload.html || undefined, inReplyTo: payload.inReplyTo || undefined, references: payload.references || undefined,
-      messageId: execution.message_id });
-    providerObservation = { message_id: info.messageId || execution.message_id,
-      accepted: Array.isArray(info.accepted) ? info.accepted : [],
-      rejected: Array.isArray(info.rejected) ? info.rejected : [],
-      pending: Array.isArray(info.pending) ? info.pending : [] };
-    if (!Array.isArray(info.accepted) || !info.accepted.length || info.rejected?.length || info.pending?.length) {
-      throw new Error('Accettazione SMTP incompleta: riconciliare il tentativo prima di altre azioni');
-    }
-    res.json({ ok: true, action: store.finishSmtpExecution(action.id, execution.id, 'EXECUTED', {
-      status: 'accepted_by_smtp', delivery_verified: false,
-      message_id: info.messageId || execution.message_id, accepted: info.accepted, rejected: info.rejected || [],
-    }) });
+      html: payload.html || undefined, messageId:payload.messageId, inReplyTo: payload.inReplyTo || undefined, references: payload.references || undefined }); }
+    finally { transporter.close(); }
+    }});
+    res.json({ ok: true, action });
   } catch (error) {
-    if (execution) {
-      try { store.finishSmtpExecution(req.params.id, execution.id, 'UNCERTAIN', {
-        status: 'outcome_unknown_reconcile_first', delivery_verified: false,
-        ...(providerObservation ? { provider_observation: providerObservation } : {}),
-      }); } catch { /* The durable EXECUTING claim still blocks a retry. */ }
-      return res.status(409).json({ ok: false, code: 'SMTP_OUTCOME_UNCERTAIN',
-        error: 'Esito invio non verificato: riconciliare il tentativo prima di riprovare' });
-    }
-    res.status(409).json({ ok: false, error: error instanceof Error ? error.message : 'Esecuzione bloccata' });
+    res.status(409).json({ ok: false, ...(error.code ? {code:error.code} : {}), error: error instanceof Error ? error.message : 'Esecuzione bloccata' });
   }
 });
 
@@ -1540,6 +1539,7 @@ const server = app.listen(port, runtime.host, (error) => {
   if (runtime.automationEnabled && !runtime.readOnly) {
     setTimeout(checkIntakeWatchdog,30000);
     setInterval(checkIntakeWatchdog,5*60*1000);
+    setInterval(()=>fastInboxTick().catch(()=>console.error('mail_intake_check_failed')),60000);
     setTimeout(() => runOperationalCycle().catch((error) => console.error(`CICLO OPERATIVO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 15000);
     setInterval(() => runOperationalCycle().catch((error) => console.error(`CICLO OPERATIVO: ERRORE - ${error instanceof Error ? error.message : 'errore sconosciuto'}`)), 60 * 60 * 1000);
   }
@@ -1547,4 +1547,3 @@ const server = app.listen(port, runtime.host, (error) => {
 
 // Module exports permit isolated contract tests without exposing extra HTTP routes.
 export { processQuoteRequest, processQuoteReply, processSentMessage, findReplyLead, server, store, approvals };
-

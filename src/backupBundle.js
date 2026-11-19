@@ -32,6 +32,12 @@ function checkSqlite(file,state){
   for(const table of ['mail_messages','mail_cursors','peu_operations','peu_effects'])counts[table]=db.prepare(`SELECT count(*) AS n FROM ${table}`).get().n;
   if(db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='peu_whatsapp_replies'").get())counts.peu_whatsapp_replies=db.prepare('SELECT count(*) AS n FROM peu_whatsapp_replies').get().n;
   for(const row of db.prepare('SELECT action_id,digest FROM peu_effects').iterate()){
+   // Direct CRM creation has a durable operation ledger, but intentionally no
+   // approval action. Validate that distinct namespace against its operation.
+   if(/^ordinary-[a-f0-9]{64}$/.test(row.action_id)
+     && row.action_id === `ordinary-${row.digest}`
+     && !state.actions[row.action_id]
+     && db.prepare('SELECT 1 FROM peu_operations WHERE digest=? LIMIT 1').get(row.digest))continue;
    if(state.actions[row.action_id]?.peu_payload_hash!==row.digest)throw Error('Registro e approvazioni non coerenti');
   }
   return counts;
@@ -148,4 +154,3 @@ export async function restoreBundle(file,destination,key,progress=()=>{}){
   return {manifest,counts,recovery_required:true};
  }finally{removePrivateDirectory(staging);}
 }
-

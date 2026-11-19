@@ -110,3 +110,95 @@ test('unknown mailbox cannot be prepared',async()=>{
 });
 
 test('automatic drafts are readable without approval and require exact owner confirmation to send',async()=>{const f=fixture();const a=f.approvals.queue({type:'SEND_EMAIL',target:mail.to,idempotency_key:'automatic',payload:{account:'hello',subject:mail.subject,text:mail.text}}).action;const r=await f.contract.execute(f.command('mail.drafts',{since:'2000-01-01T00:00:00.000Z',action_id:a.id},'read'));assert.equal(r.result.drafts[0].action_id,a.id);assert.equal(r.result.drafts[0].to,mail.to);assert.equal(f.sent,0);const params={action_id:a.id,payload_hash:r.result.drafts[0].payload_hash};const no=f.command('mail.confirm_send',params,'no');no.confirmation.confirmed=false;await assert.rejects(f.contract.execute(no));assert.equal(f.sent,0);await assert.rejects(f.contract.execute(f.command('mail.confirm_send',{...params,payload_hash:'changed'},'changed')));assert.equal(f.sent,0);await f.contract.execute(f.command('mail.confirm_send',params,'yes'));await f.contract.execute(f.command('mail.confirm_send',params,'replay'));assert.equal(f.sent,1);});
+
+test('delete draft cancels only the exact pending action and prevents later sending',async()=>{
+ const f=fixture();const p=(await f.contract.execute(f.command('mail.prepare',mail,'draft'))).result;
+ const other=(await f.contract.execute(f.command('mail.prepare',{...mail,subject:'Other'},'other'))).result;
+ const params={action_id:p.action_id,payload_hash:p.payload_hash};
+ await assert.rejects(f.contract.execute(f.command('mail.delete_draft',{...params,payload_hash:'0'.repeat(64)},'stale')));
+ const cmd=f.command('mail.delete_draft',params,'delete');cmd.confirmation.confirmed=false;
+ assert.equal((await f.contract.execute(cmd)).result.status,'draft_deleted');
+ await makePeuContract(f.config).execute(cmd);
+ assert.equal(f.approvals.store.action(other.action_id).status,'PENDING_APPROVAL');
+ assert.equal(f.approvals.store.action(p.action_id).status,'CANCELLED');
+ await assert.rejects(f.contract.execute(f.command('mail.confirm_send',params,'later-confirm')));
+ assert.equal(f.sent,0);assert.equal(f.writes,0);
+});
+test('draft original uses exact message ID, account and inbox, never a subject match',async()=>{
+ const f=fixture();const p=(await f.contract.execute(f.command('mail.prepare',{...mail,inReplyTo:'<customer-one>'},'draft'))).result;
+ const args={since:'2000-01-01T00:00:00.000Z',action_id:p.action_id};
+ const content={text:'Original customer request',subject:'Same subject',from:[{address:mail.to}]};
+ for(const [i,original] of [null,{message_id:'<other>',folder:'INBOX',payload:content},{message_id:'<customer-one>',folder:'Sent',payload:content},{message_id:'<customer-one>',folder:'INBOX',payload:content}].entries()){
+ const contract=makePeuContract({...f.config,readOriginal:async(account,id)=>{assert.equal(account,'pietro');assert.equal(id,'<customer-one>');return {original};}});
+ const draft=(await contract.execute(f.command('mail.drafts',args,'read-original-'+i))).result.drafts[0];
+ assert.equal(draft.original_status,i===3?'verified':'unavailable');assert.equal(!!draft.original,i===3);
+ }
+});
+
+test('snoozed reviews leave the queue and changed snapshots cannot be reused',async()=>{
+ const f=fixture(),row=review(f,'snooze'),before=await snapshot(f,row),until=new Date(Date.now()+86400000).toISOString();
+ const result=(await f.contract.execute(f.command('reviews.snooze',{review_id:row.id,snapshot_hash:before,until},'snooze'))).result;
+ assert.equal(result.status,'snoozed');assert.equal(result.item.snoozed_until,until);
+ assert.equal((await f.contract.execute(f.command('reviews.list',{},'list-snoozed'))).result.total,0);
+ await assert.rejects(f.contract.execute(f.command('reviews.resolve',{review_id:row.id,snapshot_hash:before,resolution:'NOT_COMMERCIAL',note:'Classificazione precedente ormai superata.'},'stale-close')));
+ const fresh=(await f.contract.execute(f.command('reviews.get',{review_id:row.id},'fresh-snooze'))).result.item;
+ await f.contract.execute(f.command('reviews.resolve',{review_id:row.id,snapshot_hash:fresh.snapshot_hash,resolution:'HANDLED_MANUALLY',note:'Il team ha già risposto al cliente.'},'close-snoozed'));
+ assert.equal(f.sent,0);assert.equal(f.writes,0);
+});
+test('review detail recovers only its exact original and keeps mailbox/message identity',async()=>{
+ const f=fixture(),row=review(f,'original-review',{account:'pietro',message_id:'<original>'});let reads=0;
+ f.config.readOriginal=async(account,id)=>{reads++;assert.equal(account,'pietro');assert.equal(id,'<original>');return {original:{message_id:id,folder:'INBOX',payload:{text:'Full original',from:[{address:row.sender}]}}};};
+ const contract=makePeuContract(f.config),result=(await contract.execute(f.command('reviews.get',{review_id:row.id},'get-original'))).result.item;
+ assert.equal(result.original_status,'verified');assert.equal(result.original.text,'Full original');assert.equal(reads,1);assert.equal(f.sent,0);
+});
+
+test('concurrent edit during verification rejects old send without poisoning the new approval hash',async()=>{
+ for(const legacy of [true,false]){
+  const f=fixture();const prepared=(await f.contract.execute(f.command('mail.prepare',mail,'draft'))).result;
+  const action=f.approvals.store.action(prepared.action_id);action.supersede_group='missing-details:1';if(legacy)delete action.peu_payload_hash;
+  let resume,entered,first=true;const gate=new Promise(r=>resume=r),started=new Promise(r=>entered=r);
+  const contract=makePeuContract({...f.config,verifyDraft:async()=>{if(first){first=false;entered();await gate;}return true;}});
+  const oldSend=contract.execute(f.command('mail.confirm_send',{action_id:action.id,payload_hash:prepared.payload_hash},'old-send')).catch(e=>e);
+  await started;
+  const edited=(await contract.execute(f.command('mail.update_draft',{action_id:action.id,payload_hash:prepared.payload_hash,text:'Correzione'},'edit'))).result;
+  resume();assert.equal((await oldSend).code,'mail_confirmation_state_conflict');assert.equal(action.status,'PENDING_APPROVAL');assert.equal(action.payload.text,'Correzione');assert.equal(f.sent,0);
+  if(legacy)assert.equal(action.peu_payload_hash,undefined);else assert.equal(action.peu_payload_hash,edited.payload_hash);
+  await contract.execute(f.command('mail.confirm_send',{action_id:action.id,payload_hash:edited.payload_hash},'new-send'));assert.equal(f.sent,1);
+ }
+});
+test('concurrent deletion during verification cannot resurrect the draft or arm approval',async()=>{
+ const f=fixture(),p=(await f.contract.execute(f.command('mail.prepare',mail,'draft'))).result,a=f.approvals.store.action(p.action_id);a.supersede_group='missing-details:1';delete a.peu_payload_hash;
+ let resume,entered;const gate=new Promise(r=>resume=r),started=new Promise(r=>entered=r);
+ const contract=makePeuContract({...f.config,verifyDraft:async()=>{entered();await gate;return true;}});
+ const old=contract.execute(f.command('mail.confirm_send',{action_id:a.id,payload_hash:p.payload_hash},'old')).catch(e=>e);await started;
+ await contract.execute(f.command('mail.delete_draft',{action_id:a.id,payload_hash:p.payload_hash},'delete'));resume();assert.equal((await old).code,'mail_confirmation_state_conflict');assert.equal(a.status,'CANCELLED');assert.equal(a.peu_payload_hash,undefined);assert.equal(f.sent,0);
+});
+
+test('updating exact pending draft preserves envelope and source; stale send cannot execute',async()=>{
+ const f=fixture(),p=(await f.contract.execute(f.command('mail.prepare',{...mail,inReplyTo:'<client>'},'draft'))).result;
+ const params={action_id:p.action_id,payload_hash:p.payload_hash,text:'Possiamo consegnare venerdì.'};
+ const cmd=f.command('mail.update_draft',params,'edit');cmd.confirmation.confirmed=false;
+ const edited=(await f.contract.execute(cmd)).result;assert.equal(edited.status,'draft_updated');assert.notEqual(edited.payload_hash,p.payload_hash);
+ await f.contract.execute(cmd);const action=f.approvals.store.action(p.action_id);
+ assert.deepEqual(action.payload,{...mail,inReplyTo:'<client>',text:params.text});assert.equal(action.status,'PENDING_APPROVAL');assert.equal(action.peu_payload_hash,edited.payload_hash);
+ await assert.rejects(f.contract.execute(f.command('mail.confirm_send',{action_id:p.action_id,payload_hash:p.payload_hash},'old-send')));
+ await assert.rejects(f.contract.execute(f.command('mail.update_draft',{...params,text:'Second change'},'stale-edit')));
+ await assert.rejects(f.contract.execute(f.command('mail.update_draft',{...params,to:'other@example.invalid'},'recipient-change')));
+ assert.equal(f.sent,0);assert.equal(f.writes,0);
+});
+test('closed or approved drafts cannot be edited and failed persistence restores old payload',async()=>{
+ for(const mode of ['approved','cancelled','disk']){const f=fixture(),p=(await f.contract.execute(f.command('mail.prepare',mail,'draft'))).result;
+ const a=f.approvals.store.action(p.action_id),before=JSON.stringify(a.payload);
+ if(mode==='approved')f.approve(p.action_id);else if(mode==='cancelled')a.status='CANCELLED';else f.approvals.store.save=()=>{throw Error('disk');};
+ await assert.rejects(f.contract.execute(f.command('mail.update_draft',{action_id:p.action_id,payload_hash:p.payload_hash,text:'Edited'},'edit')));
+ assert.equal(JSON.stringify(a.payload),before);assert.equal(f.sent,0);}
+});
+test('opening an incoming notification recovers its exact original and reuses the case',async()=>{const f=fixture();f.config.readOriginal=async(account,messageId)=>({original:{message_id:messageId,folder:'INBOX',payload:{subject:'Risposta cliente',text:'Corpo completo',from:[{address:'client@example.invalid'}]}}});const contract=makePeuContract(f.config);const parameters={account:'pietro',message_id:'<actual-original@example.invalid>'};const first=(await contract.execute(f.command('reviews.open_message',parameters,'open-first'))).result;assert.equal(first.status,'opened');assert.equal(first.item.original_status,'verified');const second=(await contract.execute(f.command('reviews.open_message',parameters,'open-again'))).result;assert.equal(second.item.id,first.item.id);assert.equal(Object.keys(f.approvals.store.state.classification_reviews).length,1);assert.equal(f.sent,0);assert.equal(f.writes,0);});
+
+test('suspended draft exposes its full original without authorizing sending',async()=>{
+ const f=fixture(),p=(await f.contract.execute(f.command('mail.prepare',{...mail,inReplyTo:'<source@example.invalid>'},'prepare-held'))).result;
+ f.approvals.store.action(p.action_id).supersede_group='missing-details:odoo-lead-42';
+ const contract=makePeuContract({...f.config,verifyDraft:async()=>false,readOriginal:async()=>({original:{message_id:'<source@example.invalid>',folder:'INBOX',payload:{text:'Complete customer request',from:[{address:mail.to}]}}})});
+ const r=(await contract.execute(f.command('mail.drafts',{since:'2000-01-01T00:00:00.000Z',action_id:p.action_id},'read-held'))).result;
+ assert.equal(r.drafts.length,0);assert.equal(r.suspended_drafts[0].original.text,'Complete customer request');assert.equal(r.suspended_drafts[0].verification_status,'incomplete');assert.equal(f.sent,0);
+});

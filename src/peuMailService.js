@@ -1,3 +1,4 @@
+import {largeOriginal} from './mailBodyOriginal.js';
 import {websiteFormMessage} from './websiteForm.js';
 import {problem,transaction} from './peuMailDb.js';
 import {readFolder,reconcileSent} from './peuMailSync.js';
@@ -37,6 +38,27 @@ export class ArubaService {
  account(id){if(!this.accounts.includes(id))throw problem('account_not_authorized',403);}
  async folders(account){this.account(account);return this.withImap(account,async client=>({folders:(await client.list()).filter(f=>f.path==='INBOX'||f.specialUse==='\\Sent').map(f=>({path:f.path,role:f.path==='INBOX'?'inbox':'sent'}))}));}
  thread(account,key){this.account(account);return {messages:Array.from(this.db.prepare(`SELECT folder,validity,uid,message_id,thread_key,${publicPayload},flags FROM mail_messages WHERE account=? AND thread_key=? AND deleted=0 ORDER BY uid LIMIT 100`).iterate(account,key),publicMessage)};}
+ original(account,messageId){this.account(account);if(typeof messageId!=='string'||!messageId.length||messageId.length>998)throw problem('invalid_message_id');const rows=Array.from(this.db.prepare(`SELECT folder,validity,uid,message_id,thread_key,${publicPayload},flags FROM mail_messages WHERE account=? AND folder='INBOX' AND message_id=? AND deleted=0 LIMIT 2`).iterate(account,messageId),publicMessage);return {original:rows.length===1?rows[0]:null};}
+ async draftOriginal(account,messageId){
+  const cached=this.original(account,messageId);if(cached.original?.payload?.text&&!cached.original.payload.text_truncated)return cached;
+  if(!this.withImap||!this.parse||/[\r\n]/.test(messageId))return {original:null};
+  return this.withImap(account,async client=>{
+   const lock=await client.getMailboxLock('INBOX',{readOnly:true});
+   try{
+    const ids=await client.search({header:{'message-id':messageId}},{uid:true});
+    if(!Array.isArray(ids)||ids.length!==1)return {original:null};
+    const uid=ids[0],meta=await client.fetchOne(uid,{size:true},{uid:true});
+    if(!meta)return {original:null};
+    if(meta.size>2*1024*1024)return {original:await largeOriginal(client,uid,messageId,this.parse)};
+    const raw=await client.fetchOne(uid,{source:{start:0,maxLength:2*1024*1024+1}},{uid:true});
+    if(!raw?.source||raw.source.length>2*1024*1024)return {original:null};
+    const parsed=await this.parse(raw.source);
+    if(parsed.messageId!==messageId||!parsed.text)return {original:null};
+    const from=parsed.from?.value||[];
+    return {original:{message_id:messageId,folder:'INBOX',payload:{subject:parsed.subject||'',date:parsed.date?.toISOString?.()||null,from:from.map(x=>({address:x.address,name:x.name})),text:parsed.text.slice(0,1024*1024),text_truncated:parsed.text.length>1024*1024}}};
+   }finally{lock.release();}
+  });
+ }
  async sync(account,folder){this.account(account);return this.withImap(account,async client=>{
    const folders=await client.list();if(!folders.some(f=>f.path===folder&&(f.path==='INBOX'||f.specialUse==='\\Sent')))throw problem('folder_not_authorized',403);
    let cursor=this.db.prepare('SELECT validity,last_uid uid FROM mail_cursors WHERE account=? AND folder=?').get(account,folder),total=0;

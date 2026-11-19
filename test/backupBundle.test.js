@@ -44,6 +44,14 @@ function fixture(t){
 }
 function capture(f){const directory=join(f.directory,'capture');fs.mkdirSync(directory);return {directory,capture:captureBundle({...f,directory,canCapture:()=>true})};}
 
+test('direct CRM creation without approval survives encrypted backup and restore',async t=>{
+ const f=fixture(t);f.config.upstream=async()=>({ok:true,id:42});f.config.verify=async()=>({ok:true,status:'verified',id:42});const contract=makePeuContract(f.config);
+ const result=await contract.execute(f.command('crm.create',{name:'Synthetic CRM request',partner_id:1},'ordinary-crm'));assert.equal(result.result.id,42);assert.equal(Object.keys(f.store.state.actions).length,0);
+ const c=capture(f),sealed=await sealBundle(c.capture,c.directory,key),destination=join(f.directory,'ordinary-restore');const restored=await restoreBundle(sealed.file,destination,key);assert.equal(restored.counts.peu_effects,1);
+ const db=openMailDb(join(destination,'peu-aruba.sqlite'));try{const restoredContract=makePeuContract({...f.config,db,approvals:new ApprovalService(new JsonStateStore(join(destination,'fancy-truck-state.json')),'test-only')});await assert.rejects(restoredContract.execute(f.command('crm.create',{name:'Another request',partner_id:1},'after-restore')),/recovery_reconciliation_required/);}finally{db.close();}
+});
+test('ordinary CRM ledger still rejects missing operation evidence',async t=>{const f=fixture(t),digest='a'.repeat(64);f.db.prepare('INSERT INTO peu_effects VALUES(?,?,?,NULL)').run('ordinary-'+digest,digest,'succeeded');assert.throws(()=>capture(f),/Registro e approvazioni non coerenti/);});
+
 test('coherent encrypted bundle restores both stores, deduplicates success and blocks post-backup effects',async t=>{
  const f=fixture(t),done=await f.prepare('done');await f.contract.execute(f.command('mail.send',done,'send-done'));
  const pending=await f.prepare('after-backup');

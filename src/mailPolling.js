@@ -56,7 +56,7 @@ export async function pollMailbox({ client, account, store, parse, processMessag
       if (Buffer.byteLength(message.source) > MAX_INLINE_SOURCE_BYTES) throw mailProblem('MAIL_SOURCE_LIMIT', 'Messaggio oltre il limite dichiarato: checkpoint conservato');
       const parsed = await parse(message.source);
       const result = await processMessage(parsed, uid, validity);
-      store.recordMailOutcome?.(account, validity, uid, result);
+      store.recordMailOutcome?.(account, validity, uid, {...result,message_id:parsed.messageId||null,subject:String(parsed.subject||'').slice(0,500),sender:parsed.from?.value?.[0]?.address||'',excerpt:String(parsed.text||'').slice(0,4000)});
       const next = { ...checkpoint, lastUid: uid };
       store.setCursor(key, next);
       checkpoint = next;

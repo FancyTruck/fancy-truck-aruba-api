@@ -1,0 +1,67 @@
+{
+  "date": "2026-11-19",
+  "modules": [
+    "P00",
+    "P01",
+    "P03",
+    "P04",
+    "P05",
+    "P20"
+  ],
+  "source_parent": "4a61f03872982bba06fd46d8363306b1542ae552",
+  "main_reconciled": "d9216637348e122c5fd8332f4a30c2bc0c5b7460",
+  "reconciliation": "Applied exact main delta from previously reconciled24a8d6c; ordinary merge-base remains older because continuation is deliberately single-parent. Two conflicted files resolved preserving both sides. No main or PR merge.",
+  "implementation": [
+    "Preserve incoming original recovery, customer/recipient-aware draft verification, review snooze/reminder pagination and notification separation from main.",
+    "Wire current executeMailAction helper to existing atomic beginSmtpExecution/finishSmtpExecution rather than overwrite prior durable claim/receipt/audit protections.",
+    "Pending/partial SMTP acceptance becomes UNCERTAIN; delivery remains unverified. Failed receipt persistence leaves durable EXECUTING and no acceptance audit.",
+    "Transport closes in finally; HTTP stub now supplies and verifies close. Existing readonly startup/ledger guards retained."
+  ],
+  "tests": {
+    "command": "node --test --test-reporter=tap; node --check every src/*.js and scripts/*.mjs",
+    "passed": 573,
+    "failed": 0,
+    "syntax_checks": 89,
+    "targeted_passed": 55,
+    "node": "24.22.3",
+    "environment": "isolated real HTTP/JsonStateStore/SQLite with synthetic SMTP/IMAP adapters",
+    "initial_suite": {
+      "passed": 568,
+      "failed": 3,
+      "cause": "Real transport now closes in finally; old HTTP stub omitted close, causing two subtest failures plus parent failure. Stub corrected and closure count asserted."
+    },
+    "new_regressions": [
+      "pending recipient accepted response blocks retry after store reopen",
+      "failed receipt persistence preserves durable EXECUTING claim, no accepted audit and no second send"
+    ]
+  },
+  "live_readonly": {
+    "commit": "d9216637348e122c5fd8332f4a30c2bc0c5b7460",
+    "deploy": "dep-dbv1hiuq1p3s73fsjo80",
+    "status": "live",
+    "finished_at": "2026-11-18T21:30:35.907223Z",
+    "events_query_start": "2026-11-18T00:00:00Z",
+    "event_types": [
+      "server_failed",
+      "server_restarted"
+    ],
+    "returned_events": 0,
+    "workspace": "tea-daa7c667bikc73fkk940",
+    "claim": "Independent existing deployment metadata and bounded events only; not released by this run."
+  },
+  "oom": "No new RSS/heap/external/arrayBuffer profile, peak observation or historical OOM attribution. Bounded event result alone is not stability acceptance; earlier exit1 cause unknown.",
+  "backup": "No provider download, integrity check, decryption, restore or deletion in this run. Prior dated restore evidence retained; retention and alarm acceptance open.",
+  "source_integrity": {
+    "pr26_server": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "combined_server": "361c3e0d778c253084f3919fe877f5f4e134f6bc",
+    "rule": "Corrected intake/awaiting_scope_review retained; original PR26 source unchanged."
+  },
+  "limits": [
+    "No general functional phase closed;4.5.1/project case unchanged and COLLAUDO74 untouched,F6 deferred.",
+    "All send tests use mocks, no customer message or live effect.",
+    "Commercial UID discovery and provider reconciliation remain open; no claim they were fixed by reconciliation.",
+    "Do not mix source work with pending permanent CRM deletion confirmation."
+  ],
+  "effects": "No main push, remote PR merge, deploy, restart, production/Odoo write, hosted migration, real send, fiscal action, payment, refund, purchase or new automation.",
+  "next_action": "Reconcile latest HEAD/lease; bound commercial UID discovery without skipping initialSince messages, and inspect batch-memory/recovery plus exact live commercial evidence."
+}

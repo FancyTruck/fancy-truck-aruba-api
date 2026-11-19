@@ -22,3 +22,8 @@ for(const [subject,text,kind] of [
 test('mixed supplier/customer purpose remains reviewable, not silently dropped',()=>{
  assert.equal(classify('Scopri quanto credito puoi ottenere','Vorremmo noleggiare un food truck per un nostro evento.').reason,'non_customer_direction_requires_review');
 });
+for(const body of [
+ 'Vi proponiamo i nostri servizi di marketing per il noleggio food truck. Vorremmo fissare una call conoscitiva.',
+ 'La nostra agenzia di marketing può migliorare la visibilità del vostro catering. Richiedete un preventivo.',
+ 'Ti presentiamo i nostri prodotti per il noleggio. Vorrei organizzare una demo.',
+])test('sales pitches requesting a meeting are not customer demand: '+body,()=>assert.equal(classify('Preventivo servizi food truck',body).reason,'supplier_offer'));

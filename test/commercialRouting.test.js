@@ -16,6 +16,15 @@ function setup(t) {
   return { file, store, parsed, uid: 10, account: 'hello', findLead: async () => ({}) };
 }
 
+test('customer order confirmation and invoice reply reach their established case',async t=>{
+ for(const subject of ['Re: Conferma ordine noleggio Airstream','Re: Fattura noleggio S00331']){
+  const args=setup(t);args.parsed={...args.parsed,subject,text:'Confermiamo il preventivo. Procedete con il contratto.',inReplyTo:'<quote@example.test>'};let reads=0;
+  args.findLead=async()=>{reads++;return {lead:{id:42},order_ids:[331]};};const r=await routeCommercialMessage(args);assert.equal(r.action,'link');assert.equal(r.match.lead.id,42);assert.equal(reads,1);
+ }
+});
+test('unmatched administrative reply is reviewed and never creates a new lead',async t=>{const args=setup(t);args.parsed={...args.parsed,subject:'Re: Conferma ordine',inReplyTo:'<unknown@example.test>'};const r=await routeCommercialMessage(args);assert.equal(r.action,'review');assert.equal(r.reason,'reply_without_matching_lead');});
+test('automatic invoice notification remains excluded even with reply headers',async t=>{const args=setup(t);args.parsed={...args.parsed,subject:'Re: Fattura',inReplyTo:'<quote@example.test>',headers:new Map([['auto-submitted','auto-generated']])};args.findLead=()=>{throw Error('No CRM lookup for auto notifications');};assert.equal((await routeCommercialMessage(args)).action,'skip');});
+
 test('ambiguous mail persists across restart, deduplicates, and never looks up or writes CRM', async t => {
   const args = setup(t);
   args.findLead = () => { throw new Error('CRM must not be called'); };

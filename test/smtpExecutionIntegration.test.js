@@ -11,8 +11,8 @@ test('actual generic execution HTTP route claims durably before mock SMTP',async
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'smtp-claim-http-'));
  Object.assign(process.env,{APP_ENV:'test',PORT:'0',STATE_FILE:path.join(dir,'state.json'),API_TOKEN:'synthetic-smtp-token',READ_ONLY:'false',AUTOMATION_ENABLED:'false',STARTUP_CHECKS:'false',EXTERNAL_BACKUP_ENABLED:'false',HELLO_EMAIL:'sender@example.invalid',HELLO_PASSWORD:'synthetic-only'});
  const originalTransport=nodemailer.createTransport,realFetch=globalThis.fetch;
- let calls=0,behavior,observed;
- nodemailer.createTransport=()=>({sendMail:async payload=>{calls++;observed=payload;return behavior(payload);}});
+ let calls=0,closes=0,behavior,observed;
+ nodemailer.createTransport=()=>({sendMail:async payload=>{calls++;observed=payload;return behavior(payload);},close(){closes++;}});
  const app=await import('../src/server.js');if(!app.server.listening)await once(app.server,'listening');
  let outbound=0;globalThis.fetch=async()=>{outbound++;throw Error('No provider calls');};
  const originalSave=app.store.save;
@@ -60,5 +60,5 @@ test('actual generic execution HTTP route claims durably before mock SMTP',async
   try {assert.equal((await post(action.id)).status,409);assert.equal(new JsonStateStore(app.store.filePath).action(action.id).status,'EXECUTING');assert.equal((await post(action.id)).status,409);assert.equal(calls,before+1);}
   finally {app.store.save=originalSave;}
  });
- assert.equal(outbound,0);
+ assert.equal(outbound,0);assert.equal(closes,calls);
 });

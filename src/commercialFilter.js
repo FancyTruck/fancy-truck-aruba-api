@@ -24,6 +24,9 @@ export function classifyCommercialMessage(subject = '', text = '', headers = new
   // A supplier answering OUR purchase request is not a customer asking to rent
   // OUR fleet. Quarantine direction conflicts before even linking an old lead.
   // No sender/domain blacklist: the same company may also be a real customer.
+  const businessAdministration = /(?:configurazione|passaggio|avvio).{0,45}odoo|(?:bilancio|contabilità|contabilita|paghe|cedolini)/i.test(title);
+  if(businessAdministration&&!/(?:vorrei|vorremmo|cerchiamo|ci serve|avremmo bisogno).{0,100}(?:nolegg|food.?truck|airstream|roadshow|brand activation)/i.test(body))return {kind:null,reason:'administrative_or_marketing'};
+  if(/\b(?:richiesta (?:di )?plafond|richiesta (?:di )?fido)\b/i.test(title))return {kind:null,reason:'non_customer_direction_requires_review'};
   const financePitch = /(?:scopri quanto credito|quanto credito puoi ottenere|(?:finanziament[oi]|credito).{0,60}(?:per la tua impresa|per la vostra impresa|per la tua azienda))/i.test(title);
   const consultingPitch = /business plan/i.test(title) && /(?:gratuit|consulenza|parlarne)/i.test(`${title} ${body}`);
   const supplierFulfilment = /(?:vostr[oa] (?:richiesta|cantiere)|presso la (?:nostra )?filiale)/i.test(body)
@@ -54,6 +57,10 @@ export function classifyCommercialMessage(subject = '', text = '', headers = new
   if (excludedTitle.test(title) || marketing.test(body)) {
     return { kind: null, reason: 'administrative_or_marketing' };
   }
+  // Require the sender's own request; a sales pitch asking for a call is not demand.
+  const salesPitch = /(?:vi|ti|le)\s+(?:offriamo|proponiamo|presentiamo)|(?:nostri|i nostri)\s+(?:servizi|prodotti)|(?:aumentare|migliorare).{0,50}(?:visibilità|vendite|fatturato|presenza online)|(?:fissare|organizzare|prenotare).{0,30}(?:demo|call conoscitiva|chiamata conoscitiva)|(?:agenzia|consulenza).{0,50}(?:marketing|seo|lead generation)/i;
+  const ownFleetRequest = /(?:vorrei|vorremmo|cerchiamo|ci servirebbe|avremmo bisogno|richiediamo).{0,100}(?:nolegg|affitt|food.?truck|airstream|catering|roadshow|vostr[oi] (?:mezzi|servizi))/i;
+  if (salesPitch.test(body)) return {kind:null,reason:ownFleetRequest.test(body)?'non_customer_direction_requires_review':'supplier_offer'};
   const supplierOffer = /\b(?:offriamo|vi proponiamo|siamo fornitori|siamo specializzati|we offer)\b/i;
   if (supplierOffer.test(body) && !customerRequest.test(body)) {
     return { kind: null, reason: 'supplier_offer' };
