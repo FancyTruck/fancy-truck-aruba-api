@@ -7,7 +7,7 @@ export const odooReadDefinitions={
  'crm.next_actions':{effect:'read',parameters:{type:'object',properties:{limit:{type:'integer',minimum:1,maximum:3},after:{type:'string',pattern:'^[0-9]{4}-[0-9]{2}-[0-9]{2}:[0-9]{12}$'}},required:[],additionalProperties:false}},
  'rentals.schedule':{effect:'read',parameters:{type:'object',properties:{period:{type:'string',enum:['next_week','this_week']},limit:{type:'integer',minimum:1,maximum:20},offset:{type:'integer',minimum:0,maximum:10000}},required:[],additionalProperties:false}},
  'rentals.list':{effect:'read',parameters:{...list,properties:{...list.properties,scope:{type:'string',enum:['ongoing','current','upcoming','all_confirmed']},offset:{type:'integer',minimum:0,maximum:10000}}}},
- 'crm.list':{effect:'read',parameters:list},
+ 'crm.list':{effect:'read',parameters:{...list,properties:{...list.properties,offset:{type:'integer',minimum:0,maximum:10000}}}},
  'sales.list':{effect:'read',parameters:list},
  'sales.get':{effect:'read',parameters:{type:'object',properties:{id},required:['id'],additionalProperties:false}}
 };
@@ -30,7 +30,7 @@ export async function readOdoo(read,capability,p,now=new Date()){
   if(scope==='upcoming')domain.push(['rental_start_date','>',stamp]);
   if(scope==='ongoing')domain.push('|',['rental_return_date','=',false],['rental_return_date','>',stamp]);
  }
- const rows=await read(model,domain,{fields,limit:limit+1,order:rental?'rental_start_date asc, id asc':'id desc',...(rental?{offset:p.offset||0}:{})});
+ const rows=await read(model,domain,{fields,limit:limit+1,order:rental?'rental_start_date asc, id asc':'id desc',...((rental||capability==='crm.list')?{offset:p.offset||0}:{})});
  if(!Array.isArray(rows))throw problem('odoo_read_failed',502);
  const result={ok:true,source:'odoo',records:rows.slice(0,limit),has_more:rows.length>limit,checked_at:new Date().toISOString()};
  if(rental){
