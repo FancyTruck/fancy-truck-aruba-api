@@ -1,0 +1,88 @@
+{
+  "date": "2026-11-20",
+  "modules": [
+    "P00",
+    "P01",
+    "P03",
+    "P05"
+  ],
+  "requirement_ids": [
+    "0.2",
+    "1.4",
+    "1.4.1",
+    "1.5",
+    "2.5",
+    "7.2",
+    "7.3"
+  ],
+  "source_parent": "bade6fb6491007abd96016f901a764f1fcacd35a",
+  "main_reconciled": "f65611254308495874eb0bba102d53e96dd3509a",
+  "reconciliation": "Exact main delta d921663..f656112 applied to existing continuation; server/Peu-contract conflicts preserve readonly mode and new customer-workspace adapters. No remote merge/release.",
+  "implementation": [
+    "Extract existing bounded newUidPage helper into shared mailUidPage.js without changing Peu query semantics.",
+    "Actual commercial pollMailbox uses bounded sequence UID discovery when lastUid>0; normal sent tracking reuses same path. At most101 positions per SEARCH, <=32 UID-only sequence probes, <=100 messages processed per call.",
+    "Caught-up skips SEARCH/FETCH. Missing mailbox metadata or false/incomplete/duplicate UID results refuse without unbounded fallback. Observed mailbox changes before MIME or checkpoint hold cursor for recovery.",
+    "Initial lastUid=0 SINCE bootstrap remains unchanged and unbounded; do not claim all searches are bounded."
+  ],
+  "tests": {
+    "passed": 591,
+    "failed": 0,
+    "syntax_checks": 93,
+    "targeted_passed": 39,
+    "targeted_command": "node --test --test-reporter=tap test/commercialUidPage.test.js test/mailPolling.test.js test/peuNewUidSearch.test.js test/pr38PollingReconciliation.test.js test/threadLinking.test.js",
+    "command": "node --test --test-reporter=tap; node --check every src/*.js and scripts/*.mjs",
+    "environment": "Node24.22.3 isolated actual pollMailbox/JsonStateStore/Peu readFolder with synthetic IMAP; no provider writes/sends",
+    "new_tests": 9,
+    "baseline_run": {
+      "tests": 8,
+      "passed": 4,
+      "failed": 4,
+      "interpretation": "First8 tests run before UID patch:4fail old query contract; negative tests may pass because fixture rejects the old unbounded query, not evidence of separate production failures. Ninth change-during-source test added afterward."
+    },
+    "initial_full_run": {
+      "passed": 589,
+      "failed": 1,
+      "cause": "Sent tracking fixture omitted EXISTS and did not update UIDNEXT when new UID51 arrived. Corrected fixture models baseline then arrival; production guards not weakened."
+    },
+    "coverage": [
+      "1200 sparse mailbox UIDs,300 resumed messages across3calls/reopens without gaps",
+      "caught-up no IO; failed processing preserves prior committed UID and retries exact next UID",
+      "false/incomplete/duplicate/changing search and missing metadata preserve durable checkpoint before processing",
+      "observed change during source fetch stops before MIME; existing large-message review and sent/inbox separation retained"
+    ]
+  },
+  "live_readonly": {
+    "commit": "f65611254308495874eb0bba102d53e96dd3509a",
+    "deploy": "dep-dbvnrvp42hec73cddnag",
+    "status": "live",
+    "finished_at": "2026-11-19T22:54:41.440598Z",
+    "events_start": "2026-11-19T00:00:00Z",
+    "events_filter": [
+      "server_failed",
+      "server_restarted"
+    ],
+    "returned_events": 0,
+    "workspace": "tea-daa7c667bikc73fkk940",
+    "scope": "Independent existing deploy metadata; not released by this run. No all-interval uptime assertion."
+  },
+  "source_integrity": {
+    "pr26_server": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "combined_server": "f38cbb484527ec104bf27a1f882140ee94d6b949",
+    "rule": "Corrected intake/awaiting_scope_review retained; canonical PR26 code unchanged."
+  },
+  "oom": "Reduces UID array size in resumed commercial/sent discovery; no RSS/heap/external profile, total process cap or historical OOM-cause/resolution proof.",
+  "backup": "No new provider download/integrity/decrypt/restore/deletion; prior dated evidence retained.",
+  "limits": [
+    "First SINCE bootstrap still unbounded; exact-message-ID/team-reply searches remain separate.",
+    "Metadata sequence probes add latency; provider performance not measured. Client lock is not a remote mailbox transaction.",
+    "Observed append/expunge change can hold cursor after an external effect; existing operation markers/review barriers remain necessary. No exactly-once guarantee across providers.",
+    "Existing development-only release boundaries remain: no F0/F1/F2/four-path live acceptance, F6 deferred;4.5.1/project case and COLLAUDO74 untouched."
+  ],
+  "effects": "No main push/remote merge/deploy/restart/production/Odoo mutation/hosted migration/real send/fiscal action/payment/refund/purchase/new task.",
+  "next_action": "Reconcile fresh HEAD/lease; bound initial SINCE discovery without dropping date-qualified mail; inspect exact-message and team-reply search/memory and authorized live checkpoint evidence.",
+  "remote_source": {
+    "commit": "d5693a4e62949485d4e2f757c4cdc2f26220b513",
+    "tree": "03e684fdf0c9d2702b4f4415fdeffb4ac1242599",
+    "verification": "Fetched exact remote commit; whole tree equals tested local source; canonical PR26 server unchanged."
+  }
+}
