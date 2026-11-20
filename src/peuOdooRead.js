@@ -1,8 +1,10 @@
+import {customerActions,customerTag} from './customerActions.js';
 import {readRentalSchedule} from './peuRentalSchedule.js';
 import {problem} from './peuCommon.js';
 const id={type:'integer',minimum:1};
 const list={type:'object',properties:{query:{type:'string',minLength:1,maxLength:200},partner_id:id,limit:{type:'integer',minimum:1,maximum:20}},required:[],additionalProperties:false};
 export const odooReadDefinitions={
+ 'crm.next_actions':{effect:'read',parameters:{type:'object',properties:{limit:{type:'integer',minimum:1,maximum:3},after:{type:'string',pattern:'^[0-9]{4}-[0-9]{2}-[0-9]{2}:[0-9]{12}$'}},required:[],additionalProperties:false}},
  'rentals.schedule':{effect:'read',parameters:{type:'object',properties:{period:{type:'string',enum:['next_week','this_week']},limit:{type:'integer',minimum:1,maximum:20},offset:{type:'integer',minimum:0,maximum:10000}},required:[],additionalProperties:false}},
  'rentals.list':{effect:'read',parameters:{...list,properties:{...list.properties,scope:{type:'string',enum:['ongoing','current','upcoming','all_confirmed']},offset:{type:'integer',minimum:0,maximum:10000}}}},
  'crm.list':{effect:'read',parameters:list},
@@ -12,11 +14,12 @@ export const odooReadDefinitions={
 // Fixed models, fields and method: neither the model nor retrieved records can issue writes.
 export async function readOdoo(read,capability,p,now=new Date()){
  if(!read)throw problem('odoo_read_unconfigured',503);
+ if(capability==='crm.next_actions')return customerActions(read,p,now);
  if(capability==='rentals.schedule')return readRentalSchedule(read,p,now);
  const rental=capability==='rentals.list';
  const sales=rental||capability.startsWith('sales.'),model=sales?'sale.order':'crm.lead';
  const fields=sales?['id','name','partner_id','state','date_order','amount_total','currency_id','user_id','is_rental_order','rental_start_date','rental_return_date','signed_on']:['id','name','partner_id','stage_id','expected_revenue','probability','date_deadline','user_id'];
- const domain=[];if(p.partner_id)domain.push(['partner_id','=',p.partner_id]);
+ const domain=capability==='crm.list'?[['active','=',true],['tag_ids.name','=',customerTag]]:[];if(p.partner_id)domain.push(['partner_id','=',p.partner_id]);
  if(p.query)domain.push(['name','ilike',p.query]);
  const single=capability==='sales.get',limit=single?1:(p.limit||10);
  if(single)domain.push(['id','=',p.id]);

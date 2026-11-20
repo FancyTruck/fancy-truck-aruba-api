@@ -1,3 +1,4 @@
+import {newUidPage} from './mailUidPage.js';
 export const MAX_POLL_SOURCE_BYTES = 20 * 1024 * 1024;
 export const MAX_INLINE_SOURCE_BYTES = 10 * 1024 * 1024;
 const mailProblem = (code, message) => Object.assign(new Error(message), { code });
@@ -20,19 +21,22 @@ export async function pollMailbox({ client, account, store, parse, processMessag
   if (checkpoint.uidValidity !== validity) {
     throw new Error('UIDVALIDITY cambiato: riconciliare la casella prima di riprendere');
   }
-  const query = checkpoint.lastUid > 0
-    ? { uid: `${checkpoint.lastUid + 1}:*` }
-    : { since: new Date(checkpoint.initialSince) };
-  const found = await client.search(query, { uid: true });
+  // Resume without materializing every unseen UID. Bootstrap still preserves
+  // its original SINCE search; date-filtered discovery is a separate boundary.
+  const page = checkpoint.lastUid > 0
+    ? await newUidPage(client, checkpoint.lastUid + 1, 100, validity) : null;
+  const found = page ? page.ids : await client.search({since:new Date(checkpoint.initialSince)}, {uid:true});
   const candidates = [...new Set(found || [])].map(Number)
     .filter(uid => Number.isSafeInteger(uid) && uid > checkpoint.lastUid)
     .sort((a, b) => a - b).slice(0, 100);
   const rows = [];
   for (const uid of candidates) {
     try {
+      page?.unchanged();
       // Inspect metadata before buffering attachments; a 150 MB email can kill a 512 MB worker.
       const metadata = await client.fetchOne(uid, { size: true, envelope: true }, { uid: true });
       if (!Number.isSafeInteger(metadata?.size) || metadata.size < 0) throw mailProblem('MESSAGE_SIZE_UNAVAILABLE', 'Dimensione messaggio non verificabile');
+      page?.unchanged();
       if (metadata.size > MAX_INLINE_SOURCE_BYTES) {
         if (!metadata.envelope) throw mailProblem('MAIL_SOURCE_LIMIT', 'Messaggio grande senza metadati recuperabili: checkpoint conservato');
         const env = metadata.envelope;
@@ -54,8 +58,10 @@ export async function pollMailbox({ client, account, store, parse, processMessag
       const message = await client.fetchOne(uid, { source: { start: 0, maxLength: MAX_INLINE_SOURCE_BYTES + 1 } }, { uid: true });
       if (!message?.source) throw new Error('Messaggio non disponibile: verifica necessaria');
       if (Buffer.byteLength(message.source) > MAX_INLINE_SOURCE_BYTES) throw mailProblem('MAIL_SOURCE_LIMIT', 'Messaggio oltre il limite dichiarato: checkpoint conservato');
+      page?.unchanged();
       const parsed = await parse(message.source);
       const result = await processMessage(parsed, uid, validity);
+      page?.unchanged();
       store.recordMailOutcome?.(account, validity, uid, {...result,message_id:parsed.messageId||null,subject:String(parsed.subject||'').slice(0,500),sender:parsed.from?.value?.[0]?.address||'',excerpt:String(parsed.text||'').slice(0,4000)});
       const next = { ...checkpoint, lastUid: uid };
       store.setCursor(key, next);

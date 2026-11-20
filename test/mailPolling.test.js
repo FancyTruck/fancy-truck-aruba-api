@@ -12,7 +12,7 @@ function setup(t) {
   const store = new JsonStateStore(path.join(dir, 'state.json'));
   const queries = [], processed = [];
   return { store, queries, processed, account: 'hello', now: Date.UTC(2026, 9, 20),
-    client: { mailbox: { uidValidity: 123n },
+    client: { mailbox: { uidValidity: 123n, exists:3, uidNext:4 },
       search: async query => { queries.push(query); return [3, 1, 2]; },
       fetchOne: async (uid, query) => query.size ? { size: String(uid).length } : { source: String(uid) } },
     parse: async source => ({ text: source }),
@@ -90,7 +90,7 @@ test('failure stops at incomplete message; restart after days resumes in order',
   assert.equal(args.store.cursor(key).lastUid, 1);
   const reloaded = new JsonStateStore(args.store.filePath);
   await pollMailbox({ ...args, store: reloaded, processMessage: process, now: args.now + 4 * 86400000 });
-  assert.deepEqual(args.queries[1], { uid: '2:*' });
+  assert.deepEqual(args.queries[1], { seq: '1:3' });
   assert.deepEqual(args.processed, [1, 2, 3]);
   assert.equal(reloaded.cursor(key).lastUid, 3);
 });
@@ -131,7 +131,7 @@ test('legacy cursor is adopted; sequence range never reprocesses lower UIDs', as
   const args = setup(t);
   args.store.setCursor('imap:hello:last_uid', 2);
   await pollMailbox(args);
-  assert.deepEqual(args.queries[0], { uid: '3:*' });
+  assert.deepEqual(args.queries[0], { seq: '1:3' });
   assert.deepEqual(args.processed, [3]);
 });
 
