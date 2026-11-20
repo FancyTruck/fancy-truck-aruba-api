@@ -1,3 +1,4 @@
+import {verifiedCustomerTagId,repairCustomerVisibility} from './customerEnrollment.js';
 import {draftOriginalResolver} from './draftOriginalResolver.js';
 import {automaticDraftVerifier} from './automaticDraftVerifier.js';
 import {verifyDraftPage} from './verifyDraftPage.js';
@@ -706,7 +707,9 @@ async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
   const created = found.created;
   const partner = found.partner ? await updatePartnerFromText(found.partner, parsed.text) : null;
   const cleanBody = String(parsed.text || '').trim().slice(0, 12000);
+  const customerTagId=await verifiedCustomerTagId(odooCall);
   const leadIds = await odooCall('crm.lead', 'create', [[{
+    tag_ids:[[4,customerTagId]],
     name: String(parsed.subject || `Richiesta da ${sender?.name || senderEmail}`).slice(0, 240),
     type: 'opportunity', partner_id: partner?.id || false, contact_name: sender?.name || false,
     email_from: senderEmail, description: `Richiesta ricevuta via ${accountName}@fancytruck.it\n\n${cleanBody}\n\n${marker}`,
@@ -1190,6 +1193,7 @@ app.post('/v1/odoo/crm/leads', async (req, res) => {
     });
     if (existing.length) return res.json({ ok: true, duplicate: true, lead: existing[0] });
     const values = {
+      ...(idempotencyKey.startsWith('peu-ordinary-')?{tag_ids:[[4,await verifiedCustomerTagId(odooCall)]]}:{}),
       name, type: 'opportunity', partner_id: req.body?.partner_id || false,
       contact_name: req.body?.contact_name || false, email_from: req.body?.email_from || false,
       phone: req.body?.phone || false,
@@ -1480,6 +1484,7 @@ const server = app.listen(port, runtime.host, (error) => {
     console.error(JSON.stringify({event:'external_backup_alarm',code:'BACKUP_DISABLED'}));
   }
   if (runtime.startupChecks) {
+  if(!runtime.readOnly)repairCustomerVisibility({call:odooCall,state:store.state}).then(result=>console.log(JSON.stringify({event:'customer_visibility_repair',...result}))).catch(()=>console.error('customer_visibility_repair_failed'));
   Promise.allSettled(['hello', 'pietro'].map(verifyAccountConnections)).catch(() => {});
   odooCall('crm.stage', 'search_count', [[]])
     .then((count) => console.log(`ODOO CRM: OK (${count} fasi)`))
