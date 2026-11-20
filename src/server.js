@@ -181,6 +181,8 @@ async function odooCall(model, method, args = [], kwargs = {}) {
   let body;
   if (method === 'search_read' || method === 'search_count') {
     body = { domain: args[0] || [], ...kwargs };
+  } else if (method === 'fields_get') {
+    body = { ...kwargs };
   } else if (method === 'create') {
     body = { vals_list: args[0] || [], ...kwargs };
   } else if (method === 'message_post' || method === 'action_feedback') {
