@@ -21,15 +21,28 @@ export async function pollMailbox({ client, account, store, parse, processMessag
   if (checkpoint.uidValidity !== validity) {
     throw new Error('UIDVALIDITY cambiato: riconciliare la casella prima di riprendere');
   }
-  // Resume without materializing every unseen UID. Bootstrap still preserves
-  // its original SINCE search; date-filtered discovery is a separate boundary.
-  const page = checkpoint.lastUid > 0
-    ? await newUidPage(client, checkpoint.lastUid + 1, 100, validity) : null;
-  const found = page ? page.ids : await client.search({since:new Date(checkpoint.initialSince)}, {uid:true});
-  const candidates = [...new Set(found || [])].map(Number)
-    .filter(uid => Number.isSafeInteger(uid) && uid > checkpoint.lastUid)
-    .sort((a, b) => a - b).slice(0, 100);
-  const rows = [];
+  // Keep date-qualified bootstrap discovery bounded, even when INTERNALDATE is
+  // not ordered by UID. The scan watermark is distinct from processed lastUid.
+  let scan = checkpoint.bootstrap_scan;
+  if(scan&&(!Number.isSafeInteger(scan.uid)||scan.uid<0||!Number.isSafeInteger(scan.upper_uid)||scan.upper_uid<scan.uid||typeof scan.complete!=='boolean'))throw mailProblem('MAIL_BOOTSTRAP_INVALID','Checkpoint scansione non valido');
+  const after = Math.max(checkpoint.lastUid, scan?.uid || 0);
+  const page = await newUidPage(client, after + 1, 100, validity);
+  if(!scan&&checkpoint.lastUid===0){
+    scan={uid:0,upper_uid:page.upperUid,complete:false};
+    checkpoint={...checkpoint,bootstrap_scan:scan};store.setCursor(key,checkpoint);
+  }
+  const bootstrap = scan&&!scan.complete;
+  const eligible = bootstrap ? page.ids.filter(uid=>uid<=scan.upper_uid) : page.ids;
+  let found=eligible;
+  if(bootstrap&&eligible.length){
+    const since=new Date(checkpoint.initialSince);
+    if(!Number.isFinite(+since))throw mailProblem('MAIL_BOOTSTRAP_INVALID','Data iniziale non valida');
+    found=await client.search({seq:page.sequence,uid:`${eligible[0]}:${eligible.at(-1)}`,since},{uid:true});
+    page.unchanged();
+    if(!Array.isArray(found)||found.length>eligible.length||new Set(found).size!==found.length||found.some(uid=>!eligible.includes(uid)))throw mailProblem('MAIL_BOOTSTRAP_SEARCH_INVALID','Ricerca iniziale non verificabile');
+  }
+  const candidates = found.slice().sort((a,b)=>a-b).slice(0,100);
+  const rows = [];let failed=false;
   for (const uid of candidates) {
     try {
       page?.unchanged();
@@ -71,8 +84,17 @@ export async function pollMailbox({ client, account, store, parse, processMessag
       try { store.recordMailOutcome?.(account, validity, uid, {retry_pending:true,error:error.message}); } catch {}
       rows.push({ suspended: true, retry_pending: true, uid, code: error?.code || 'MAIL_PROCESSING_FAILED',
         error: error instanceof Error ? error.message : 'errore sconosciuto' });
-      break;
+      failed=true;break;
     }
+  }
+  if(bootstrap&&!failed){
+    page.unchanged();
+    const all=found.length<=100;
+    const complete=all&&(!page.more||page.ids.some(uid=>uid>scan.upper_uid)||(eligible.at(-1)||0)>=scan.upper_uid);
+    const uid=complete?scan.upper_uid:all?(eligible.at(-1)||scan.uid):candidates.at(-1);
+    const next={...checkpoint,bootstrap_scan:{...scan,uid,complete}};
+    store.setCursor(key,next);
+    if(!complete)rows.push({suspended:true,content_processed:false,account,reason:'mail_bootstrap_scan_pending'});
   }
   return rows;
 }

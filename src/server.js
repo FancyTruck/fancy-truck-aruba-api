@@ -1,5 +1,6 @@
 import { reviewSnapshot } from './reviewSnapshot.js';
 import { acquireProcessOwner } from './processOwner.js';
+import {verifiedCustomerTagId,repairCustomerVisibility} from './customerEnrollment.js';
 import {draftOriginalResolver} from './draftOriginalResolver.js';
 import {automaticDraftVerifier} from './automaticDraftVerifier.js';
 import {verifyDraftPage} from './verifyDraftPage.js';
@@ -205,6 +206,8 @@ async function odooCall(model, method, args = [], kwargs = {}) {
   let body;
   if (method === 'search_read' || method === 'search_count') {
     body = { domain: args[0] || [], ...kwargs };
+  } else if (method === 'fields_get') {
+    body = { ...kwargs };
   } else if (method === 'create') {
     body = { vals_list: args[0] || [], ...kwargs };
   } else if (method === 'message_post' || method === 'action_feedback') {
@@ -720,7 +723,9 @@ async function processQuoteRequest(parsed, uid, accountName, uidValidity) {
   const created = found.created;
   const partner = found.partner ? await updatePartnerFromText(found.partner, parsed.text) : null;
   const cleanBody = String(parsed.text || '').trim().slice(0, 12000);
+  const customerTagId=await verifiedCustomerTagId(odooCall);
   const leadIds = await odooCall('crm.lead', 'create', [[{
+    tag_ids:[[4,customerTagId]],
     name: String(parsed.subject || `Richiesta da ${sender?.name || senderEmail}`).slice(0, 240),
     type: 'opportunity', partner_id: partner?.id || false, contact_name: sender?.name || false,
     email_from: senderEmail, description: `Richiesta ricevuta via ${accountName}@fancytruck.it\n\n${cleanBody}\n\n${marker}`,
@@ -1053,7 +1058,7 @@ if (peuDb) {
     const result=await verifyDraftPage(drafts,store.state.actions,verifyDraft);
     console.log(JSON.stringify({event:'automatic_draft_recovery',checked:drafts.length,verified:result.drafts.length,verification_pending:result.verification_pending}));
   }catch{console.error('automatic_draft_recovery_failed');}},1000);startupDraftCheck.unref();
-  mountPeuContract(app,makePeuContract({db:peuDb,approvals,upstream,odooWrite:odooCall,completeActivity:id=>odooCall('mail.activity','action_feedback',[[id]],{feedback:'Completata da Pietro tramite Peu AI.'}),readOriginal:readDraftOriginal,verifyDraft,readOnly:runtime.readOnly,odooRead:(model,domain,options)=>odooCall(model,'search_read',[domain],options),assertWritable:()=>assertWritable(runtime),
+  mountPeuContract(app,makePeuContract({db:peuDb,approvals,upstream,odooFields:model=>odooCall(model,'fields_get',[],{attributes:['type','relation','readonly']}),odooWrite:odooCall,completeActivity:id=>odooCall('mail.activity','action_feedback',[[id]],{feedback:'Completata da Pietro tramite Peu AI.'}),readOriginal:readDraftOriginal,verifyDraft,readOnly:runtime.readOnly,odooRead:(model,domain,options)=>odooCall(model,'search_read',[domain],options),assertWritable:()=>assertWritable(runtime),
     verify:async(capability,response,marker)=>{
       const model=capability==='crm.create'?'crm.lead':'sale.order';
       const id=response.id||response.lead?.id||response.order?.id;
@@ -1230,6 +1235,7 @@ app.post('/v1/odoo/crm/leads', async (req, res) => {
     });
     if (existing.length) return res.json({ ok: true, duplicate: true, lead: existing[0] });
     const values = {
+      ...(idempotencyKey.startsWith('peu-ordinary-')?{tag_ids:[[4,await verifiedCustomerTagId(odooCall)]]}:{}),
       name, type: 'opportunity', partner_id: req.body?.partner_id || false,
       contact_name: req.body?.contact_name || false, email_from: req.body?.email_from || false,
       phone: req.body?.phone || false,
@@ -1524,6 +1530,7 @@ const server = app.listen(port, runtime.host, (error) => {
     console.error(JSON.stringify({event:'external_backup_alarm',code:'BACKUP_DISABLED'}));
   }
   if (runtime.startupChecks) {
+  if(!runtime.readOnly)repairCustomerVisibility({call:odooCall,state:store.state}).then(result=>console.log(JSON.stringify({event:'customer_visibility_repair',...result}))).catch(()=>console.error('customer_visibility_repair_failed'));
   Promise.allSettled(['hello', 'pietro'].map(verifyAccountConnections)).catch(() => {});
   odooCall('crm.stage', 'search_count', [[]])
     .then((count) => console.log(`ODOO CRM: OK (${count} fasi)`))

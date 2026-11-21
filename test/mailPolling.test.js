@@ -13,7 +13,7 @@ function setup(t) {
   const queries = [], processed = [];
   return { store, queries, processed, account: 'hello', now: Date.UTC(2026, 9, 20),
     client: { mailbox: { uidValidity: 123n, exists:3, uidNext:4 },
-      search: async query => { queries.push(query); return [3, 1, 2]; },
+      search: async query => { queries.push(query); const [lo,hi]=(query.uid||'1:3').split(':').map(Number);return [3,1,2].filter(uid=>uid>=lo&&uid<=hi); },
       fetchOne: async (uid, query) => query.size ? { size: String(uid).length } : { source: String(uid) } },
     parse: async source => ({ text: source }),
     processMessage: async (_parsed, uid) => { processed.push(uid); return { uid }; },
@@ -90,7 +90,7 @@ test('failure stops at incomplete message; restart after days resumes in order',
   assert.equal(args.store.cursor(key).lastUid, 1);
   const reloaded = new JsonStateStore(args.store.filePath);
   await pollMailbox({ ...args, store: reloaded, processMessage: process, now: args.now + 4 * 86400000 });
-  assert.deepEqual(args.queries[1], { seq: '1:3' });
+  assert(args.queries.every(q=>q.seq==='1:3'));assert.equal(+args.queries[1].since,+args.queries[3].since);
   assert.deepEqual(args.processed, [1, 2, 3]);
   assert.equal(reloaded.cursor(key).lastUid, 3);
 });
@@ -107,15 +107,13 @@ for (const failure of ['fetch', 'parse', 'missing']) {
   });
 }
 
-test('initial date remains fixed across retries and batch starts with oldest 100', async t => {
-  const args = setup(t);
-  args.client.search = async query => { args.queries.push(query); return []; };
-  await pollMailbox(args);
-  await pollMailbox({ ...args, now: args.now + 4 * 86400000 });
-  assert.equal(+args.queries[0].since, +args.queries[1].since);
-  args.client.search = async () => Array.from({ length: 130 }, (_, i) => 130 - i);
-  await pollMailbox(args);
-  assert.deepEqual(args.processed, Array.from({ length: 100 }, (_, i) => i + 1));
+test('initial date remains fixed across retries and batch starts with oldest100',async t=>{
+ const args=setup(t);args.client.search=async q=>{args.queries.push(q);return q.since?[]:[1,2,3];};
+ await pollMailbox(args);const since=args.store.cursor(key).initialSince;
+ await pollMailbox({...args,now:args.now+4*86400000});assert.equal(args.store.cursor(key).initialSince,since);
+ const batch=setup(t);batch.client.mailbox.exists=130;batch.client.mailbox.uidNext=131;
+ batch.client.search=async q=>{const [a,b]=q.seq.split(':').map(Number);const [lo,hi]=(q.uid||'1:130').split(':').map(Number);return Array.from({length:b-a+1},(_,i)=>a+i).filter(uid=>uid>=lo&&uid<=hi).reverse();};
+ await pollMailbox(batch);assert.deepEqual(batch.processed,Array.from({length:100},(_,i)=>i+1));
 });
 
 test('mailbox reset suspends processing instead of trusting reused UIDs', async t => {
@@ -139,7 +137,7 @@ test('checkpoint write failure rolls back memory and disk and stops the batch', 
   const args = setup(t);
   args.store.setCursor(key, { lastUid: 0, uidValidity: '123', initialSince: new Date(args.now).toISOString() });
   const save = args.store.save.bind(args.store);
-  args.store.save = () => { throw new Error('disk full'); };
+  args.store.save = function(){if(this.state.cursors[key].lastUid>0)throw new Error('disk full');return save();};
   const rows = await pollMailbox(args);
   assert.equal(rows[0].retry_pending, true);
   assert.equal(args.store.cursor(key).lastUid, 0);

@@ -29,3 +29,7 @@ test('schedule includes only boundaries in range and never calls shipping addres
  const result=await readRentalSchedule(async model=>model==='sale.order'?[{id:4,name:'S4',partner_id:[1,'Client'],partner_shipping_id:[1,'Client'],rental_start_date:'2026-10-26 08:00:00',rental_return_date:'2026-11-10 08:00:00'}]:model==='sale.order.line'?[{id:1,order_id:[4,'S4'],name:'Consegna presso Fiera Bologna',is_rental:false}]:[{id:1,street:'Sede amministrativa'}],{},new Date('2026-10-25T18:00:00Z'));
  assert.equal(result.events.length,1);assert.equal(result.events[0].kind,'rental_start');assert.match(result.events[0].location_evidence[0].text,/Bologna/);assert.equal(result.events[0].shipping_address_candidate.street,'Sede amministrativa');assert.match(result.meaning,/non è un luogo confermato/);
 });
+
+test('verified CRM pagination preserves customer filter and accepts only bounded offset',async()=>{
+ const f=fixture();try{await f.execute('crm.list',{limit:2,offset:20});assert.equal(f.calls[0][2].offset,20);assert.ok(f.calls[0][1].some(x=>x[0]==='tag_ids.name'));await assert.rejects(f.execute('crm.list',{offset:10001}));}finally{f.db.close();}
+});

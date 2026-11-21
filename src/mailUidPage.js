@@ -7,7 +7,7 @@ export async function newUidPage(client,since,limit,validity){
  if(!Number.isSafeInteger(exists)||exists<0||!Number.isSafeInteger(uidNext)||uidNext<1||uidNext>4294967295||exists>=uidNext||!Number.isSafeInteger(since)||since<1)throw problem('mailbox_metadata_unavailable',502);
  const unchanged=()=>{if(client.mailbox?.exists!==exists||client.mailbox?.uidNext!==uidNext||String(client.mailbox?.uidValidity)!==validity)throw problem('mailbox_changed_retry',409);};
  unchanged();
- if(!exists||since>=uidNext)return {ids:[],more:false,unchanged};
+ if(!exists||since>=uidNext)return {ids:[],more:false,unchanged,upperUid:uidNext-1};
  let start=1;
  if(exists>101&&since>1){
   let low=1,high=exists+1,lower=0,upper=uidNext;
@@ -18,10 +18,10 @@ export async function newUidPage(client,since,limit,validity){
   }
   start=low;
  }
- if(start>exists)return {ids:[],more:false,unchanged};
+ if(start>exists)return {ids:[],more:false,unchanged,upperUid:uidNext-1};
  const end=Math.min(start+100,exists),found=await client.search({seq:`${start}:${end}`},{uid:true});unchanged();
  if(!Array.isArray(found))throw problem('mail_uid_search_unavailable',502);
  if(found.length!==end-start+1)throw problem('mail_uid_search_incomplete',502);
  if(new Set(found).size!==found.length||found.some(uid=>!Number.isSafeInteger(uid)||uid<1||uid>=uidNext)||(start>1&&found.some(uid=>uid<since)))throw problem('message_uid_mismatch',502);
- return {ids:found.filter(uid=>uid>=since).sort((a,b)=>a-b),more:end<exists,unchanged};
+ return {ids:found.filter(uid=>uid>=since).sort((a,b)=>a-b),more:end<exists,unchanged,upperUid:uidNext-1,sequence:`${start}:${end}`};
 }
