@@ -1,0 +1,97 @@
+{
+  "date": "2026-11-21",
+  "modules": [
+    "P00",
+    "P01",
+    "P03",
+    "P05",
+    "P22"
+  ],
+  "requirement_ids": [
+    "0.2",
+    "1.4",
+    "1.4.1",
+    "1.5",
+    "2.5",
+    "7.2",
+    "7.3"
+  ],
+  "source_parent": "d5693a4e62949485d4e2f757c4cdc2f26220b513",
+  "main_reconciled": "f36a109f639192773689d18e4893b2f22ae5277c",
+  "reconciliation": "Exact main delta f656112..f36a109 applied to existing isolated continuation; preserves customer enrollment/quote update/CRM pagination plus readonly ledger/process ownership and corrected intake. Single-parent continuation, no remote main merge/release.",
+  "implementation": [
+    "Actual pollMailbox initial SINCE discovery now uses shared newUidPage: SEARCH at most101 sequence positions, at most100 processed messages, existing at most32 UID-only probes to locate resumed windows.",
+    "Persist bootstrap_scan with pinned UID upper bound and independent scan UID; keep original initialSince across retries/days. No assumption that INTERNALDATE is monotone with UID. Existing lastUid still denotes processed work or durable review handoff, never merely date-excluded discovery.",
+    "Empty date windows advance the scan, return mail_bootstrap_scan_pending and content_processed=false. Successful final window marks scan complete. Arrivals beyond initial snapshot are processed afterward through normal resume.",
+    "Malformed date results or stored scan fail closed. Failed scan persistence or processing preserves durable prior progress for retry; no fallback to mailbox-wide SEARCH. Existing UIDVALIDITY/observed mailbox-change,10MiB inline and durable review protections retained."
+  ],
+  "tests": {
+    "command": "node --test --test-reporter=tap; npm run check; node --check every src/**/*.js, public/**/*.js and scripts/**/*.mjs",
+    "passed": 611,
+    "failed": 0,
+    "syntax_checks": 84,
+    "environment": "Node24.22.3, actual pollMailbox/JsonStateStore and existing HTTP/SQLite suites, synthetic IMAP/Odoo/SMTP; no real provider sends/writes",
+    "new_test": "test/initialMailPage.test.js",
+    "new_passed": 11,
+    "targeted_passed": 50,
+    "targeted_command": "node --test --test-reporter=tap test/initialMailPage.test.js test/mailPolling.test.js test/commercialUidPage.test.js test/pr38PollingReconciliation.test.js test/peuNewUidSearch.test.js test/threadLinking.test.js",
+    "baseline_run": {
+      "tests": 9,
+      "passed": 0,
+      "failed": 9,
+      "interpretation": "First9 tests before bootstrap patch: old implementation primarily fails bounded sequence query assertions. Not9 independently established production defects; last2 tests added afterward."
+    },
+    "integration_corrections": [
+      {
+        "passed": 563,
+        "failed": 21,
+        "cause": "Conflict resolution omitted two existing server imports; restored in isolated checkout."
+      },
+      {
+        "passed": 610,
+        "failed": 1,
+        "cause": "Conflict resolution omitted existing readonly execute guard; restored before remote preservation."
+      }
+    ],
+    "coverage": [
+      "Sparse350-UID fixture; nonmonotone date-qualified messages across four windows/reopens with no gaps",
+      "250 qualifying messages, at most100processed/call; empty window scans without claiming processing",
+      "fixed cutoff after seven days; false/foreign/duplicate date results refuse before effects",
+      "failed scan persistence retries, processing failure retains earlier committed UID",
+      "empty mailbox, malformed stored checkpoint and append beyond pinned initial snapshot"
+    ],
+    "compiler_check": "Installed ImapFlow search compiler produces combined sequence102:202, UID101001:201001 and SINCE20-Nov-2026 criteria; verified locally without network."
+  },
+  "live_readonly": {
+    "commit": "f36a109f639192773689d18e4893b2f22ae5277c",
+    "deploy": "dep-dc0dckjbc2fs73aua280",
+    "status": "live",
+    "finished_at": "2026-11-20T23:23:41.836543Z",
+    "events_start": "2026-11-20T00:00:00Z",
+    "events_filter": [
+      "server_failed",
+      "server_restarted"
+    ],
+    "returned_events": 0,
+    "workspace": "tea-daa7c667bikc73fkk940",
+    "scope": "Existing independently deployed main. This run only read metadata; not isolated-source release, all-interval uptime or checkpoint proof."
+  },
+  "source_integrity": {
+    "pr26_server": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "combined_server": "d2b5343472883c15682fb78de736c277ab12790b",
+    "rule": "PR26 runtime code unchanged. Combined server intentionally reconciled with latest main while retaining repaired intake/awaiting_scope_review."
+  },
+  "oom": "Bounds UID arrays during initial date discovery; no new RSS/heap/external/load profile, service-wide cap or historical OOM-cause/resolution evidence.",
+  "backup": "No new download/integrity/decrypt/restore/deletion. Prior dated isolated-restore evidence remains valid within its original scope; retention/alarms remain separate.",
+  "limits": [
+    "One bounded window per poll may require many cycles for large old mailboxes; provider latency/throughput unmeasured.",
+    "Exact-message-ID and team-reply searches and SQLite/flag working memory remain separate.",
+    "Observed metadata checks are not a provider mailbox transaction or exactly-once guarantee; existing post-effect dedup/review remains necessary.",
+    "Mock/local tests do not close F0/F1/F2/four-path/live handoff acceptance. F6 deferred; accepted4.5.1 and existing project case untouched."
+  ],
+  "effects": "No main push/remote merge/deploy/restart/production/Odoo mutation/deletion/hosted migration/real send/fiscal action/payment/refund/purchase/new task.",
+  "next_action": "Reconcile HEAD/lease; inspect bounded exact-message-ID/team-reply discovery and recovery/receipt evidence. Obtain authorized live checkpoint/structured CRM/notification evidence separately.",
+  "source_commit": "cbd40e9e0248decad5042502c4b83da0a4316450",
+  "source_tree": "19c4f9094f8bfc2b6681ae48bed81f6bad0bc252",
+  "remote_readback": "Exact full remote source commit fetched; tree and all files equal local tested commit ad337b486fbf37fe01d0180a283efc29d74fa35a. Server blob verified."
+}
