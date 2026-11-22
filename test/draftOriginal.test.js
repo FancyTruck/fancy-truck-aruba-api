@@ -9,7 +9,7 @@ test('original lookup is exact and account scoped, excludes deleted/sent, retain
 
 test('missing original is retrieved read-only from exact inbox message, with identity rechecked',async()=>{
  const db=openMailDb(join(mkdtempSync(join(tmpdir(),'draft-imap-')),'mail.db'));let released=0,reads=0;
- const client={getMailboxLock:async(folder,opts)=>{assert.equal(folder,'INBOX');assert.equal(opts.readOnly,true);return {release(){released++;}};},search:async(query,opts)=>{assert.equal(query.header['message-id'],'<exact>');assert.equal(opts.uid,true);return [42];},fetchOne:async(uid,query)=>{assert.equal(uid,42);reads++;return query.size?{size:100}:{source:Buffer.from('mail')};}};
+ const client={mailbox:{exists:1,uidNext:43,uidValidity:"1"},getMailboxLock:async(folder,opts)=>{assert.equal(folder,'INBOX');assert.equal(opts.readOnly,true);return {release(){released++;}};},search:async(query,opts)=>{assert.equal(query.header['message-id'],'<exact>');assert.equal(opts.uid,true);return [42];},fetchOne:async(uid,query)=>{assert.equal(uid,42);reads++;return query.size?{size:100}:{source:Buffer.from('mail')};}};
  let parsed={messageId:'<wrong>',text:'Wrong original'};
  const s=new ArubaService({db,accounts:['hello'],withImap:async(account,fn)=>{assert.equal(account,'hello');return fn(client);},parse:async()=>parsed});
  assert.equal((await s.draftOriginal('hello','<exact>')).original,null);

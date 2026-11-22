@@ -1,0 +1,69 @@
+{
+  "date": "2026-11-22",
+  "modules": [
+    "P01",
+    "P03",
+    "P05",
+    "P22"
+  ],
+  "requirement_ids": [
+    "1.4",
+    "1.4.1",
+    "1.5",
+    "2.5",
+    "7.2",
+    "7.3"
+  ],
+  "source_parent": "cbd40e9e0248decad5042502c4b83da0a4316450",
+  "main_reconciled": "f36a109f639192773689d18e4893b2f22ae5277c",
+  "implementation": [
+    "Shared headerCandidates searches <=200 sequence positions per query, <=100 windows/20000 positions per call and retains at most2 candidates. Missing/changed metadata and false/duplicate/foreign results refuse. Work exhaustion is explicit mail_header_lookup_incomplete, never not-found.",
+    "Existing ArubaService.draftOriginal uses bounded discovery before original body retrieval. Retains exact parsed Message-ID and size bounds; rejects missing/invalid size and observed mailbox changes. Cached exact originals unchanged.",
+    "reconcileSent requires exactly one candidate plus identical UID/envelope Message-ID under readonly mailbox lock. Ambiguous/substring candidates unresolved; no send/retry. Sent-folder presence is not recipient delivery."
+  ],
+  "runtime_link": "draftOriginal is called by existing authenticated draft-original resolver. reconcileSent remains an exported helper imported by service but no active invocation found; not claimed operationally wired. No parallel poller.",
+  "tests": {
+    "passed": 623,
+    "failed": 0,
+    "new_tests": 12,
+    "targeted_passed": 14,
+    "command": "node --test; npm run check; node --check all src/**/*.js/public/**/*.js/scripts/**/*.mjs",
+    "targeted_command": "node --test test/mailHeaderLookup.test.js test/draftOriginal.test.js",
+    "syntax_checks": 85,
+    "environment": "Node24.22.3; actual ArubaService/SQLite and helper functions, synthetic IMAP/Odoo/SMTP and HTTP regressions; no real sends/writes",
+    "baseline_reproduction": "Extracted unchanged reconcileSent function from exact cbd40e9: both one-candidate and two-candidate fixtures return verified_sent without any envelope fetch. Corrected tests require unique exact envelope and readonly cleanup.",
+    "coverage": [
+      "450 sparse messages, match in third window",
+      "empty mailbox without SEARCH",
+      "false/duplicate/foreign/change reject and release lock",
+      "20001-message incomplete scan after100windows cannot report absence",
+      "ambiguity avoids fetch; substring/wrong UID refuse; unique exact envelope accepted",
+      "invalid Message-ID before search; actual original recovery keeps parsed identity recheck"
+    ]
+  },
+  "live_readonly": {
+    "date": "2026-11-22",
+    "scope": "Render list_deploys limit1, explicit confirmed workspace",
+    "workspace": "tea-daa7c667bikc73fkk940",
+    "commit": "f36a109f639192773689d18e4893b2f22ae5277c",
+    "deploy": "dep-dc0dckjbc2fs73aua280",
+    "status": "live",
+    "finished_at": "2026-11-20T23:23:41.836543Z",
+    "does_not_prove": "current memory/events/checkpoints/backup/end-to-end acceptance or isolated-source release"
+  },
+  "source_integrity": {
+    "combined_server": "d2b5343472883c15682fb78de736c277ab12790b",
+    "pr26_server": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "scope": "Both server files unchanged; repaired intake preserved."
+  },
+  "oom": "No new RSS/heap/load profile or historical cause/resolution proof. Candidate response bounds reduce specific lookup-array risk, not whole-service memory.",
+  "backup": "No new download/integrity/decrypt/restore/deletion; previous dated isolated restore evidence retained.",
+  "limits": [
+    "Large mailbox beyond20000 positions may require cached original/manual review; this lookup does not persist a discovery cursor. Conservative substring ambiguity may reject legitimate exact message.",
+    "Provider latency unmeasured; up to100 bounded search requests. Metadata observation not remote transactional snapshot.",
+    "TeamReplyGuard and generic messages list still have unbounded searches, recorded for next lot.",
+    "No F0/F1/F2/four-path/live notification/CRM acceptance closure;4.5.1/project association unchanged,COLLAUDO74 untouched,F6 deferred."
+  ],
+  "effects": "No main push/remote merge/deploy/restart/Odoo mutation/deletion/hosted migration/real send/fiscal action/payment/refund/purchase/new task.",
+  "next_action": "Reconcile HEAD/lease, bound team-reply ancestry discovery without treating incomplete search as no reply; verify original lookup errors remain visible for review. Operational CRM/notification/checkpoint evidence remains separate."
+}

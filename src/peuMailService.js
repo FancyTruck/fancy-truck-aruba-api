@@ -1,3 +1,4 @@
+import {headerCandidates} from './mailHeaderLookup.js';
 import {largeOriginal} from './mailBodyOriginal.js';
 import {websiteFormMessage} from './websiteForm.js';
 import {problem,transaction} from './peuMailDb.js';
@@ -45,14 +46,17 @@ export class ArubaService {
   return this.withImap(account,async client=>{
    const lock=await client.getMailboxLock('INBOX',{readOnly:true});
    try{
-    const ids=await client.search({header:{'message-id':messageId}},{uid:true});
+    const {ids,unchanged}=await headerCandidates(client,messageId);
     if(!Array.isArray(ids)||ids.length!==1)return {original:null};
     const uid=ids[0],meta=await client.fetchOne(uid,{size:true},{uid:true});
+    unchanged();
     if(!meta)return {original:null};
-    if(meta.size>2*1024*1024)return {original:await largeOriginal(client,uid,messageId,this.parse)};
+    if(!Number.isSafeInteger(meta.size)||meta.size<0)throw problem('message_size_unavailable',502);
+    if(meta.size>2*1024*1024){const original=await largeOriginal(client,uid,messageId,this.parse);unchanged();return {original};}
     const raw=await client.fetchOne(uid,{source:{start:0,maxLength:2*1024*1024+1}},{uid:true});
+    unchanged();
     if(!raw?.source||raw.source.length>2*1024*1024)return {original:null};
-    const parsed=await this.parse(raw.source);
+    const parsed=await this.parse(raw.source);unchanged();
     if(parsed.messageId!==messageId||!parsed.text)return {original:null};
     const from=parsed.from?.value||[];
     return {original:{message_id:messageId,folder:'INBOX',payload:{subject:parsed.subject||'',date:parsed.date?.toISOString?.()||null,from:from.map(x=>({address:x.address,name:x.name})),text:parsed.text.slice(0,1024*1024),text_truncated:parsed.text.length>1024*1024}}};

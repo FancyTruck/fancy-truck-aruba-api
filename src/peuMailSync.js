@@ -1,3 +1,4 @@
+import {headerCandidates} from './mailHeaderLookup.js';
 import {newUidPage} from './mailUidPage.js';
 import {problem} from './peuMailDb.js';
 const MAX_SOURCE_BYTES=20*1024*1024;
@@ -64,4 +65,13 @@ export async function readFolder(client,folder,cursor,limit=100){
   }finally{lock.release();}
 }
 export async function folders(client){const list=await client.list();return list.filter(f=>f.path==='INBOX'||f.specialUse==='\\Sent').map(f=>({path:f.path,role:f.path==='INBOX'?'inbox':'sent'}));}
-export async function reconcileSent(client,folder,messageId){const lock=await client.getMailboxLock(folder);try{const ids=await client.search({header:{'message-id':messageId}},{uid:true});return {status:ids.length?'verified_sent':'unresolved',uids:ids};}finally{lock.release();}}
+export async function reconcileSent(client,folder,messageId){
+ const lock=await client.getMailboxLock(folder,{readOnly:true});
+ try{
+  const {ids,unchanged}=await headerCandidates(client,messageId);
+  if(ids.length!==1)return {status:'unresolved',uids:ids};
+  const message=await client.fetchOne(ids[0],{uid:true,envelope:true},{uid:true});unchanged();
+  if(message?.uid!==ids[0]||message?.envelope?.messageId!==messageId)return {status:'unresolved',uids:[]};
+  return {status:'verified_sent',uids:ids};
+ }finally{lock.release();}
+}
