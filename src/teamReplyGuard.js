@@ -1,8 +1,24 @@
+const replyProblem=code=>Object.assign(new Error(code),{code,status:502});
+async function* replyCandidates(client,id){
+ const {exists,uidNext,uidValidity}=client.mailbox||{};
+ if(!Number.isSafeInteger(exists)||exists<0||!Number.isSafeInteger(uidNext)||uidNext<1||uidNext>4294967295||exists>=uidNext||!uidValidity)throw replyProblem('team_reply_metadata_unavailable');
+ const unchanged=()=>{const m=client.mailbox||{};if(m.exists!==exists||m.uidNext!==uidNext||String(m.uidValidity)!==String(uidValidity))throw replyProblem('team_reply_mailbox_changed');};
+ for(let start=1;start<=exists;start+=200){
+  if(start>20000)throw replyProblem('team_reply_search_incomplete');
+  const end=Math.min(start+199,exists),seen=new Set();
+  for(const field of ['in-reply-to','references']){
+   const ids=await client.search({seq:`${start}:${end}`,header:{[field]:id}},{uid:true});unchanged();
+   if(!Array.isArray(ids)||ids.length>end-start+1||new Set(ids).size!==ids.length||ids.some(uid=>!Number.isSafeInteger(uid)||uid<1||uid>=uidNext))throw replyProblem('team_reply_search_invalid');
+   for(const uid of ids){if(seen.has(uid))continue;seen.add(uid);yield {uid,unchanged};unchanged();}
+  }
+ }
+}
 // Inspect both sent mail and team replies delivered to our inbox (To or Cc).
 // Exact RFC Message-ID ancestry keeps distinct customer requests separate.
-export async function teamAlreadyReplied({parsed,accounts,withImap}) {
+export async function teamAlreadyReplied({parsed,accounts,withImap,evidence=false,parse}) {
  const id=String(parsed.messageId||'');
  if(!id||id.length>998||/[\r\n]/.test(id))throw Error('team_reply_check_missing_message_id');
+ let latest=null;
  const addresses=value=>(Array.isArray(value)?value:value?.value||[]).map(v=>String(v.address||'').trim().toLowerCase()).filter(Boolean);
  const internal=address=>address.endsWith('@fancytruck.it');
  const customer=addresses(parsed.from).filter(a=>!internal(a));
@@ -13,10 +29,11 @@ export async function teamAlreadyReplied({parsed,accounts,withImap}) {
    for(const folder of [{path:folders[0].path,sent:true},{path:'INBOX',sent:false}]){
     const lock=await client.getMailboxLock(folder.path,{readOnly:true});
     try{
-     for(const field of ['in-reply-to','references']){
-      const ids=await client.search({header:{[field]:id}},{uid:true});
-      for(const uid of ids){
-       const message=await client.fetchOne(uid,{envelope:true,headers:['in-reply-to','references']},{uid:true});
+     let candidates=0;
+     for await(const {uid,unchanged} of replyCandidates(client,id)){
+       if(evidence&&++candidates>50)throw replyProblem('team_reply_search_incomplete');
+       const message=await client.fetchOne(uid,{uid:true,envelope:true,headers:['in-reply-to','references']},{uid:true});unchanged();
+       if(message?.uid!==uid)throw replyProblem('team_reply_uid_mismatch');
        const envelope=message?.envelope||{};
        const header=String(message?.headers||'').replace(/\r?\n[ \t]+/g,' ');
        const refs=[...header.matchAll(/<[^<>\s]+>/g)].map(m=>m[0]);
@@ -30,14 +47,25 @@ export async function teamAlreadyReplied({parsed,accounts,withImap}) {
         if(!senders.length||!senders.every(internal))continue;
         if(!recipients.some(a=>!internal(a)&&(!customer.length||customer.includes(a))))continue;
        }
-       return true;
-      }
+       if(!evidence)return true;
+       if(typeof parse!=='function')throw Error('team_reply_parser_unavailable');
+       const meta=await client.fetchOne(uid,{size:true},{uid:true});
+       unchanged();
+       if(!Number.isSafeInteger(meta?.size)||meta.size<0||meta.size>2*1024*1024)throw Error('team_reply_body_unavailable');
+       const raw=await client.fetchOne(uid,{source:{start:0,maxLength:2*1024*1024+1}},{uid:true});
+       unchanged();
+       if(!raw?.source||raw.source.length>2*1024*1024)throw Error('team_reply_body_unavailable');
+       const full=await parse(raw.source);unchanged();
+       if(full.inReplyTo!==id)continue;
+       const at=full.date?.toISOString?.();
+       if(!full.messageId||!at||Date.parse(at)>Date.now()+60000)throw Error('team_reply_date_unavailable');
+       if(!latest||at>latest.evidence.at)latest={handled:true,account,evidence:{message_id:full.messageId,at,text:full.text||''}};
      }
     }finally{lock.release();}
    }
    return false;
   });
-  if(found)return {handled:true,account};
+  if(found&&!evidence)return {handled:true,account};
  }
- return {handled:false};
+ return latest||{handled:false};
 }

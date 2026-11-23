@@ -1,3 +1,4 @@
+import {replyCycleEvidence} from './replyCycleEvidence.js';
 import {QuoteUpdate} from './quoteUpdate.js';
 import {customerWorkspace} from './customerWorkspace.js';
 import {completeCustomerActivity} from './completeCustomerActivity.js';
@@ -21,6 +22,7 @@ const defs={
  'crm.postpone_activity':{effect:'write',parameters:obj({opportunity_id:id,revision:{type:'string',pattern:'^[a-f0-9]{64}$'},activity_id:id,activity_revision:{type:'string',pattern:'^[a-f0-9]{64}$'},date:{type:'string',format:'date'}})},
  'crm.complete_activity':{effect:'write',parameters:obj({activity_id:id,opportunity_id:id,revision:{type:'string',pattern:'^[a-f0-9]{64}$'}})},
  'mail.drafts':{effect:'read',parameters:obj({since:{type:'string',minLength:20,maxLength:40},action_id:{type:'string',minLength:1,maxLength:100},after:{type:'string',maxLength:100},limit:{type:'integer',minimum:1,maximum:50}},['since'])},
+ 'mail.reply_cycle':{effect:'read',parameters:obj({account:{type:'string',enum:['hello','pietro']},in_reply_to:{type:'string',minLength:1,maxLength:998,pattern:'^[^\\r\\n]+$'},sender:{type:'string',minLength:3,maxLength:320}})},
  'intake.updates':{effect:'read',parameters:obj({since:{type:'string',minLength:20,maxLength:40},after:{type:'string',maxLength:150},limit:{type:'integer',minimum:1,maximum:100}},['since'])},
  'travel.from_depot':travelDefinition,
  ...odooReadDefinitions,
@@ -45,7 +47,7 @@ const defs={
  'mail.confirm_send':{effect:'send',parameters:approved},
  'operation.execute':{effect:'write',parameters:approved},
 };
-export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritable,odooRead,readOriginal,verifyDraft,completeActivity,odooWrite,odooFields,readOnly=false}){
+export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritable,odooRead,readOriginal,verifyDraft,completeActivity,odooWrite,odooFields,replyTeamCheck,readOnly=false}){
  const applicationAssertWritable=assertWritable;
  assertWritable=()=>{
    if(approvals.store.state.recovery?.required||
@@ -157,6 +159,7 @@ export function makePeuContract({db,approvals,upstream,verify,smtp,assertWritabl
      }
      else if(['crm.customer','crm.change_stage','crm.add_activity','crm.postpone_activity'].includes(c.id)){if(c.id!=='crm.customer')assertWritable();result=await customerWorkspace(odooRead,odooWrite,c.id,p);}
      else if(c.id==='crm.complete_activity'){assertWritable();result=await completeCustomerActivity(odooRead,completeActivity,p);}
+     else if(c.id==='mail.reply_cycle')result=await replyCycleEvidence({account:p.account,messageId:p.in_reply_to,sender:p.sender,readOriginal,actions:approvals.store.state.actions,teamCheck:replyTeamCheck});
      else if(c.id==='intake.updates')result=intakeUpdates(approvals.store.state,p);
      else if(c.id.startsWith('reviews.')){result=await reviews[c.id.slice('reviews.'.length)](p);}
      else if(c.id==='travel.from_depot'){result=await travelFromDepot(p);}

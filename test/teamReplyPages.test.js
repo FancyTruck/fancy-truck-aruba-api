@@ -1,0 +1,20 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {teamAlreadyReplied} from '../src/teamReplyGuard.js';
+const id='<customer@example.invalid>',parsed={messageId:id,date:new Date('2026-11-20'),from:{value:[{address:'client@example.invalid'}]}};
+function fixture({count=450,match=[420],evidence=false,mutate,invalid,size=50}={}){
+ let released=0,fetches=0,searches=0,folder;const queries=[];
+ const mailbox={exists:count,uidNext:count*1000+1,uidValidity:'synthetic'};
+ const client={mailbox,list:async()=>[{path:'Sent',specialUse:'\\Sent'}],getMailboxLock:async(path,opts)=>{assert.equal(opts.readOnly,true);folder=path;return {release(){released++;}};},
+ search:async(q,o)=>{searches++;queries.push(q);assert.deepEqual(o,{uid:true});assert(q.seq,'bounded discovery required');const [a,b]=q.seq.split(':').map(Number);assert(b-a<200);if(invalid==='false')return false;if(invalid==='duplicate')return [1000,1000];if(invalid==='foreign')return [999999999];if(mutate==='search')mailbox.exists++;
+ return folder==='Sent'?match.filter(n=>n>=a&&n<=b).map(n=>n*1000):[];},
+ fetchOne:async(uid,q)=>{fetches++;if(mutate==='fetch')mailbox.uidNext++;if(q.size)return {size};if(q.source)return {source:Buffer.from('synthetic')};return {uid:invalid==='identity'?uid+1:uid,headers:Buffer.from('References: '+id),envelope:{inReplyTo:id,messageId:'<answer@example.invalid>',date:new Date('2026-11-21'),from:[{address:'hello@fancytruck.it'}],to:[{address:'client@example.invalid'}]}};}};
+ const args={parsed,accounts:['hello'],withImap:async(a,fn)=>fn(client),evidence,parse:async()=>({inReplyTo:id,messageId:'<answer@example.invalid>',date:new Date('2026-11-21'),text:'Synthetic answer'})};
+ return {args,queries,get released(){return released;},get fetches(){return fetches;},get searches(){return searches;}};
+}
+test('actual team check finds sparse historical answer in third bounded window',async()=>{const f=fixture();assert.equal((await teamAlreadyReplied(f.args)).handled,true);assert.equal(f.released,1);assert.equal(f.fetches,1);assert(f.queries.some(q=>q.seq==='401:450'));});
+test('no match completes both readonly folders before returning false',async()=>{const f=fixture({match:[]});assert.deepEqual(await teamAlreadyReplied(f.args),{handled:false});assert.equal(f.searches,12);assert.equal(f.released,2);assert.equal(f.fetches,0);});
+for(const invalid of ['false','duplicate','foreign','identity'])test(`invalid ${invalid} cannot mean no team reply`,async()=>{const f=fixture({invalid});await assert.rejects(teamAlreadyReplied(f.args));assert.equal(f.released,1);});
+for(const mutate of ['search','fetch'])test(`observed mailbox change during ${mutate} rejects and releases`,async()=>{const f=fixture({mutate});await assert.rejects(teamAlreadyReplied(f.args),{code:'team_reply_mailbox_changed'});assert.equal(f.released,1);});
+test('work cap returns incomplete before silently missing an old answer',async()=>{const f=fixture({count:20001,match:[20001]});await assert.rejects(teamAlreadyReplied(f.args),{code:'team_reply_search_incomplete'});assert.equal(f.searches,200);assert.equal(f.released,1);});
+test('evidence mode deduplicates two header hits and preserves latest verified response',async()=>{const f=fixture({evidence:true});const r=await teamAlreadyReplied(f.args);assert.equal(r.evidence.message_id,'<answer@example.invalid>');assert.equal(r.evidence.text,'Synthetic answer');assert.equal(f.fetches,3);assert.equal(f.released,2);});
+test('evidence candidate budget spans windows rather than only each search',async()=>{const f=fixture({evidence:true,match:Array.from({length:51},(_,i)=>i*4+1)});await assert.rejects(teamAlreadyReplied(f.args),{code:'team_reply_search_incomplete'});assert.equal(f.released,1);});
+test('negative declared size cannot reach body parsing',async()=>{const f=fixture({evidence:true,size:-1});f.args.parse=()=>assert.fail('No parser for invalid metadata');await assert.rejects(teamAlreadyReplied(f.args),/body_unavailable/);assert.equal(f.released,1);});

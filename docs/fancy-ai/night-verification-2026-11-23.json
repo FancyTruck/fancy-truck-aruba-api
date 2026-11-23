@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-23",
+  "modules": [
+    "P00",
+    "P01",
+    "P03",
+    "P05",
+    "P22"
+  ],
+  "requirement_ids": [
+    "0.2",
+    "1.4",
+    "1.4.1",
+    "1.5",
+    "2.5",
+    "7.2",
+    "7.3"
+  ],
+  "source_parent": "3b9a380c74c99d0c58691d840c89e6c523d7f51c",
+  "main_reconciled": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e",
+  "reconciliation": "Exact delta f36a109..be0d7ab applied to continuation; server/contract conflicts resolved preserving readOnly guards and new replyTeamCheck adapter. No remote main merge/release.",
+  "implementation": [
+    "Actual teamAlreadyReplied searches both ancestry headers using <=200 sequence positions per query; <=100 windows/20000 positions per folder; <=200 queries per folder. No unbounded fallback.",
+    "Per-window dedup prevents fetching same candidate twice across in-reply-to/references. Retains at most400 distinct candidate UIDs per two-header window (each response <=200); sequential fetch retains no mailbox-wide collection. Evidence mode candidate budget50 spans windows per folder; ordinary mode can return early only on verified relationship/sender/recipient evidence.",
+    "Missing metadata, false/oversized/duplicate/foreign search UID, mismatched fetched UID and observed metadata changes reject. Work limit is explicit incomplete rather than no reply. Existing account/sender/customer/ancestry/time filters preserved.",
+    "Current-main evidence body parsing retains2MiB cap, now rejects negative declared size and checks observed mailbox stability around fetch/parse. Latest-answer evidence preserved; no automatic send/retry."
+  ],
+  "runtime_link": "Existing server processQuoteRequest and automaticDraftVerifier call teamAlreadyReplied; current-main replyTeamCheck adapter also reconciled. Same live entrypoint code tested in isolation, not proof isolated branch deployed.",
+  "tests": {
+    "passed": 639,
+    "failed": 0,
+    "new_tests": 12,
+    "targeted_passed": 26,
+    "command": "node --test; npm run check; node --check all src/**/*.js/public/**/*.js/scripts/**/*.mjs",
+    "targeted_command": "node --test test/teamReplyPages.test.js test/teamReplyGuard.test.js test/replyCycleEvidence.test.js",
+    "syntax_checks": 86,
+    "environment": "Node24.22.3; actual teamAlreadyReplied and existing real-store/SQLite/HTTP suite with synthetic IMAP/Odoo/SMTP",
+    "coverage": [
+      "450 sparse-UID mailbox, historical answer in third window",
+      "no match completes both sent/inbox folders before false",
+      "false/duplicate/foreign responses and wrong fetched identity refuse with lock cleanup",
+      "mailbox changes during search/fetch refuse",
+      "20001-message work exhaustion explicitly incomplete",
+      "evidence mode deduplicates two header hits and retains latest answer",
+      "candidate cap across windows, negative size before body parsing",
+      "existing customer/internal-handoff, account and old-message regressions retained"
+    ],
+    "baseline_run": "Not separately executed; prior exact source directly shows unbounded per-header search. No baseline failure count claimed."
+  },
+  "live_readonly": {
+    "date": "2026-11-23",
+    "scope": "Render list_deploys limit1 with confirmed explicit workspace",
+    "workspace": "tea-daa7c667bikc73fkk940",
+    "commit": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e",
+    "deploy": "dep-dc1a0se0tbcc73afveeg",
+    "status": "live",
+    "finished_at": "2026-11-22T07:58:12.726253Z",
+    "does_not_prove": "new memory/events/live checkpoint/backup/CRM/notification/end-to-end acceptance or isolated-source release"
+  },
+  "source_integrity": {
+    "combined_server": "a30c676d5857c2c6231ee4e0f6dc97e16d8b6b20",
+    "pr26_server": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "scope": "Combined server only adds current-main replyTeamCheck adapter, retaining readonly/process-owner/repaired-intake/awaiting_scope_review guards. Canonical PR26 runtime unchanged."
+  },
+  "oom": "Specific candidate-array retention bounded; no new RSS/heap/load/provider-latency profile or historical OOM cause/resolution proof.",
+  "backup": "No new download/integrity/decrypt/restore/deletion; dated isolated restore evidence retained.",
+  "limits": [
+    "Up to200 SEARCH calls per folder and potentially800 across2accounts/2folders; latency unmeasured. Work cap may repeatedly require manual review on large mailbox; no persistent discovery cursor.",
+    "Header payload/envelope size, complete parsed text/evidence budgets and generic message listing remain separate memory boundaries.",
+    "Metadata observation is not a remote mailbox transaction; no exactly-once or delivered-recipient claim.",
+    "F0/F1/F2/four-path operational acceptance remains open;4.5.1/project case unchanged,COLLAUDO74 untouched,F6 deferred."
+  ],
+  "effects": "No main push/remote merge/deploy/restart/Odoo mutation/deletion/hosted migration/real send/fiscal action/payment/refund/purchase/new task.",
+  "next_action": "Reconcile HEAD/lease; inspect bounded generic message listing and header/evidence payload budgets. Authorized live checkpoint/CRM/notification verification remains separate."
+}
