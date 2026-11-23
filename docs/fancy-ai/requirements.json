@@ -140,7 +140,7 @@
         },
         {
           "date": "2026-11-16",
-          "kind": "Readonly deployed-main metrics12 samples169.7–181.0MiB/512 and263 HTTP200 counts; one Nov13 exit1 event in complete7-day filtered query. Cause unknown, not OOM evidence; no checkpoint/live acceptance.",
+          "kind": "Readonly deployed-main metrics12 samples169.7\u2013181.0MiB/512 and263 HTTP200 counts; one Nov13 exit1 event in complete7-day filtered query. Cause unknown, not OOM evidence; no checkpoint/live acceptance.",
           "reference": "render-observation-2026-11-16.json"
         }
       ],
@@ -184,7 +184,7 @@
       "evidence": [
         {
           "date": "2026-10-22",
-          "kind": "direct runtime logs at 00:29:56–00:29:59 UTC, 76318-byte bundle, VERIFIED, isolated_process=true, restore_writes_blocked=true; source path inspected"
+          "kind": "direct runtime logs at 00:29:56\u201300:29:59 UTC, 76318-byte bundle, VERIFIED, isolated_process=true, restore_writes_blocked=true; source path inspected"
         },
         {
           "date": "2026-10-23",
@@ -337,17 +337,22 @@
         },
         {
           "date": "2026-11-16",
-          "kind": "Readonly deployed-main metrics12 samples169.7–181.0MiB/512 and263 HTTP200 counts; one Nov13 exit1 event in complete7-day filtered query. Cause unknown, not OOM evidence; no checkpoint/live acceptance.",
+          "kind": "Readonly deployed-main metrics12 samples169.7\u2013181.0MiB/512 and263 HTTP200 counts; one Nov13 exit1 event in complete7-day filtered query. Cause unknown, not OOM evidence; no checkpoint/live acceptance.",
           "reference": "render-observation-2026-11-16.json"
         },
         {
           "date": "2026-11-17",
           "kind": "Bounded new-message UID acquisition in real readFolder/sync with synthetic IMAP/SQLite;10 new,41 targeted,458 whole tests and23 syntax checks; source-only, no live acceptance.",
           "reference": "night-verification-2026-11-17.json"
+        },
+        {
+          "date": "2026-11-23",
+          "kind": "Isolated team-reply lookup: bounded ancestry queries, incomplete/identity/change refusal;12new/639whole tests. Not live checkpoint or handoff acceptance.",
+          "reference": "night-verification-2026-11-23.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-17"
+      "updated_at": "2026-11-23"
     },
     {
       "id": "1.5",
@@ -445,7 +450,7 @@
         },
         {
           "date": "2026-11-16",
-          "kind": "Readonly deployed-main metrics12 samples169.7–181.0MiB/512 and263 HTTP200 counts; one Nov13 exit1 event in complete7-day filtered query. Cause unknown, not OOM evidence; no checkpoint/live acceptance.",
+          "kind": "Readonly deployed-main metrics12 samples169.7\u2013181.0MiB/512 and263 HTTP200 counts; one Nov13 exit1 event in complete7-day filtered query. Cause unknown, not OOM evidence; no checkpoint/live acceptance.",
           "reference": "render-observation-2026-11-16.json"
         },
         {
@@ -574,9 +579,14 @@
           "date": "2026-11-17",
           "kind": "Owner authorized PR39-only release. Main5bdde8 tree equals tested source; Render deploy dep-dbu45t5ckfvc73c6igq0 live12:05:55UTC; publichealth200/startup Odoo/IMAP/SMTP OK. Not real-message/end-to-end/notification acceptance.",
           "reference": "commercial-direction-2026-11-17.json"
+        },
+        {
+          "date": "2026-11-23",
+          "kind": "Isolated team-reply lookup: bounded ancestry queries, incomplete/identity/change refusal;12new/639whole tests. Not live checkpoint or handoff acceptance.",
+          "reference": "night-verification-2026-11-23.json"
         }
       ],
-      "updated_at": "2026-11-17"
+      "updated_at": "2026-11-23"
     },
     {
       "id": "2.6",
@@ -704,7 +714,7 @@
     },
     {
       "id": "4.5.1",
-      "objective": "Collaudo reale lettura/aggiornamento note e attività Odoo",
+      "objective": "Collaudo reale lettura/aggiornamento note e attivit\u00e0 Odoo",
       "status": "collaudato",
       "source": "owner update 2026-10-22 and published Sites v22/OAuth v17",
       "decision_successiva": "Close this bounded acceptance item only; leave test activity open, preserve other activity and all other phase states",
@@ -752,7 +762,7 @@
     },
     {
       "id": "5.1",
-      "objective": "Catalogo capacità",
+      "objective": "Catalogo capacit\u00e0",
       "status": "da verificare",
       "evidence": [
         {
@@ -856,7 +866,7 @@
     },
     {
       "id": "6.1",
-      "objective": "Identità Odoo",
+      "objective": "Identit\u00e0 Odoo",
       "status": "differito per scelta"
     },
     {
@@ -1038,7 +1048,7 @@
         },
         {
           "date": "2026-11-16",
-          "kind": "Readonly deployed-main metrics12 samples169.7–181.0MiB/512 and263 HTTP200 counts; one Nov13 exit1 event in complete7-day filtered query. Cause unknown, not OOM evidence; no checkpoint/live acceptance.",
+          "kind": "Readonly deployed-main metrics12 samples169.7\u2013181.0MiB/512 and263 HTTP200 counts; one Nov13 exit1 event in complete7-day filtered query. Cause unknown, not OOM evidence; no checkpoint/live acceptance.",
           "reference": "render-observation-2026-11-16.json"
         },
         {
@@ -1215,7 +1225,7 @@
         },
         {
           "date": "2026-11-16",
-          "kind": "Readonly deployed-main metrics12 samples169.7–181.0MiB/512 and263 HTTP200 counts; one Nov13 exit1 event in complete7-day filtered query. Cause unknown, not OOM evidence; no checkpoint/live acceptance.",
+          "kind": "Readonly deployed-main metrics12 samples169.7\u2013181.0MiB/512 and263 HTTP200 counts; one Nov13 exit1 event in complete7-day filtered query. Cause unknown, not OOM evidence; no checkpoint/live acceptance.",
           "reference": "render-observation-2026-11-16.json"
         },
         {
@@ -1403,14 +1413,19 @@
           "date": "2026-11-17",
           "kind": "Bounded new-message UID acquisition in real readFolder/sync with synthetic IMAP/SQLite;10 new,41 targeted,458 whole tests and23 syntax checks; source-only, no live acceptance.",
           "reference": "night-verification-2026-11-17.json"
+        },
+        {
+          "date": "2026-11-23",
+          "kind": "Isolated team-reply lookup: bounded ancestry queries, incomplete/identity/change refusal;12new/639whole tests. Not live checkpoint or handoff acceptance.",
+          "reference": "night-verification-2026-11-23.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-17"
+      "updated_at": "2026-11-23"
     },
     {
       "id": "2.1.1",
-      "objective": "Applicabilità pulizia Gmail storica",
+      "objective": "Applicabilit\u00e0 pulizia Gmail storica",
       "status": "da verificare"
     },
     {

@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "updated_at": "2026-11-22T01:47:16.947836+00:00",
+  "updated_at": "2026-11-23T01:28:55.516007+00:00",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
-  "stage": "bounded original lookup remotely preserved; functional acceptance open",
+  "stage": "bounded team-reply discovery remotely preserved; functional acceptance open",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
@@ -46,7 +46,8 @@
     "bounded-new-message-uid-search-with-sequence-probes-and-cursor-preservation",
     "bounded-resumed-commercial-and-sent-uid-discovery-with-shared-page-helper",
     "bounded-initial-commercial-date-scan-with-separate-durable-watermark",
-    "bounded-original-header-lookup-and-exact-unique-sent-helper-identity"
+    "bounded-original-header-lookup-and-exact-unique-sent-helper-identity",
+    "bounded-team-reply-ancestry-with-explicit-incomplete-and-identity-guards"
   ],
   "tests": {
     "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs",
@@ -55,7 +56,7 @@
     "syntax_checks": 8,
     "environment": "Node24.22.1 isolated PR26 with synthetic HTTP/IMAP tests"
   },
-  "next_action": "Reconcile HEAD/lease, bound team-reply ancestry discovery without treating incomplete search as no reply; verify original lookup errors remain visible for review. Operational CRM/notification/checkpoint evidence remains separate.",
+  "next_action": "Reconcile HEAD/lease; inspect bounded generic message listing and header/evidence payload budgets. Authorized live checkpoint/CRM/notification verification remains separate.",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
@@ -129,7 +130,7 @@
     {
       "date": "2026-11-16",
       "scope": "Render deployed main metadata,55-minute memory/HTTP samples and7-day filtered events, readonly",
-      "result": "12 samples169.7–181.0MiB/512;263 returned HTTP200 counts; one Nov13 exit1 event, cause unknown; near-event log queries0 rows",
+      "result": "12 samples169.7\u2013181.0MiB/512;263 returned HTTP200 counts; one Nov13 exit1 event, cause unknown; near-event log queries0 rows",
       "does_not_prove": "historical OOM cause/resolution, live checkpoints, all-interval peak/uptime or release of isolated source",
       "reference": "render-observation-2026-11-16.json"
     },
@@ -162,10 +163,16 @@
       "scope": "Render list_deploys limit1 with explicit confirmed workspace",
       "result": "Latest independently live main f36a109/dep-dc0dckjbc2fs73aua280 still finished20Nov23:23:41UTC",
       "does_not_prove": "new memory/events/OOM/checkpoint/backup/end-to-end evidence or isolated-source release"
+    },
+    {
+      "date": "2026-11-23",
+      "scope": "Render list_deploys limit1 with confirmed explicit workspace",
+      "result": "Independent main be0d7ab live via dep-dc1a0se0tbcc73afveeg since22Nov07:58:12UTC",
+      "does_not_prove": "new memory/events/live checkpoint/backup/CRM/notification/end-to-end acceptance or isolated-source release"
     }
   ],
   "operational_evidence": "docs/fancy-ai/operational-verification-2026-10-22.json",
-  "live_render_commit": "f36a109f639192773689d18e4893b2f22ae5277c",
+  "live_render_commit": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e",
   "acceptance_items": {
     "4.5.1": {
       "status": "collaudato",
@@ -194,27 +201,27 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-11-22T02:47:16.947836+01:00",
-  "run_id": "fancy-night-20261122",
-  "current_lot": "P01/P03/P05/P22 bounded original lookup and exact sent helper identity; isolated only",
-  "live_render_deploy": "dep-dc0dckjbc2fs73aua280",
+  "updated_at_rome": "2026-11-23T02:28:55.516007+01:00",
+  "run_id": "fancy-night-20261123",
+  "current_lot": "P00/P01/P03/P05/P22 bounded team-reply discovery; isolated continuation",
+  "live_render_deploy": "dep-dc1a0se0tbcc73afveeg",
   "upstream_integration_tests": {
     "status": "passed on isolated continuation; no remote main merge/deployment",
-    "main": "f36a109f639192773689d18e4893b2f22ae5277c",
+    "main": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e",
     "pr26_source": "a450bb3ddfabf40191aa56fa0bbd2390a2476044",
-    "passed": 623,
+    "passed": 639,
     "failed": 0,
-    "syntax_checks": 85,
+    "syntax_checks": 86,
     "resolved_paths": [
       "src/server.js",
       "src/peuContract.js"
     ],
     "policy": "10MiB inline source and durable review handoff retained; <=101 positions/date search, <=100processed per poll; independent scan watermark never means content processed",
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "3b9a380c74c99d0c58691d840c89e6c523d7f51c",
-    "tree": "e57c6aec114b7f3ef48dc2f209a98649b08b714b",
-    "remote_readback": "Exact remote source fetched and full tree/file diff equal local tested tree; server unchanged.",
-    "date": "2026-11-22"
+    "commit": "c895a6dcc2b7286556009fd654f150b3535f1543",
+    "tree": "8b42036ec0789ac748657d2cf0449dc17bcc0b1e",
+    "remote_readback": "Full exact remote source fetched and equal to local tested tree; combined server blob verified.",
+    "date": "2026-11-23"
   },
   "source_integrity": {
     "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
@@ -223,19 +230,19 @@
     "previous_corrected_project_guard_server_blob": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc",
     "previous_single_message_server_blob": "a11abed369707d1ab0efd38c37848223bb917de2",
     "previous_server_blob": "9ba35a907c6165a9051434d59fd7d72850fe24cc",
-    "combined_server_blob": "d2b5343472883c15682fb78de736c277ab12790b",
+    "combined_server_blob": "a30c676d5857c2c6231ee4e0f6dc97e16d8b6b20",
     "pr26_server_blob_unchanged": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
-    "previous_combined_server_blob": "f38cbb484527ec104bf27a1f882140ee94d6b949",
-    "combined_server_scope": "Exact main customer-enrollment/quote-update adapters reconciled; existing readonly ledger guard, process ownership, repaired intake and awaiting_scope_review retained."
+    "previous_combined_server_blob": "d2b5343472883c15682fb78de736c277ab12790b",
+    "combined_server_scope": "Combined server only adds current-main replyTeamCheck adapter, retaining readonly/process-owner/repaired-intake/awaiting_scope_review guards. Canonical PR26 runtime unchanged."
   },
   "last_lease": {
-    "run_id": "fancy-night-20261122",
-    "component": "Render isolated exact-message lookup and registry",
-    "acquired_at": "2026-11-22T01:43:56.245Z",
-    "expires_at": "2026-11-22T02:43:56.245Z",
-    "base_head": "fdd8eaceece05bd297dfc7de2a3ebd189d4ac9b2",
+    "run_id": "fancy-night-20261123",
+    "component": "Render isolated team-reply discovery and registry",
+    "acquired_at": "2026-11-23T01:25:03.424Z",
+    "expires_at": "2026-11-23T02:25:03.424Z",
+    "base_head": "c2b2d5835ef4705bba4ec07b39d0d203c1b03328",
     "status": "released",
-    "released_at": "2026-11-22T01:47:16.947836+00:00"
+    "released_at": "2026-11-23T01:28:55.516007+00:00"
   },
   "last_verified_tests": {
     "command": "npm test; npm run check",
@@ -252,25 +259,19 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": {
-    "run_id": "fancy-night-20261123",
-    "component": "Render isolated team-reply discovery and registry",
-    "acquired_at": "2026-11-23T01:25:03.424Z",
-    "expires_at": "2026-11-23T02:25:03.424Z",
-    "base_head": "c2b2d5835ef4705bba4ec07b39d0d203c1b03328"
-  },
+  "lease": null,
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "3b9a380c74c99d0c58691d840c89e6c523d7f51c",
-    "parent": "cbd40e9e0248decad5042502c4b83da0a4316450",
-    "tree": "e57c6aec114b7f3ef48dc2f209a98649b08b714b",
-    "tests": 623,
-    "syntax_checks": 85,
+    "commit": "c895a6dcc2b7286556009fd654f150b3535f1543",
+    "parent": "3b9a380c74c99d0c58691d840c89e6c523d7f51c",
+    "tree": "8b42036ec0789ac748657d2cf0449dc17bcc0b1e",
+    "tests": 639,
+    "syntax_checks": 86,
     "source_only": true,
     "remote_verified": true,
-    "main_reconciled": "f36a109f639192773689d18e4893b2f22ae5277c"
+    "main_reconciled": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e"
   },
-  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-22.json",
+  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-23.json",
   "commercial_correction": {
     "branch": "fix/commercial-direction-20261117",
     "commit": "ea283533b900d0f8e3429a9633d607611ca0a375",
