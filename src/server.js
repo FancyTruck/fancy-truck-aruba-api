@@ -1,3 +1,4 @@
+import {listingOptions,listMailboxMessages} from './mailListing.js';
 import { reviewSnapshot } from './reviewSnapshot.js';
 import { acquireProcessOwner } from './processOwner.js';
 import {verifiedCustomerTagId,repairCustomerVisibility} from './customerEnrollment.js';
@@ -1382,31 +1383,14 @@ app.get('/v1/:account/status', async (req, res) => {
 });
 
 app.get('/v1/:account/messages', async (req, res) => {
-  const limit = Math.min(Math.max(Number(req.query.limit || 20), 1), 100);
-  const unseenOnly = String(req.query.unseen || 'false') === 'true';
-  const since = req.query.since ? new Date(String(req.query.since)) : null;
   try {
-    const messages = await withImap(req.params.account, async (client) => {
-      const lock = await client.getMailboxLock('INBOX', { readOnly: true });
-      try {
-        const search = {};
-        if (unseenOnly) search.seen = false;
-        if (since && !Number.isNaN(since.getTime())) search.since = since;
-        const uids = await client.search(search, { uid: true });
-        const selected = uids.slice(-limit).reverse();
-        const rows = [];
-        for (const uid of selected) {
-          const message = await client.fetchOne(uid, { envelope: true, flags: true, internalDate: true, size: true }, { uid: true });
-          rows.push({ uid, subject: message.envelope?.subject || null, date: message.envelope?.date || message.internalDate || null,
-            from: message.envelope?.from || [], to: message.envelope?.to || [], flags: [...(message.flags || [])], size: message.size || null });
-        }
-        return rows;
-      } finally { lock.release(); }
+    const options=listingOptions(req.query);
+    const result=await withImap(req.params.account,async client=>{
+      const lock=await client.getMailboxLock('INBOX',{readOnly:true});
+      try{return await listMailboxMessages(client,options);}finally{lock.release();}
     });
-    res.json({ ok: true, account: req.params.account, count: messages.length, messages });
-  } catch (error) {
-    res.status(502).json({ ok: false, error: error instanceof Error ? error.message : 'Errore IMAP' });
-  }
+    res.json({ok:true,account:req.params.account,count:result.messages.length,...result});
+  }catch(error){res.status(error.status||502).json({ok:false,code:error.code||'MAIL_LISTING_FAILED',error:error.message});}
 });
 
 app.get('/v1/:account/messages/:uid', async (req, res) => {
