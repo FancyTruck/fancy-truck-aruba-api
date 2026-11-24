@@ -130,7 +130,7 @@
     {
       "date": "2026-11-16",
       "scope": "Render deployed main metadata,55-minute memory/HTTP samples and7-day filtered events, readonly",
-      "result": "12 samples169.7\u2013181.0MiB/512;263 returned HTTP200 counts; one Nov13 exit1 event, cause unknown; near-event log queries0 rows",
+      "result": "12 samples169.7–181.0MiB/512;263 returned HTTP200 counts; one Nov13 exit1 event, cause unknown; near-event log queries0 rows",
       "does_not_prove": "historical OOM cause/resolution, live checkpoints, all-interval peak/uptime or release of isolated source",
       "reference": "render-observation-2026-11-16.json"
     },
@@ -259,7 +259,13 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": null,
+  "lease": {
+    "run_id": "fancy-night-20261124",
+    "component": "Render isolated bounded mail listing and registry",
+    "acquired_at": "2026-11-24T01:24:03.829Z",
+    "expires_at": "2026-11-24T02:24:03.829Z",
+    "base_head": "114f45d3b803bc01ca584b3a61cb4e974bef9011"
+  },
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
     "commit": "c895a6dcc2b7286556009fd654f150b3535f1543",
