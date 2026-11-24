@@ -1,0 +1,77 @@
+{
+  "date": "2026-11-24",
+  "modules": [
+    "P01",
+    "P05",
+    "P22"
+  ],
+  "requirement_ids": [
+    "1.4",
+    "1.5",
+    "2.5",
+    "7.2",
+    "7.4"
+  ],
+  "source_parent": "c895a6dcc2b7286556009fd654f150b3535f1543",
+  "main_reconciled": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e",
+  "implementation": [
+    "Existing GET /v1/:account/messages delegates to bounded listMailboxMessages under readonly INBOX lock; same authentication/account client, no new endpoint/poller/schema.",
+    "Search newest-to-oldest windows of <=200 sequence positions, at most100windows/20000positions per call, retaining <=100selected messages. Preserve since/unseen filters across windows, descending UID order and account/count/messages response. Body/source never requested.",
+    "Expose partial, has_more (true/false/null when older matches unknown), scanned_positions and older_messages_unscanned. Empty filtered search after work cap remains explicitly partial; no claim of complete absence.",
+    "Validate limit integer1..100, unseen true/false and valid since before IMAP. Unlike prior clamping/silently ignored bad date, invalid options return400. Invalid search, missing metadata, UID/sequence identity, negative size and observed mailbox changes refuse response; zero size remains0."
+  ],
+  "runtime_link": "Actual existing authenticated HTTP listing route imports helper; integration test boots real local server with stubbed IMAP, verifies readonly lock/logout and unchanged store. Isolated source not deployed.",
+  "tests": {
+    "passed": 653,
+    "failed": 0,
+    "new_tests": 14,
+    "targeted_passed": 14,
+    "command": "node --test; npm run check; node --check all src/**/*.js/public/**/*.js/scripts/**/*.mjs",
+    "targeted_command": "node --test test/mailListing.test.js test/mailListingIntegration.test.js",
+    "syntax_checks": 87,
+    "environment": "Node24.22.3; actual local HTTP route and listing helper, synthetic IMAP/Odoo/SMTP fixtures and existing store/SQLite suite",
+    "baseline": {
+      "source": "c895a6dcc2b7286556009fd654f150b3535f1543",
+      "command": "node --test test/mailListingIntegration.test.js on detached exact prior tree",
+      "passed": 0,
+      "failed": 1,
+      "interpretation": "HTTP stub requires bounded sequence query; old route searches entire mailbox and returns502 under that assertion, corrected200. Demonstrates query boundary regression, not a live provider failure."
+    },
+    "coverage": [
+      "latest100 in450 sparse-UID mailbox from one200-position window",
+      "since/unseen matches across3windows, complete absence versus work-limit partial absence",
+      "empty mailbox no SEARCH/FETCH",
+      "false/duplicate/foreign/incomplete search refuse before metadata fetch",
+      "wrong UID/sequence/size and changed mailbox refuse response",
+      "actual HTTP lock/logout cleanup and unchanged persistent state; invalid date400 before connect"
+    ]
+  },
+  "live_readonly": {
+    "date": "2026-11-24",
+    "scope": "Render list_deploys limit1, confirmed explicit workspace",
+    "workspace": "tea-daa7c667bikc73fkk940",
+    "commit": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e",
+    "deploy": "dep-dc1a0se0tbcc73afveeg",
+    "status": "live",
+    "finished_at": "2026-11-22T07:58:12.726253Z",
+    "does_not_prove": "new memory/events/checkpoints/backup/operational acceptance or isolated-source release"
+  },
+  "source_integrity": {
+    "combined_server": "5901397d61c9872796057ed1bc80fe08ad72f7ee",
+    "pr26_server": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "scope": "Combined server only imports listing helper/replaces existing listing handler; corrected intake/awaiting_scope_review and process-owner/readonly guards retained. Canonical PR26 runtime unchanged."
+  },
+  "oom": "Specific mailbox-wide UID list removed from generic listing. No new RSS/heap/external/load profile, total service memory bound or historical OOM-cause/resolution evidence.",
+  "backup": "No new download/integrity/decrypt/restore/deletion; previous dated isolated restore evidence retained.",
+  "limits": [
+    "At most100SEARCH and100metadata FETCH requests/call; provider latency unmeasured. Individual envelope/flag payload and aggregate response bytes remain separate memory boundaries.",
+    "Partial metadata exposes incomplete coverage; no new continuation token or paging UI. Large filtered mailbox may need review/continuation design before release.",
+    "Client readonly lock and observed metadata checks are not a provider mailbox transaction. No live client compatibility claim for added response fields/stricter bad-input400.",
+    "F0/F1/F2/four-path acceptance remains open;4.5.1/project case unchanged,COLLAUDO74 untouched,F6 deferred."
+  ],
+  "effects": "No main push/remote merge/deploy/restart/Odoo mutation/deletion/hosted migration/real send/fiscal action/payment/refund/purchase/new task.",
+  "next_action": "Reconcile HEAD/lease; bound envelope/header/evidence payload retention and design explicit continuation for partial listing before release. Live checkpoint/CRM/notification evidence remains separate.",
+  "source_commit": "5c3c5c8e38647301b76173de9eccd8d0653ebb34",
+  "source_tree": "2187e1b8950a3e4e7833ca55a9d41da9d16a19a9",
+  "remote_readback": "Full exact remote source fetched; tree and all files equal local tested commit1d516a2; server blob verified."
+}
