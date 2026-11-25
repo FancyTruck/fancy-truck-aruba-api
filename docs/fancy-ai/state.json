@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "updated_at": "2026-11-24T01:28:04.918290+00:00",
+  "updated_at": "2026-11-25T01:10:22.366629+00:00",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
-  "stage": "bounded mail listing remotely preserved; functional acceptance open",
+  "stage": "signed mail listing continuation remotely preserved; functional acceptance open",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
@@ -48,7 +48,8 @@
     "bounded-initial-commercial-date-scan-with-separate-durable-watermark",
     "bounded-original-header-lookup-and-exact-unique-sent-helper-identity",
     "bounded-team-reply-ancestry-with-explicit-incomplete-and-identity-guards",
-    "bounded-newest-first-http-mail-listing-with-explicit-partial-coverage"
+    "bounded-newest-first-http-mail-listing-with-explicit-partial-coverage",
+    "signed-snapshot-and-filter-bound-mail-listing-continuation"
   ],
   "tests": {
     "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs",
@@ -57,7 +58,7 @@
     "syntax_checks": 8,
     "environment": "Node24.22.1 isolated PR26 with synthetic HTTP/IMAP tests"
   },
-  "next_action": "Reconcile HEAD/lease; bound envelope/header/evidence payload retention and design explicit continuation for partial listing before release. Live checkpoint/CRM/notification evidence remains separate.",
+  "next_action": "Reconcile HEAD/lease; bound envelope/header/evidence payload retention and inspect operational checkpoint/CRM/notification evidence through authorized reads. Busy-mailbox paging behavior/client UI remains to validate before release.",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
@@ -131,7 +132,7 @@
     {
       "date": "2026-11-16",
       "scope": "Render deployed main metadata,55-minute memory/HTTP samples and7-day filtered events, readonly",
-      "result": "12 samples169.7–181.0MiB/512;263 returned HTTP200 counts; one Nov13 exit1 event, cause unknown; near-event log queries0 rows",
+      "result": "12 samples169.7\u2013181.0MiB/512;263 returned HTTP200 counts; one Nov13 exit1 event, cause unknown; near-event log queries0 rows",
       "does_not_prove": "historical OOM cause/resolution, live checkpoints, all-interval peak/uptime or release of isolated source",
       "reference": "render-observation-2026-11-16.json"
     },
@@ -176,6 +177,12 @@
       "scope": "Render list_deploys limit1, confirmed explicit workspace",
       "result": "Latest independently live main be0d7ab/dep-dc1a0se0tbcc73afveeg still finished22Nov07:58:12UTC",
       "does_not_prove": "new memory/events/checkpoints/backup/operational acceptance or isolated-source release"
+    },
+    {
+      "date": "2026-11-25",
+      "scope": "Render list_deploys limit1, confirmed explicit workspace",
+      "result": "Latest independently live main be0d7ab/dep-dc1a0se0tbcc73afveeg still finished22Nov07:58:12UTC",
+      "does_not_prove": "new memory/events/checkpoints/backup/operational acceptance or isolated-source release"
     }
   ],
   "operational_evidence": "docs/fancy-ai/operational-verification-2026-10-22.json",
@@ -208,27 +215,27 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-11-24T02:28:04.918290+01:00",
-  "run_id": "fancy-night-20261124",
-  "current_lot": "P01/P05/P22 bounded existing HTTP mail listing; isolated continuation",
+  "updated_at_rome": "2026-11-25T02:10:22.366629+01:00",
+  "run_id": "fancy-night-20261125",
+  "current_lot": "P03/P05/P22 signed continuation for partial mail listing; isolated continuation",
   "live_render_deploy": "dep-dc1a0se0tbcc73afveeg",
   "upstream_integration_tests": {
     "status": "passed on isolated continuation; no remote main merge/deployment",
     "main": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e",
     "pr26_source": "a450bb3ddfabf40191aa56fa0bbd2390a2476044",
-    "passed": 653,
+    "passed": 661,
     "failed": 0,
-    "syntax_checks": 87,
+    "syntax_checks": 88,
     "resolved_paths": [
       "src/server.js",
       "src/peuContract.js"
     ],
     "policy": "10MiB inline source and durable review handoff retained; <=101 positions/date search, <=100processed per poll; independent scan watermark never means content processed",
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "5c3c5c8e38647301b76173de9eccd8d0653ebb34",
-    "tree": "2187e1b8950a3e4e7833ca55a9d41da9d16a19a9",
-    "remote_readback": "Full exact remote source fetched; tree and all files equal local tested commit1d516a2; server blob verified.",
-    "date": "2026-11-24"
+    "commit": "129b3823396d9cdde9d4ec38fc2b0df4dda550b4",
+    "tree": "822330c722ea0a7b9d881d384ccf2fad0831f944",
+    "remote_readback": "Full exact remote source fetched; tree and all files equal local tested commitd3ba90f; server blob verified.",
+    "date": "2026-11-25"
   },
   "source_integrity": {
     "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
@@ -237,46 +244,40 @@
     "previous_corrected_project_guard_server_blob": "936c30b532b2d2be6dcb0964cbe39d90b97d71dc",
     "previous_single_message_server_blob": "a11abed369707d1ab0efd38c37848223bb917de2",
     "previous_server_blob": "9ba35a907c6165a9051434d59fd7d72850fe24cc",
-    "combined_server_blob": "5901397d61c9872796057ed1bc80fe08ad72f7ee",
+    "combined_server_blob": "12d569873cb3842f553dedff7652562033fe59c9",
     "pr26_server_blob_unchanged": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
-    "previous_combined_server_blob": "a30c676d5857c2c6231ee4e0f6dc97e16d8b6b20",
-    "combined_server_scope": "Combined server only imports listing helper/replaces existing listing handler; corrected intake/awaiting_scope_review and process-owner/readonly guards retained. Canonical PR26 runtime unchanged."
+    "previous_combined_server_blob": "5901397d61c9872796057ed1bc80fe08ad72f7ee",
+    "combined_server_scope": "Combined server adds cursor factory with existing secret and adapts existing listing handler; repaired intake/awaiting_scope_review, readonly/process ownership retained. Canonical PR26 runtime unchanged."
   },
   "last_lease": {
-    "run_id": "fancy-night-20261124",
-    "component": "Render isolated bounded mail listing and registry",
-    "acquired_at": "2026-11-24T01:24:03.829Z",
-    "expires_at": "2026-11-24T02:24:03.829Z",
-    "base_head": "114f45d3b803bc01ca584b3a61cb4e974bef9011",
+    "run_id": "fancy-night-20261125",
+    "component": "Render isolated mail listing continuation and registry",
+    "acquired_at": "2026-11-25T01:06:17.765Z",
+    "expires_at": "2026-11-25T02:06:17.765Z",
+    "base_head": "9e81e235a782f39495805c211d647dd5c097bebb",
     "status": "released",
-    "released_at": "2026-11-24T01:28:04.918290+00:00"
+    "released_at": "2026-11-25T01:10:22.366629+00:00"
   },
   "last_verified_tests": {
-    "passed": 653,
+    "passed": 661,
     "failed": 0,
-    "new_tests": 14,
-    "targeted_passed": 14,
+    "new_tests": 8,
+    "targeted_passed": 22,
     "command": "node --test; npm run check; node --check all src/**/*.js/public/**/*.js/scripts/**/*.mjs",
-    "targeted_command": "node --test test/mailListing.test.js test/mailListingIntegration.test.js",
-    "syntax_checks": 87,
-    "environment": "Node24.22.3; actual local HTTP route and listing helper, synthetic IMAP/Odoo/SMTP fixtures and existing store/SQLite suite",
-    "baseline": {
-      "source": "c895a6dcc2b7286556009fd654f150b3535f1543",
-      "command": "node --test test/mailListingIntegration.test.js on detached exact prior tree",
-      "passed": 0,
-      "failed": 1,
-      "interpretation": "HTTP stub requires bounded sequence query; old route searches entire mailbox and returns502 under that assertion, corrected200. Demonstrates query boundary regression, not a live provider failure."
-    },
+    "targeted_command": "node --test test/mailListingCursor.test.js test/mailListing.test.js test/mailListingIntegration.test.js",
+    "syntax_checks": 88,
+    "environment": "Node24.22.3; actual listing helper/HTTP server with synthetic IMAP and existing local store/SQLite/HTTP suites",
     "coverage": [
-      "latest100 in450 sparse-UID mailbox from one200-position window",
-      "since/unseen matches across3windows, complete absence versus work-limit partial absence",
-      "empty mailbox no SEARCH/FETCH",
-      "false/duplicate/foreign/incomplete search refuse before metadata fetch",
-      "wrong UID/sequence/size and changed mailbox refuse response",
-      "actual HTTP lock/logout cleanup and unchanged persistent state; invalid date400 before connect"
+      "450 sparse UIDs across225two-message pages without gaps or repeats on stable fixture",
+      "empty filtered work-capped page continues beyond20000positions to older match",
+      "account/limit/since/unseen binding, tampered/malformed/oversized token refusal",
+      "expiry preserved acrosspages, expired token and signing-key change refusal",
+      "EXISTS/UIDNEXT/UIDVALIDITY change rejects stale continuation",
+      "actual HTTP next page,400scope mismatch before connect,409snapshot mismatch and lock/logout/state invariants"
     ],
-    "source_commit": "5c3c5c8e38647301b76173de9eccd8d0653ebb34",
-    "date": "2026-11-24",
+    "baseline_run": "Not separately executed; prior source exposes partial coverage but has no continuation. No baseline test-failure count claimed.",
+    "source_commit": "129b3823396d9cdde9d4ec38fc2b0df4dda550b4",
+    "date": "2026-11-25",
     "component": "isolated combined continuation, not canonical PR26 runtime or production"
   },
   "pending_development": [],
@@ -285,25 +286,19 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": {
-    "run_id": "fancy-night-20261125",
-    "component": "Render isolated mail listing continuation and registry",
-    "acquired_at": "2026-11-25T01:06:17.765Z",
-    "expires_at": "2026-11-25T02:06:17.765Z",
-    "base_head": "9e81e235a782f39495805c211d647dd5c097bebb"
-  },
+  "lease": null,
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "5c3c5c8e38647301b76173de9eccd8d0653ebb34",
-    "parent": "c895a6dcc2b7286556009fd654f150b3535f1543",
-    "tree": "2187e1b8950a3e4e7833ca55a9d41da9d16a19a9",
-    "tests": 653,
-    "syntax_checks": 87,
+    "commit": "129b3823396d9cdde9d4ec38fc2b0df4dda550b4",
+    "parent": "5c3c5c8e38647301b76173de9eccd8d0653ebb34",
+    "tree": "822330c722ea0a7b9d881d384ccf2fad0831f944",
+    "tests": 661,
+    "syntax_checks": 88,
     "source_only": true,
     "remote_verified": true,
     "main_reconciled": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e"
   },
-  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-24.json",
+  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-25.json",
   "commercial_correction": {
     "branch": "fix/commercial-direction-20261117",
     "commit": "ea283533b900d0f8e3429a9633d607611ca0a375",

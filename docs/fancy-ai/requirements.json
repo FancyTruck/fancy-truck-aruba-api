@@ -599,9 +599,14 @@
           "date": "2026-11-24",
           "kind": "Isolated bounded generic HTTP mail listing; explicit partial coverage and unchanged state;14new/653whole tests. Not production continuity/operational acceptance.",
           "reference": "night-verification-2026-11-24.json"
+        },
+        {
+          "date": "2026-11-25",
+          "kind": "Isolated signed mail listing continuation with filter/snapshot/expiry refusal;8new/661whole tests. Stable fixture only, not live checkpoint or concurrent-provider acceptance.",
+          "reference": "night-verification-2026-11-25.json"
         }
       ],
-      "updated_at": "2026-11-24"
+      "updated_at": "2026-11-25"
     },
     {
       "id": "2.6",
@@ -1186,9 +1191,14 @@
           "date": "2026-11-17",
           "kind": "Bounded new-message UID acquisition in real readFolder/sync with synthetic IMAP/SQLite;10 new,41 targeted,458 whole tests and23 syntax checks; source-only, no live acceptance.",
           "reference": "night-verification-2026-11-17.json"
+        },
+        {
+          "date": "2026-11-25",
+          "kind": "Isolated signed mail listing continuation with filter/snapshot/expiry refusal;8new/661whole tests. Stable fixture only, not live checkpoint or concurrent-provider acceptance.",
+          "reference": "night-verification-2026-11-25.json"
         }
       ],
-      "updated_at": "2026-11-17"
+      "updated_at": "2026-11-25"
     },
     {
       "id": "7.4",
@@ -1438,10 +1448,15 @@
           "date": "2026-11-23",
           "kind": "Isolated team-reply lookup: bounded ancestry queries, incomplete/identity/change refusal;12new/639whole tests. Not live checkpoint or handoff acceptance.",
           "reference": "night-verification-2026-11-23.json"
+        },
+        {
+          "date": "2026-11-25",
+          "kind": "Isolated signed mail listing continuation with filter/snapshot/expiry refusal;8new/661whole tests. Stable fixture only, not live checkpoint or concurrent-provider acceptance.",
+          "reference": "night-verification-2026-11-25.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-23"
+      "updated_at": "2026-11-25"
     },
     {
       "id": "2.1.1",
