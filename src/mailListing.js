@@ -9,12 +9,14 @@ export function listingOptions(query){
 }
 // Called under the existing readonly INBOX lock. Search newest positions first;
 // never collect all mailbox UIDs just to return the latest few messages.
-export async function listMailboxMessages(client,{limit,unseenOnly=false,since=null}){
+export async function listMailboxMessages(client,{limit,unseenOnly=false,since=null,resume=null}){
  if(!Number.isSafeInteger(limit)||limit<1||limit>100)throw problem('invalid_mail_limit',400);
  const {exists,uidNext,uidValidity}=client.mailbox||{};
  if(!Number.isSafeInteger(exists)||exists<0||!Number.isSafeInteger(uidNext)||uidNext<1||uidNext>4294967295||exists>=uidNext||!uidValidity)throw problem('mailbox_metadata_unavailable');
  const unchanged=()=>{const m=client.mailbox||{};if(m.exists!==exists||m.uidNext!==uidNext||String(m.uidValidity)!==String(uidValidity))throw problem('mailbox_changed_retry');};
- let end=exists,scanned=0,moreMatches=false;const selected=[];
+ const snapshot={exists,uidNext,uidValidity:String(uidValidity)};
+ if(resume&&(JSON.stringify(resume.snapshot)!==JSON.stringify(snapshot)||!Number.isSafeInteger(resume.end)||resume.end<1||resume.end>exists))throw problem('mail_cursor_snapshot_changed',409);
+ let end=resume?resume.end:exists,scanned=0,moreMatches=false;const selected=[];
  while(end>0&&selected.length<limit&&scanned<20000){
   const start=Math.max(1,end-199),search={seq:`${start}:${end}`};
   if(unseenOnly)search.seen=false;if(since)search.since=since;
@@ -26,14 +28,19 @@ export async function listMailboxMessages(client,{limit,unseenOnly=false,since=n
   for(const uid of sorted.slice(0,room))selected.push({uid,start,end});
   scanned+=end-start+1;end=start-1;
  }
- const messages=[];
+ const messages=[];let lastSequence=null;
  for(const row of selected){
   const message=await client.fetchOne(row.uid,{uid:true,envelope:true,flags:true,internalDate:true,size:true},{uid:true});unchanged();
   if(message?.uid!==row.uid||!Number.isSafeInteger(message?.seq)||message.seq<row.start||message.seq>row.end)throw problem('message_uid_mismatch');
   if(!Number.isSafeInteger(message.size)||message.size<0)throw problem('message_size_unavailable');
+  lastSequence=message.seq;
   messages.push({uid:row.uid,subject:message.envelope?.subject||null,date:message.envelope?.date||message.internalDate||null,
    from:message.envelope?.from||[],to:message.envelope?.to||[],flags:[...(message.flags||[])],size:message.size});
  }
  unchanged();
- return {messages,partial:end>0||moreMatches,has_more:moreMatches?true:end>0?null:false,scanned_positions:scanned,older_messages_unscanned:end};
+ // An overflowing search window must resume before the LAST RETURNED message,
+ // not before the whole searched window: otherwise unreturned matches vanish.
+ if(moreMatches)end=lastSequence-1;
+ const continuation=end>0?{snapshot,end,...(resume?.expires_at?{expires_at:resume.expires_at}:{})}:null;
+ return {continuation,messages,partial:end>0||moreMatches,has_more:moreMatches?true:end>0?null:false,scanned_positions:scanned,older_messages_unscanned:end};
 }

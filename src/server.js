@@ -1,3 +1,4 @@
+import {mailListingCursor} from './mailListingCursor.js';
 import {listingOptions,listMailboxMessages} from './mailListing.js';
 import { reviewSnapshot } from './reviewSnapshot.js';
 import { acquireProcessOwner } from './processOwner.js';
@@ -68,6 +69,7 @@ app.use(express.json({ limit: '2mb' }));
 
 const port = Number(process.env.PORT || 3000);
 const apiToken = process.env.API_TOKEN || '';
+const listingCursor=mailListingCursor(apiToken);
 const initialRuntime = runtimeConfig();
 const startedAt = Date.now();
 let store = new JsonStateStore(initialRuntime.stateFile);
@@ -1385,11 +1387,13 @@ app.get('/v1/:account/status', async (req, res) => {
 app.get('/v1/:account/messages', async (req, res) => {
   try {
     const options=listingOptions(req.query);
+    if(req.query.cursor!==undefined)options.resume=listingCursor.decode(req.params.account,options,req.query.cursor);
     const result=await withImap(req.params.account,async client=>{
       const lock=await client.getMailboxLock('INBOX',{readOnly:true});
       try{return await listMailboxMessages(client,options);}finally{lock.release();}
     });
-    res.json({ok:true,account:req.params.account,count:result.messages.length,...result});
+    const {continuation,...page}=result;
+    res.set('Cache-Control','no-store').json({ok:true,account:req.params.account,count:page.messages.length,...page,next_cursor:listingCursor.encode(req.params.account,options,continuation)});
   }catch(error){res.status(error.status||502).json({ok:false,code:error.code||'MAIL_LISTING_FAILED',error:error.message});}
 });
 

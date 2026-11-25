@@ -1,0 +1,69 @@
+{
+  "date": "2026-11-25",
+  "modules": [
+    "P03",
+    "P05",
+    "P22"
+  ],
+  "requirement_ids": [
+    "1.4.1",
+    "1.5",
+    "2.5",
+    "7.2",
+    "7.3"
+  ],
+  "source_parent": "5c3c5c8e38647301b76173de9eccd8d0653ebb34",
+  "main_reconciled": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e",
+  "implementation": [
+    "Existing mail listing response now includes signed next_cursor; client sends cursor with same account/limit/since/unseen to continue. HMAC-SHA256 domain-separated with existing API_TOKEN; no new secret/config/storage. Stateless token expires30minutes; subsequent pages retain original expiry.",
+    "Cursor binds account and canonical filters plus EXISTS/UIDNEXT/UIDVALIDITY snapshot and remaining sequence boundary. Invalid/altered/expired/wrong-scope tokens reject400 before IMAP. Observed changed snapshot rejects409 under readonly lock, client must restart. API token rotation invalidates existing cursors.",
+    "Overflowing window resumes immediately before last RETURNED message sequence, rather than skipping the whole searched window. Empty work-capped filtered pages resume before oldest scanned position. Existing200-position/100-window/100-selected per-call bounds retained.",
+    "Internal continuation snapshot removed from response in favor of opaque signed cursor; Cache-Control no-store. Existing account/count/messages/partial/has_more fields retained. No UI/worker/provider write."
+  ],
+  "runtime_link": "Existing authenticated GET /v1/:account/messages uses signer/decoder and same readonly IMAP client; real local HTTP tests exercise continuation, scope rejection before connect, stale snapshot409 and cleanup/state preservation. Isolated source not deployed.",
+  "tests": {
+    "passed": 661,
+    "failed": 0,
+    "new_tests": 8,
+    "targeted_passed": 22,
+    "command": "node --test; npm run check; node --check all src/**/*.js/public/**/*.js/scripts/**/*.mjs",
+    "targeted_command": "node --test test/mailListingCursor.test.js test/mailListing.test.js test/mailListingIntegration.test.js",
+    "syntax_checks": 88,
+    "environment": "Node24.22.3; actual listing helper/HTTP server with synthetic IMAP and existing local store/SQLite/HTTP suites",
+    "coverage": [
+      "450 sparse UIDs across225two-message pages without gaps or repeats on stable fixture",
+      "empty filtered work-capped page continues beyond20000positions to older match",
+      "account/limit/since/unseen binding, tampered/malformed/oversized token refusal",
+      "expiry preserved acrosspages, expired token and signing-key change refusal",
+      "EXISTS/UIDNEXT/UIDVALIDITY change rejects stale continuation",
+      "actual HTTP next page,400scope mismatch before connect,409snapshot mismatch and lock/logout/state invariants"
+    ],
+    "baseline_run": "Not separately executed; prior source exposes partial coverage but has no continuation. No baseline test-failure count claimed."
+  },
+  "live_readonly": {
+    "date": "2026-11-25",
+    "scope": "Render list_deploys limit1, confirmed explicit workspace",
+    "workspace": "tea-daa7c667bikc73fkk940",
+    "commit": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e",
+    "deploy": "dep-dc1a0se0tbcc73afveeg",
+    "status": "live",
+    "finished_at": "2026-11-22T07:58:12.726253Z",
+    "does_not_prove": "new memory/events/checkpoints/backup/operational acceptance or isolated-source release"
+  },
+  "source_integrity": {
+    "combined_server": "12d569873cb3842f553dedff7652562033fe59c9",
+    "pr26_server": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "scope": "Combined server adds cursor factory with existing secret and adapts existing listing handler; repaired intake/awaiting_scope_review, readonly/process ownership retained. Canonical PR26 runtime unchanged."
+  },
+  "oom": "No new RSS/heap/external/load profile or historical cause/resolution evidence. Existing bounded listing working set retained; cursor adds no persistent ledger or mailbox-wide collection.",
+  "backup": "No new download/integrity/decrypt/restore/deletion; prior dated isolated restore evidence retained.",
+  "limits": [
+    "Snapshot changes from append/expunge require restart409; this design favors fail-closed snapshot consistency and may be inconvenient on busy mailboxes. No live provider/UI acceptance.",
+    "EXISTS/UIDNEXT/UIDVALIDITY do not snapshot flags or body/header edits: unseen matches can change between calls without these metadata changing. Stable synthetic no-gap test is not universal concurrent-mailbox proof.",
+    "Signing does not confer authorization; existing API access control still applies. Existing API_TOKEN rotation invalidates cursors. No key rotation/config mutation executed.",
+    "Individual envelope/header/evidence response bytes remain unbounded separately; no whole-process memory cap or provider-latency claim.",
+    "F0/F1/F2/four-path operational acceptance remains open;4.5.1/project case unchanged,COLLAUDO74 untouched,F6 deferred."
+  ],
+  "effects": "No main push/remote merge/deploy/restart/Odoo mutation/deletion/hosted migration/real send/fiscal action/payment/refund/purchase/new task.",
+  "next_action": "Reconcile HEAD/lease; bound envelope/header/evidence payload retention and inspect operational checkpoint/CRM/notification evidence through authorized reads. Busy-mailbox paging behavior/client UI remains to validate before release."
+}
