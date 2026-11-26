@@ -354,10 +354,15 @@
           "date": "2026-11-24",
           "kind": "Isolated bounded generic HTTP mail listing; explicit partial coverage and unchanged state;14new/653whole tests. Not production continuity/operational acceptance.",
           "reference": "night-verification-2026-11-24.json"
+        },
+        {
+          "date": "2026-11-26",
+          "kind": "Isolated bounded listing metadata projection with explicit review placeholders;10new/671whole tests. Parser allocation/total RSS and live acceptance remain open.",
+          "reference": "night-verification-2026-11-26.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-24"
+      "updated_at": "2026-11-26"
     },
     {
       "id": "1.5",
@@ -467,9 +472,14 @@
           "date": "2026-11-24",
           "kind": "Isolated bounded generic HTTP mail listing; explicit partial coverage and unchanged state;14new/653whole tests. Not production continuity/operational acceptance.",
           "reference": "night-verification-2026-11-24.json"
+        },
+        {
+          "date": "2026-11-26",
+          "kind": "Isolated bounded listing metadata projection with explicit review placeholders;10new/671whole tests. Parser allocation/total RSS and live acceptance remain open.",
+          "reference": "night-verification-2026-11-26.json"
         }
       ],
-      "updated_at": "2026-11-24"
+      "updated_at": "2026-11-26"
     },
     {
       "id": "2.1",
@@ -1262,9 +1272,14 @@
           "date": "2026-11-24",
           "kind": "Isolated bounded generic HTTP mail listing; explicit partial coverage and unchanged state;14new/653whole tests. Not production continuity/operational acceptance.",
           "reference": "night-verification-2026-11-24.json"
+        },
+        {
+          "date": "2026-11-26",
+          "kind": "Isolated bounded listing metadata projection with explicit review placeholders;10new/671whole tests. Parser allocation/total RSS and live acceptance remain open.",
+          "reference": "night-verification-2026-11-26.json"
         }
       ],
-      "updated_at": "2026-11-24"
+      "updated_at": "2026-11-26"
     },
     {
       "id": "7.5",
