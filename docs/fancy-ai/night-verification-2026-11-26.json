@@ -1,0 +1,78 @@
+{
+  "date": "2026-11-26",
+  "modules": [
+    "P01",
+    "P05",
+    "P22"
+  ],
+  "requirement_ids": [
+    "1.4",
+    "1.5",
+    "2.5",
+    "7.2",
+    "7.4"
+  ],
+  "source_parent": "129b3823396d9cdde9d4ec38fc2b0df4dda550b4",
+  "main_reconciled": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e",
+  "implementation": [
+    "Existing listing projects selected envelope/flags into detached bounded metadata before JSON serialization/retention: <=16KiB serialized JSON per row, <=512KiB for messages array. UTF8/escaping, array/object breadth, depth and node limits checked. Flag count capped before spreading.",
+    "Oversized/unsupported metadata becomes explicit requires_metadata_review placeholder retaining UID/size, with null subject/date and empty addresses/flags; metadata_complete=false per row/page. Provider object/source unchanged, no silent truncation or claimed complete metadata.",
+    "Page budget reserves512bytes per remaining placeholder; JSON byte count exposed as metadata_bytes. Exactly same selected UIDs and cursor progression retained even for review-only rows. No new route/storage/worker/provider mutation."
+  ],
+  "runtime_link": "Actual existing authenticated listing route uses helper indirectly through listMailboxMessages. Real local HTTP tests cover oversize placeholders, continuation, readonly lock/logout and unchanged store. No deployment.",
+  "tests": {
+    "passed": 671,
+    "failed": 0,
+    "new_tests": 10,
+    "targeted_passed": 32,
+    "command": "node --test; npm run check; node --check all src/**/*.js/public/**/*.js/scripts/**/*.mjs",
+    "targeted_command": "node --test test/mailListingMetadata.test.js test/mailListing.test.js test/mailListingCursor.test.js test/mailListingIntegration.test.js",
+    "syntax_checks": 89,
+    "environment": "Node24.22.3; actual local HTTP/listing helpers with synthetic IMAP and existing store/SQLite/provider-stub suite",
+    "baseline": {
+      "source": "129b3823396d9cdde9d4ec38fc2b0df4dda550b4",
+      "command": "node --test test/mailListingIntegration.test.js on detached exact prior tree with new fixture",
+      "passed": 0,
+      "failed": 1,
+      "interpretation": "Prior route returns oversized metadata without metadata_complete=false review indicator; corrected HTTP regression passes. Not live provider or OOM-cause evidence."
+    },
+    "initial_failed_run": {
+      "passed": 661,
+      "failed": 1,
+      "cause": "New deep-array test fixture had an unmatched bracket and could not load. Replaced with iterative nested fixture; final10new tests load/pass. No broken fixture committed remotely."
+    },
+    "coverage": [
+      "Small exact detached projection with zero size/date/flags",
+      "large subject/address lists/UTF8/JSON escape growth/flags/deep nesting/cycles produce explicit review",
+      "100rows with12KiB subjects stay within512KiB aggregate, with truthful review placeholders",
+      "review-only rows preserve selected UID ordering/continuation",
+      "real HTTP oversized metadata response remains bounded with next_cursor and unchanged state"
+    ]
+  },
+  "live_readonly": {
+    "date": "2026-11-26",
+    "scope": "Render list_deploys limit1, explicit confirmed workspace",
+    "workspace": "tea-daa7c667bikc73fkk940",
+    "commit": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e",
+    "deploy": "dep-dc1a0se0tbcc73afveeg",
+    "status": "live",
+    "finished_at": "2026-11-22T07:58:12.726253Z",
+    "does_not_prove": "new memory/events/checkpoints/backup/operational acceptance or isolated-source release"
+  },
+  "source_integrity": {
+    "combined_server": "12d569873cb3842f553dedff7652562033fe59c9",
+    "pr26_server": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "scope": "Both server files unchanged; repaired intake/awaiting_scope_review and readonly/process ownership retained."
+  },
+  "oom": "Specific retained listing metadata/JSON bounded. IMAP parser may already allocate oversized provider data before projection; no new RSS/heap/external/load profile, total-service cap or historical OOM cause/resolution proof.",
+  "backup": "No new download/integrity/decrypt/restore/deletion; dated isolated restore evidence retained.",
+  "limits": [
+    "16KiB row/512KiB array budgets are development-only technical limits; client handling of explicit metadata-review placeholders not live tested. Full metadata remains at provider, not returned through this listing.",
+    "Budget covers messages array, not entire HTTP wrapper/cursor/transport or concurrent requests. Parser allocation, provider response sizes and network latency remain separate.",
+    "Team-reply header/evidence retention is still unbounded separately and remains next lot. No statement that all email paths now bounded.",
+    "Existing signed cursor requires stable observed metadata, expires30minutes; flags/header changes not fully snapshotted.",
+    "F0/F1/F2/four-path acceptance open;4.5.1/project case unchanged,COLLAUDO74 untouched,F6 deferred."
+  ],
+  "effects": "No main push/remote merge/deploy/restart/Odoo mutation/deletion/hosted migration/real send/fiscal action/payment/refund/purchase/new task.",
+  "next_action": "Reconcile HEAD/lease; bound team-reply header/evidence retention, then inspect authorized operational checkpoint/CRM/notification evidence. Live placeholder/client and busy-mailbox pagination acceptance remain open."
+}

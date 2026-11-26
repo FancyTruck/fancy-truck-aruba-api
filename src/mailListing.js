@@ -1,3 +1,4 @@
+import {listingMetadata,metadataReview,LISTING_PAGE_BYTES} from './mailListingMetadata.js';
 const problem=(code,status=502)=>Object.assign(new Error(code),{code,status});
 export function listingOptions(query){
  const limit=query.limit===undefined?20:Number(query.limit);
@@ -28,19 +29,21 @@ export async function listMailboxMessages(client,{limit,unseenOnly=false,since=n
   for(const uid of sorted.slice(0,room))selected.push({uid,start,end});
   scanned+=end-start+1;end=start-1;
  }
- const messages=[];let lastSequence=null;
+ const messages=[];let lastSequence=null,metadataBytes=2;
  for(const row of selected){
   const message=await client.fetchOne(row.uid,{uid:true,envelope:true,flags:true,internalDate:true,size:true},{uid:true});unchanged();
   if(message?.uid!==row.uid||!Number.isSafeInteger(message?.seq)||message.seq<row.start||message.seq>row.end)throw problem('message_uid_mismatch');
   if(!Number.isSafeInteger(message.size)||message.size<0)throw problem('message_size_unavailable');
   lastSequence=message.seq;
-  messages.push({uid:row.uid,subject:message.envelope?.subject||null,date:message.envelope?.date||message.internalDate||null,
-   from:message.envelope?.from||[],to:message.envelope?.to||[],flags:[...(message.flags||[])],size:message.size});
+  let projected=listingMetadata(message,row.uid),bytes=Buffer.byteLength(JSON.stringify(projected));
+  // Reserve room for explicit review placeholders for every remaining row.
+  if(metadataBytes+bytes+1>LISTING_PAGE_BYTES-(selected.length-messages.length-1)*512){projected=metadataReview(row.uid,message.size);bytes=Buffer.byteLength(JSON.stringify(projected));}
+  metadataBytes+=bytes+(messages.length?1:0);messages.push(projected);
  }
  unchanged();
  // An overflowing search window must resume before the LAST RETURNED message,
  // not before the whole searched window: otherwise unreturned matches vanish.
  if(moreMatches)end=lastSequence-1;
  const continuation=end>0?{snapshot,end,...(resume?.expires_at?{expires_at:resume.expires_at}:{})}:null;
- return {continuation,messages,partial:end>0||moreMatches,has_more:moreMatches?true:end>0?null:false,scanned_positions:scanned,older_messages_unscanned:end};
+ return {continuation,messages,metadata_complete:messages.every(m=>m.metadata_complete),metadata_bytes:metadataBytes,partial:end>0||moreMatches,has_more:moreMatches?true:end>0?null:false,scanned_positions:scanned,older_messages_unscanned:end};
 }
