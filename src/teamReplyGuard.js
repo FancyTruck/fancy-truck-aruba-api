@@ -1,3 +1,4 @@
+import {replyAddresses,replyHeader,replyId,replyDate,replyEvidence,replySourceAvailable} from './teamReplyPayload.js';
 const replyProblem=code=>Object.assign(new Error(code),{code,status:502});
 async function* replyCandidates(client,id){
  const {exists,uidNext,uidValidity}=client.mailbox||{};
@@ -16,12 +17,13 @@ async function* replyCandidates(client,id){
 // Inspect both sent mail and team replies delivered to our inbox (To or Cc).
 // Exact RFC Message-ID ancestry keeps distinct customer requests separate.
 export async function teamAlreadyReplied({parsed,accounts,withImap,evidence=false,parse}) {
- const id=String(parsed.messageId||'');
+ const id=replyId(parsed.messageId);
  if(!id||id.length>998||/[\r\n]/.test(id))throw Error('team_reply_check_missing_message_id');
  let latest=null;
- const addresses=value=>(Array.isArray(value)?value:value?.value||[]).map(v=>String(v.address||'').trim().toLowerCase()).filter(Boolean);
+ const addresses=replyAddresses;
  const internal=address=>address.endsWith('@fancytruck.it');
  const customer=addresses(parsed.from).filter(a=>!internal(a));
+ const originalDate=replyDate(parsed.date);
  for(const account of accounts){
   const found=await withImap(account,async client=>{
    const folders=(await client.list()).filter(f=>f.specialUse==='\\Sent');
@@ -35,15 +37,19 @@ export async function teamAlreadyReplied({parsed,accounts,withImap,evidence=fals
        const message=await client.fetchOne(uid,{uid:true,envelope:true,headers:['in-reply-to','references']},{uid:true});unchanged();
        if(message?.uid!==uid)throw replyProblem('team_reply_uid_mismatch');
        const envelope=message?.envelope||{};
-       const header=String(message?.headers||'').replace(/\r?\n[ \t]+/g,' ');
-       const refs=[...header.matchAll(/<[^<>\s]+>/g)].map(m=>m[0]);
-       if(envelope.inReplyTo!==id&&!refs.includes(id))continue;
-       if(parsed.date&&envelope.date&&new Date(envelope.date)<new Date(parsed.date))continue;
+       const header=replyHeader(message?.headers);
+       const parent=replyId(envelope.inReplyTo);
+       // Scan bounded headers without retaining an array of every ancestry token.
+       let related=parent===id;
+       for(const match of header.matchAll(/<[^<>\s]+>/g)){if(match[0]===id){related=true;break;}}
+       if(!related)continue;
+       const envelopeDate=replyDate(envelope.date);
+       if(originalDate&&envelopeDate&&envelopeDate<originalDate)continue;
        {
         // An internal-only handoff is not an answer to the customer. Likewise,
         // another customer message in the thread is not evidence of team handling.
         const senders=addresses(envelope.from);
-        const recipients=[...addresses(envelope.to),...addresses(envelope.cc)];
+        const recipients=addresses(envelope.to,envelope.cc);
         if(!senders.length||!senders.every(internal))continue;
         if(!recipients.some(a=>!internal(a)&&(!customer.length||customer.includes(a))))continue;
        }
@@ -54,12 +60,11 @@ export async function teamAlreadyReplied({parsed,accounts,withImap,evidence=fals
        if(!Number.isSafeInteger(meta?.size)||meta.size<0||meta.size>2*1024*1024)throw Error('team_reply_body_unavailable');
        const raw=await client.fetchOne(uid,{source:{start:0,maxLength:2*1024*1024+1}},{uid:true});
        unchanged();
-       if(!raw?.source||raw.source.length>2*1024*1024)throw Error('team_reply_body_unavailable');
+       if(!replySourceAvailable(raw?.source))throw Error('team_reply_body_unavailable');
        const full=await parse(raw.source);unchanged();
-       if(full.inReplyTo!==id)continue;
-       const at=full.date?.toISOString?.();
-       if(!full.messageId||!at||Date.parse(at)>Date.now()+60000)throw Error('team_reply_date_unavailable');
-       if(!latest||at>latest.evidence.at)latest={handled:true,account,evidence:{message_id:full.messageId,at,text:full.text||''}};
+       if(replyId(full?.inReplyTo)!==id)continue;
+       const proof=replyEvidence(full);
+       if(!latest||proof.at>latest.evidence.at)latest={handled:true,account,evidence:proof};
      }
     }finally{lock.release();}
    }
