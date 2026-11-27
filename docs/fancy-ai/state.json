@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "updated_at": "2026-11-26T01:55:43.755925+00:00",
+  "updated_at": "2026-11-27T01:15:42.818755+00:00",
   "baseline_commit": "bb1792151b5fa66c16180c52335ea26ff5629957",
   "branch": "work/fancy-foundations-20261022",
-  "stage": "bounded listing metadata remotely preserved; functional acceptance open",
+  "stage": "bounded team reply payloads remotely preserved; functional acceptance open",
   "functional_acceptance": "open",
   "completed_development": [
     "bounded-business-mail-polling",
@@ -50,7 +50,8 @@
     "bounded-team-reply-ancestry-with-explicit-incomplete-and-identity-guards",
     "bounded-newest-first-http-mail-listing-with-explicit-partial-coverage",
     "signed-snapshot-and-filter-bound-mail-listing-continuation",
-    "bounded-detached-listing-metadata-and-truthful-review-placeholders"
+    "bounded-detached-listing-metadata-and-truthful-review-placeholders",
+    "bounded-team-reply-header-address-source-and-retained-evidence-with-explicit-incomplete"
   ],
   "tests": {
     "command": "npm test; npm run check; node --check src/mailMessage.js; node --check src/mailReadGate.js; node --check scripts/profile-interactive-mail.mjs",
@@ -59,7 +60,7 @@
     "syntax_checks": 8,
     "environment": "Node24.22.1 isolated PR26 with synthetic HTTP/IMAP tests"
   },
-  "next_action": "Reconcile HEAD/lease; bound team-reply header/evidence retention, then inspect authorized operational checkpoint/CRM/notification evidence. Live placeholder/client and busy-mailbox pagination acceptance remain open.",
+  "next_action": "Reconcile fresh HEAD/lease; inspect remaining reply-cycle action/evidence projection and folder discovery bounds, and authorized operational checkpoint/CRM/notification evidence. Live client/busy-mailbox and provider reconciliation remain separate.",
   "blocked": [
     "administrative browser policy for pending approval/application diagnostics; no bypass",
     "production rollout, hosted migrations and operational acceptance are outside this run authorization",
@@ -190,6 +191,12 @@
       "scope": "Render list_deploys limit1, explicit confirmed workspace",
       "result": "Latest independently live main be0d7ab/dep-dc1a0se0tbcc73afveeg still finished22Nov07:58:12UTC",
       "does_not_prove": "new memory/events/checkpoints/backup/operational acceptance or isolated-source release"
+    },
+    {
+      "date": "2026-11-27",
+      "scope": "Render list_deploys limit1, explicit confirmed workspace",
+      "result": "Latest independently live main be0d7ab/dep-dc1a0se0tbcc73afveeg still finished22Nov07:58:12UTC",
+      "does_not_prove": "new memory/events/checkpoints/backup/operational acceptance or isolated-source release"
     }
   ],
   "operational_evidence": "docs/fancy-ai/operational-verification-2026-10-22.json",
@@ -222,27 +229,27 @@
     "syntax_checks": 5,
     "scope": "local isolated; not live checkpoints or end-to-end acceptance"
   },
-  "updated_at_rome": "2026-11-26T02:55:43.755925+01:00",
-  "run_id": "fancy-night-20261126",
-  "current_lot": "P01/P05/P22 bounded listing metadata projection; isolated continuation",
+  "updated_at_rome": "2026-11-27T02:15:42.818755+01:00",
+  "run_id": "fancy-night-20261127",
+  "current_lot": "P01/P03/P05/P22 bounded team reply payload/evidence; isolated continuation",
   "live_render_deploy": "dep-dc1a0se0tbcc73afveeg",
   "upstream_integration_tests": {
     "status": "passed on isolated continuation; no remote main merge/deployment",
     "main": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e",
     "pr26_source": "a450bb3ddfabf40191aa56fa0bbd2390a2476044",
-    "passed": 671,
+    "passed": 685,
     "failed": 0,
-    "syntax_checks": 89,
+    "syntax_checks": 90,
     "resolved_paths": [
       "src/server.js",
       "src/peuContract.js"
     ],
     "policy": "10MiB inline source and durable review handoff retained; <=101 positions/date search, <=100processed per poll; independent scan watermark never means content processed",
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "17032f2a42a8b7cd086deb6c284c159d0e68358e",
-    "tree": "642e3bcdbd65a2ca5a021f4768677c9020586cc6",
-    "remote_readback": "Full exact remote source fetched; tree and all files equal tested local commit3ac4bd9; both servers unchanged.",
-    "date": "2026-11-26"
+    "commit": "477e855119b8039c82be33ed66bcaef2894248f5",
+    "tree": "9baeb91a9c020fe54d5d7c2444fc25ebf4fe2fa9",
+    "remote_readback": "Fetched full exact remote source; whole-tree diff against tested local commit empty; tree and server hash equal",
+    "date": "2026-11-27"
   },
   "source_integrity": {
     "parent_server_blob": "a128e39a7685f5474967b4c6528f70e93583b902",
@@ -257,44 +264,39 @@
     "combined_server_scope": "Both server files unchanged; repaired intake/awaiting_scope_review and readonly/process ownership retained."
   },
   "last_lease": {
-    "run_id": "fancy-night-20261126",
-    "component": "Render isolated listing metadata budget and registry",
-    "acquired_at": "2026-11-26T01:51:21.132Z",
-    "expires_at": "2026-11-26T02:51:21.132Z",
-    "base_head": "117bd7efff26d9d6f0877466c3ed6cf8eb769dc6",
+    "run_id": "fancy-night-20261127",
+    "component": "Render isolated team reply payload budgets and registry",
+    "acquired_at": "2026-11-27T01:10:31.042Z",
+    "expires_at": "2026-11-27T02:10:31.042Z",
+    "base_head": "a0631e5f30ebacaf2168343dfe645b5930a4f446",
     "status": "released",
-    "released_at": "2026-11-26T01:55:43.755925+00:00"
+    "released_at": "2026-11-27T01:15:42.818755+00:00"
   },
   "last_verified_tests": {
-    "passed": 671,
+    "passed": 685,
     "failed": 0,
-    "new_tests": 10,
-    "targeted_passed": 32,
+    "new_tests": 14,
+    "targeted_passed": 49,
     "command": "node --test; npm run check; node --check all src/**/*.js/public/**/*.js/scripts/**/*.mjs",
-    "targeted_command": "node --test test/mailListingMetadata.test.js test/mailListing.test.js test/mailListingCursor.test.js test/mailListingIntegration.test.js",
-    "syntax_checks": 89,
-    "environment": "Node24.22.3; actual local HTTP/listing helpers with synthetic IMAP and existing store/SQLite/provider-stub suite",
+    "new_command": "node --test test/teamReplyPayload.test.js",
     "baseline": {
-      "source": "129b3823396d9cdde9d4ec38fc2b0df4dda550b4",
-      "command": "node --test test/mailListingIntegration.test.js on detached exact prior tree with new fixture",
-      "passed": 0,
-      "failed": 1,
-      "interpretation": "Prior route returns oversized metadata without metadata_complete=false review indicator; corrected HTTP regression passes. Not live provider or OOM-cause evidence."
+      "source": "17032f2a42a8b7cd086deb6c284c159d0e68358e",
+      "command": "node --test finalized14test synthetic fixture using exact git-show baseline teamReplyGuard.js",
+      "passed": 2,
+      "failed": 12,
+      "interpretation": "Old guard decodes oversized headers, accepts oversized/unsupported address/evidence and UTF8 source inputs; positive folded/exact-boundary ancestry already passes. Failures overlap, not12separate incidents. No live provider/OOM attribution."
     },
-    "initial_failed_run": {
-      "passed": 661,
-      "failed": 1,
-      "cause": "New deep-array test fixture had an unmatched bracket and could not load. Replaced with iterative nested fixture; final10new tests load/pass. No broken fixture committed remotely."
-    },
+    "environment": "Node24.22.3; actual guard/verifier/cycle modules, synthetic IMAP and parser; existing full local HTTP/SQLite/store/provider-stub suite",
+    "syntax_checks": 90,
     "coverage": [
-      "Small exact detached projection with zero size/date/flags",
-      "large subject/address lists/UTF8/JSON escape growth/flags/deep nesting/cycles produce explicit review",
-      "100rows with12KiB subjects stay within512KiB aggregate, with truthful review placeholders",
-      "review-only rows preserve selected UID ordering/continuation",
-      "real HTTP oversized metadata response remains bounded with next_cursor and unchanged state"
+      "Oversized buffer rejected before decode/body fetch, UTF8 byte limits before unfolding, exact boundary/folded tokens and substring rejection",
+      "Address count/aggregate bytes, unsupported shapes, invalid dates, original customer metadata before any connection",
+      "Parsed text/identity/source guards, exact256KiB UTF8 text boundary, readonly lock cleanup",
+      "Draft verifier defers without retirement/authorization; cycle consumer propagates incomplete evidence despite local receipt; actions unchanged"
     ],
-    "source_commit": "17032f2a42a8b7cd086deb6c284c159d0e68358e",
-    "date": "2026-11-26",
+    "targeted_command": "node --test test/teamReplyPayload.test.js test/teamReplyGuard.test.js test/teamReplyPages.test.js test/replyCycleEvidence.test.js test/automaticDraftVerifier.test.js",
+    "source_commit": "477e855119b8039c82be33ed66bcaef2894248f5",
+    "date": "2026-11-27",
     "component": "isolated combined continuation, not canonical PR26 runtime or production"
   },
   "pending_development": [],
@@ -303,25 +305,19 @@
     "resolution": "/bin/bash with root working directory succeeded; clean clone and npm ci --ignore-scripts restored Node test environment",
     "node": "v24.22.1"
   },
-  "lease": {
-    "run_id": "fancy-night-20261127",
-    "component": "Render isolated team reply payload budgets and registry",
-    "acquired_at": "2026-11-27T01:10:31.042Z",
-    "expires_at": "2026-11-27T02:10:31.042Z",
-    "base_head": "a0631e5f30ebacaf2168343dfe645b5930a4f446"
-  },
+  "lease": null,
   "integration_branch": {
     "branch": "work/fancy-pr38-reconcile-20261101",
-    "commit": "17032f2a42a8b7cd086deb6c284c159d0e68358e",
-    "parent": "129b3823396d9cdde9d4ec38fc2b0df4dda550b4",
-    "tree": "642e3bcdbd65a2ca5a021f4768677c9020586cc6",
-    "tests": 671,
-    "syntax_checks": 89,
+    "commit": "477e855119b8039c82be33ed66bcaef2894248f5",
+    "parent": "17032f2a42a8b7cd086deb6c284c159d0e68358e",
+    "tree": "9baeb91a9c020fe54d5d7c2444fc25ebf4fe2fa9",
+    "tests": 685,
+    "syntax_checks": 90,
     "source_only": true,
     "remote_verified": true,
     "main_reconciled": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e"
   },
-  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-26.json",
+  "integration_evidence": "docs/fancy-ai/night-verification-2026-11-27.json",
   "commercial_correction": {
     "branch": "fix/commercial-direction-20261117",
     "commit": "ea283533b900d0f8e3429a9633d607611ca0a375",

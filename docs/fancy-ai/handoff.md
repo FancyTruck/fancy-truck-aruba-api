@@ -552,3 +552,15 @@ Both server blobs unchanged. Readonly Render latest independent live deploy rema
 No main push/merge/deploy/restart/Odoo write/deletion/hosted migration/send/economic effect/new task.4.5.1/project association unchanged,COLLAUDO74 untouched,F0/F1/F2/four paths open,F6 deferred. Next reconcile HEAD/lease and bound team header/evidence retention; authorized operational evidence remains separate. Commands/limits: night-verification-2026-11-26.json.
 
 Remote source17032f2a42a8b7cd086deb6c284c159d0e68358e/tree642e3bcdbd65a2ca5a021f4768677c9020586cc6 fetched in full and equal to tested local tree. Canonical docs only; both server blobs unchanged; lease released. Reconcile fresh refs/state before edits; main delta base remains be0d7ab.
+
+
+## Bounded team reply payloads — 27 November 2026
+Fresh main be0d7ab/source17032f2/canonicala0631e5 unchanged; canonical lease reserved after state/handoff/requirements and absent applicable AGENTS/branch workflow checks. Existing teamAlreadyReplied now rejects oversized/unsupported metadata or evidence with explicit team_reply_payload_incomplete; never truncates or turns incomplete search into handled=false/true.64KiB header bytes before decode/unfold,998byte IDs,100addresses/32KiB per address group (To+Cc combined),256KiB retained UTF8 text;2MiB source byte/type/nonempty checks before MIME parse. Exact ancestry scanned without all-token array; readonly cleanup and prior bounded UID/snapshot guards retained. Address groups and invalid dates go to review, not coercion.
+
+14new/49targeted/685whole tests, npm run check and90syntax checks pass. Exact prior guard17032f2 fails12/14 finalized tests;2positive ancestry/boundary tests already pass. Actual automaticDraftVerifier defers oversized checks without retiring/authorizing draft; actual readonly replyCycleEvidence propagates incomplete proof even with a local receipt. Synthetic IMAP/parser only for new tests, existing HTTP/store/SQLite suite passed; no new HTTP/live test claimed. Actions unchanged, locks released, oversized buffers rejected before decoding/body fetch.
+
+Both server blobs unchanged. Readonly Render latest independent live deploy still be0d7ab/dep-dc1a0se0tbcc73afveeg since22Nov07:58:12UTC. No new RSS/heap/events/OOM/checkpoint/backup evidence. Provider/MIME parser may allocate before checks; folder inventory and whole-service concurrency are not capped. Retained text/source limits do not prove historical OOM cause or resolution; oversized/grouped messages require review.
+
+No main push/merge/deploy/restart/Odoo write/deletion/hosted migration/send/economic effect/new task.4.5.1/project association unchanged,COLLAUDO74 untouched,F0/F1/F2/four paths open,F6 deferred. Next reconcile HEAD/lease, inspect remaining reply-cycle projection/folder discovery bounds and authorized operational evidence. Commands/limits: night-verification-2026-11-27.json.
+
+Remote source477e855119b8039c82be33ed66bcaef2894248f5/tree9baeb91a9c020fe54d5d7c2444fc25ebf4fe2fa9 fetched in full and equal to tested local tree. Canonical docs only; both servers unchanged; lease released. Reconcile fresh refs/state before edits; main delta base remains be0d7ab.
