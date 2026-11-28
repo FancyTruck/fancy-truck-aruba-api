@@ -1,0 +1,91 @@
+{
+  "date": "2026-11-28",
+  "modules": [
+    "P01",
+    "P03",
+    "P05",
+    "P22"
+  ],
+  "requirement_ids": [
+    "1.4",
+    "1.5",
+    "2.5",
+    "7.2",
+    "7.4"
+  ],
+  "source_parent": "477e855119b8039c82be33ed66bcaef2894248f5",
+  "main_reconciled": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e",
+  "implementation": [
+    "Existing replyCycleEvidence no longer builds Object.values/filter/sort action arrays; single pass selects latest matching receipt using numeric timestamps; rejects after10000own actions before mailbox check, rather than claiming an incomplete result. Equal timestamps keep last encountered receipt.",
+    "Latest local and remote evidence uses bounded ID/date/text projection (998byte IDs,256KiB UTF8 text); remote arbitrary extra fields are not spread into response. Oversized latest proof never falls back to older receipt. Missing/malformed team result raises reply_evidence_incomplete503 even with local receipt.",
+    "Original input text must be a string <=2MiB UTF8 before existing18000character display slice; display truncation remains explicit. Accepted lists<=100, recipient strings<=998bytes. Source/actions remain unchanged; no new route/storage/worker."
+  ],
+  "runtime_link": "Existing Peu mail.reply_cycle capability imports actual replyCycleEvidence with approvals.store.state.actions and configured original/team readers. New tests invoke real module with synthetic originals/actions/team results; existing full local HTTP/SQLite/store suite passes. No new full HTTP/provider test claimed.",
+  "tests": {
+    "passed": 695,
+    "failed": 0,
+    "new_tests": 10,
+    "targeted_passed": 28,
+    "syntax_checks": 90,
+    "command": "node --test; npm run check; node --check all src/**/*.js/public/**/*.js/scripts/**/*.mjs",
+    "targeted_command": "node --test test/replyCycleBounds.test.js test/replyCycleEvidence.test.js test/teamReplyPayload.test.js",
+    "environment": "Node24.22.3; isolated actual module with synthetic action ledger/readers, plus full existing local HTTP/SQLite/store/provider-stub suite",
+    "baseline": {
+      "source": "477e855119b8039c82be33ed66bcaef2894248f5",
+      "command": "node --test finalized test/replyCycleBounds.test.js with exact git-show baseline replyCycleEvidence.js",
+      "passed": 1,
+      "failed": 9,
+      "interpretation": "Prior code accepts unbounded/incomplete evidence, sorts ISO offsets lexically and spreads remote extra fields. Positive send-type/status test already passes. These overlapping regressions are not9live incidents."
+    },
+    "coverage": [
+      "10000/10001action boundaries; exact latest timestamp across offsets and immutable ledger",
+      "Local/remote UTF8 text and source limits; no fallback from oversized latest receipt",
+      "Detached allowed-field projection ignores cyclic/large remote extras",
+      "Missing team result propagates uncertainty; all existing send types/statuses/receipt identity rules retained"
+    ]
+  },
+  "live_readonly": {
+    "date": "2026-11-28",
+    "scope": "Render list_deploys limit1, explicit confirmed workspace",
+    "workspace": "tea-daa7c667bikc73fkk940",
+    "commit": "be0d7ab2c2e9cb6467f2fa0f363064da960f6b1e",
+    "deploy": "dep-dc1a0se0tbcc73afveeg",
+    "status": "live",
+    "finished_at": "2026-11-22T07:58:12.726253Z",
+    "does_not_prove": "new memory/events/checkpoints/backup/operational acceptance or isolated-source release"
+  },
+  "source_integrity": {
+    "combined_server": "12d569873cb3842f553dedff7652562033fe59c9",
+    "pr26_server": "a8ba0f7587843595a4c593ce655a492a00e0cc38",
+    "scope": "Both server files unchanged; corrected intake/awaiting_scope_review and readonly/process ownership retained."
+  },
+  "oom": "Specific intermediate arrays and returned proof bounded; no new RSS/heap/external/concurrency measurement or historical OOM attribution/resolution. Store loading, JS property enumeration and provider/parser allocations precede or lie outside these guards.",
+  "backup": "No new download/integrity/decrypt/restore/deletion; previous dated isolated restore evidence retained.",
+  "limits": [
+    "10000action cap is a conservative development limit. Larger ledgers require review/indexed retrieval; this patch does not mutate, prune or paginate persisted actions. No claim of process-wide memory cap.",
+    "Source/receipt objects already exist before validation. Limit bounds projection/returned proof, not whole JSON transport bytes, ledger size on disk, ingestion or full-service concurrency.",
+    "Future-dated/malformed proofs, malformed accepted lists and unavailable team result fail closed. SMTP acceptance remains distinct from delivery.",
+    "F0/F1/F2/four-path acceptance open;4.5.1/project association unchanged,COLLAUDO74 untouched,F6 deferred."
+  ],
+  "effects": "No main push/merge/deploy/restart/Odoo write/deletion/hosted migration/real send/fiscal action/payment/refund/purchase/new task.",
+  "next_action": "Reconcile HEAD/lease; inspect bounded folder discovery and live checkpoint/CRM/notification diagnostics through authorized tools. Indexed receipt lookup for ledgers above10000 and client review handling remain separate.",
+  "work_window": {
+    "started_at_utc": "2026-11-28T01:48:16.846Z",
+    "checkpoint_at_utc": "2026-11-28T01:51:52.425665+00:00",
+    "timezone": "Europe/Rome"
+  },
+  "source_preservation": {
+    "branch": "work/fancy-pr38-reconcile-20261101",
+    "commit": "5276a7bacdb73317ace44eeb6fd0be89c861456c",
+    "parent": "477e855119b8039c82be33ed66bcaef2894248f5",
+    "tree": "89544383f77426caa430b8ef0005186cf13c59a0",
+    "local_tested_commit": "2e0cb0a73375f84abb0b76b830d4dbc6234433b4",
+    "remote_readback": "Full exact remote source fetched; whole-tree diff against tested local commit empty; tree and server hash match.",
+    "source_only": true
+  },
+  "canonical_preservation": {
+    "branch": "work/fancy-foundations-20261022",
+    "parent_lease": "76130690f6e1b9ec286f49cd3cdafa5b9686a17a",
+    "scope": "Five sanitized docs only; server unchanged; lease released with checkpoint. Result commit contains this file."
+  }
+}

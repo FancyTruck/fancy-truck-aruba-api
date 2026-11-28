@@ -564,3 +564,15 @@ Both server blobs unchanged. Readonly Render latest independent live deploy stil
 No main push/merge/deploy/restart/Odoo write/deletion/hosted migration/send/economic effect/new task.4.5.1/project association unchanged,COLLAUDO74 untouched,F0/F1/F2/four paths open,F6 deferred. Next reconcile HEAD/lease, inspect remaining reply-cycle projection/folder discovery bounds and authorized operational evidence. Commands/limits: night-verification-2026-11-27.json.
 
 Remote source477e855119b8039c82be33ed66bcaef2894248f5/tree9baeb91a9c020fe54d5d7c2444fc25ebf4fe2fa9 fetched in full and equal to tested local tree. Canonical docs only; both servers unchanged; lease released. Reconcile fresh refs/state before edits; main delta base remains be0d7ab.
+
+
+## Bounded reply-cycle evidence projection — 28 November 2026
+Fresh main be0d7ab/source477e855/canonicald1ff819 reconciled; canonical lease reserved. Actual replyCycleEvidence uses single bounded pass over<=10000own actions, numeric timestamp comparison (offsets normalized), no Object.values/filter/sort arrays. Original source<=2MiB UTF8 before explicit18000character display truncation; latest local/remote proof ID<=998bytes/text<=256KiB, accepted list<=100. Only allowed remote evidence fields returned, no arbitrary spread. Incomplete ledger/proof/team result raises503 and cannot silently fall back to older/local receipt. No state mutation.
+
+10new/28targeted/695whole tests and90syntax checks plus npm run check passed. Exact prior477e855 module fails9/10 new tests; positive send types/status test already passes. Synthetic action ledger/readers through actual module; existing HTTP/SQLite/store suite passes, no new live/fullHTTP acceptance claimed.10000/10001boundary, offsets, byte limits, missing team response, cyclic remote extras and unchanged actions covered.
+
+Both servers unchanged. Render readonly latest independent deploy still be0d7ab/dep-dc1a0se0tbcc73afveeg since22Nov07:58:12UTC. No new RSS/OOM/checkpoint/backup evidence. Store loading/property enumeration/provider allocations remain outside guard; cap requires review/indexed retrieval above10000, no ledger deletion. SMTP acceptance is not delivery. Folder inventory bounds and client/live acceptance remain open.
+
+No main push/merge/deploy/restart/Odoo write/migration/send/economic effect/new task.4.5.1/project case unchanged,COLLAUDO74 untouched,F0/F1/F2/four paths open,F6 deferred. Reconcile refs/lease before next edit; inspect folder discovery and authorized operational diagnostics next. Evidence/commands: night-verification-2026-11-28.json.
+
+Remote source5276a7bacdb73317ace44eeb6fd0be89c861456c/tree89544383f77426caa430b8ef0005186cf13c59a0 fetched in full, equal to tested tree. Canonical docs only; server unchanged; lease released. Reconcile fresh HEAD/lease before editing.

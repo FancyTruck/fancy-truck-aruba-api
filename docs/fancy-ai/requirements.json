@@ -364,10 +364,15 @@
           "date": "2026-11-27",
           "kind": "Bounded team reply payload/evidence on isolated combined source:14new/49targeted/685whole tests and90syntax checks;12negative regressions fail prior guard; real draft/cycle consumers defer incomplete proof. Not live or historical OOM-cause acceptance.",
           "reference": "night-verification-2026-11-27.json"
+        },
+        {
+          "date": "2026-11-28",
+          "kind": "Bounded reply-cycle action scan and proof projection on isolated source:10new/28targeted/695whole tests,90syntax checks; prior module1pass/9fail. Synthetic readers; no live/OOM/checkpoint acceptance.",
+          "reference": "night-verification-2026-11-28.json"
         }
       ],
       "gap": "Hosted D1 migrations/runtime, mobile QA, unresolved partial-case handling, cross-device discovery and delivery acceptance remain open",
-      "updated_at": "2026-11-27"
+      "updated_at": "2026-11-28"
     },
     {
       "id": "1.5",
@@ -487,9 +492,14 @@
           "date": "2026-11-27",
           "kind": "Bounded team reply payload/evidence on isolated combined source:14new/49targeted/685whole tests and90syntax checks;12negative regressions fail prior guard; real draft/cycle consumers defer incomplete proof. Not live or historical OOM-cause acceptance.",
           "reference": "night-verification-2026-11-27.json"
+        },
+        {
+          "date": "2026-11-28",
+          "kind": "Bounded reply-cycle action scan and proof projection on isolated source:10new/28targeted/695whole tests,90syntax checks; prior module1pass/9fail. Synthetic readers; no live/OOM/checkpoint acceptance.",
+          "reference": "night-verification-2026-11-28.json"
         }
       ],
-      "updated_at": "2026-11-27"
+      "updated_at": "2026-11-28"
     },
     {
       "id": "2.1",
@@ -629,9 +639,14 @@
           "date": "2026-11-27",
           "kind": "Bounded team reply payload/evidence on isolated combined source:14new/49targeted/685whole tests and90syntax checks;12negative regressions fail prior guard; real draft/cycle consumers defer incomplete proof. Not live or historical OOM-cause acceptance.",
           "reference": "night-verification-2026-11-27.json"
+        },
+        {
+          "date": "2026-11-28",
+          "kind": "Bounded reply-cycle action scan and proof projection on isolated source:10new/28targeted/695whole tests,90syntax checks; prior module1pass/9fail. Synthetic readers; no live/OOM/checkpoint acceptance.",
+          "reference": "night-verification-2026-11-28.json"
         }
       ],
-      "updated_at": "2026-11-27"
+      "updated_at": "2026-11-28"
     },
     {
       "id": "2.6",
@@ -1105,9 +1120,14 @@
           "date": "2026-11-27",
           "kind": "Bounded team reply payload/evidence on isolated combined source:14new/49targeted/685whole tests and90syntax checks;12negative regressions fail prior guard; real draft/cycle consumers defer incomplete proof. Not live or historical OOM-cause acceptance.",
           "reference": "night-verification-2026-11-27.json"
+        },
+        {
+          "date": "2026-11-28",
+          "kind": "Bounded reply-cycle action scan and proof projection on isolated source:10new/28targeted/695whole tests,90syntax checks; prior module1pass/9fail. Synthetic readers; no live/OOM/checkpoint acceptance.",
+          "reference": "night-verification-2026-11-28.json"
         }
       ],
-      "updated_at": "2026-11-27"
+      "updated_at": "2026-11-28"
     },
     {
       "id": "7.3",
@@ -1302,9 +1322,14 @@
           "date": "2026-11-27",
           "kind": "Bounded team reply payload/evidence on isolated combined source:14new/49targeted/685whole tests and90syntax checks;12negative regressions fail prior guard; real draft/cycle consumers defer incomplete proof. Not live or historical OOM-cause acceptance.",
           "reference": "night-verification-2026-11-27.json"
+        },
+        {
+          "date": "2026-11-28",
+          "kind": "Bounded reply-cycle action scan and proof projection on isolated source:10new/28targeted/695whole tests,90syntax checks; prior module1pass/9fail. Synthetic readers; no live/OOM/checkpoint acceptance.",
+          "reference": "night-verification-2026-11-28.json"
         }
       ],
-      "updated_at": "2026-11-27"
+      "updated_at": "2026-11-28"
     },
     {
       "id": "7.5",
